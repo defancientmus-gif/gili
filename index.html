@@ -34,6 +34,8 @@
   }
 
   /* ── вход ── */
+  #приложение{display:contents}
+  #приложение[hidden]{display:none}
   #вход{margin:auto; width:min(360px, 90vw); text-align:center}
   #вход h1{font-size:22px; font-weight:650; margin:0 0 6px}
   #вход p{color:var(--fg-l); font-size:14px; line-height:1.5; margin:0 0 22px}
@@ -128,7 +130,7 @@
   <div id="сказ"></div>
 </div>
 
-<div id="приложение" hidden style="display:contents">
+<div id="приложение" hidden>
   <header>
     <div class="потоки" id="потоки"></div>
     <span class="кто" id="кто"></span>
