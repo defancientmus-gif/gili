@@ -33,182 +33,46 @@
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
-  /* ── вход ── */
-  #приложение{display:contents}
-  #приложение[hidden]{display:none}
-  #вход{margin:auto; width:min(360px, 90vw); text-align:center}
-  #вход h1{font-size:22px; font-weight:650; margin:0 0 6px}
-  #вход p{color:var(--fg-l); font-size:14px; line-height:1.5; margin:0 0 22px}
-  #вход input, #вход button{
-    width:100%; font:inherit; font-size:16px; padding:13px 15px; margin-bottom:9px;
-    border-radius:13px; border:1px solid var(--glass-bd); background:var(--glass-bg);
-    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  }
-  #вход input:focus{outline:none; border-color:var(--accent)}
-  #вход button{background:var(--accent); color:#fff; border:none; font-weight:600}
-  #вход button:disabled{opacity:.5}
-  #сказ{font-size:13px; color:var(--fg-l); min-height:18px; margin-top:4px}
+  /* ── вход ────────────────────────────────────────────────────────────────────
+   Пароля нет и не будет: в «Разберёмся» вход по коду из письма, и здесь тот же
+   аккаунт. Одна почта — один человек, ничего не надо помнить. */
+let ЖДЁМ_КОД = false, ПОЧТА = '';
 
-  /* ── шапка ── */
-  header{display:flex; gap:6px; padding:10px 12px 6px; align-items:center}
-  header .кто{font-size:13px; color:var(--fg-l); margin-left:auto; padding:0 4px}
-  .потоки{display:flex; gap:5px; flex:1}
-  .потоки button{
-    flex:1; font:inherit; font-size:13.5px; padding:8px 4px; border-radius:11px;
-    border:1px solid transparent; background:transparent; color:var(--fg-l);
-  }
-  .потоки button.on{background:var(--glass-bg); border-color:var(--glass-bd); color:var(--fg); font-weight:600}
-
-  /* ── поиск: ради него всё и затевалось ── */
-  .искать{padding:0 12px 8px}
-  .искать input{
-    width:100%; font:inherit; font-size:15px; padding:9px 13px; border-radius:12px;
-    border:1px solid var(--glass-bd); background:var(--glass-bg); color:var(--fg);
-    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  }
-  .искать input:focus{outline:none; border-color:var(--accent)}
-
-  /* ── лента ── */
-  main{flex:1; overflow-y:auto; padding:0 12px 8px; -webkit-overflow-scrolling:touch}
-  .день{text-align:center; font-size:12px; color:var(--fg-l); margin:14px 0 8px}
-  .мысль{
-    background:var(--glass-bg); border:1px solid var(--glass-bd); border-radius:var(--r);
-    padding:11px 13px; margin-bottom:8px; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-    font-size:15.5px; line-height:1.45; white-space:pre-wrap; word-break:break-word;
-  }
-  .мысль.ждёт{opacity:.72}
-  .мысль .низ{display:flex; gap:7px; align-items:center; margin-top:7px; font-size:12px; color:var(--fg-l)}
-  .мысль .низ b{font-weight:600; color:var(--accent)}
-  .мысль.ждёт .низ b{color:oklch(0.6 0.09 75)}
-  .мысль .кто{margin-left:auto}
-  .мысль img{max-width:100%; border-radius:10px; margin-top:8px; display:block}
-  .пусто{text-align:center; color:var(--fg-l); font-size:14px; padding:40px 0}
-  mark{background:oklch(0.85 0.13 95 / .6); color:inherit; border-radius:3px}
-
-  /* ── написать ── */
-  footer{padding:6px 12px calc(10px + env(safe-area-inset-bottom))}
-  .строка{display:flex; gap:7px; align-items:flex-end}
-  textarea{
-    flex:1; font:inherit; font-size:16px; line-height:1.4; resize:none; max-height:150px;
-    padding:11px 14px; border-radius:15px; border:1px solid var(--glass-bd);
-    background:var(--glass-bg); color:var(--fg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  }
-  textarea:focus{outline:none; border-color:var(--accent)}
-  .кнопка{
-    width:44px; height:44px; flex:none; border-radius:50%; border:1px solid var(--glass-bd);
-    background:var(--glass-bg); color:var(--fg-m); display:grid; place-items:center;
-    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  }
-  .кнопка svg{width:21px; height:21px}
-  .фишки{display:flex; gap:6px; padding:0 0 7px; flex-wrap:wrap}
-  .фишка{position:relative; width:52px; height:52px; border-radius:10px; overflow:hidden}
-  .фишка img{width:100%; height:100%; object-fit:cover}
-  .фишка button{
-    position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%;
-    border:none; background:oklch(0.2 0 0 / .6); color:#fff; font-size:12px; line-height:1; padding:0;
-  }
-  .состояние{font-size:12px; color:var(--fg-l); text-align:center; padding:3px 0 0; min-height:16px}
-
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:oklch(0.19 0.012 235); --fog:oklch(0.23 0.010 235); --fg:oklch(0.95 0.005 230);
-      --fg-m:oklch(0.82 0.006 230); --fg-l:oklch(0.62 0.008 230);
-      --glass-bg:oklch(0.28 0.012 235 / 0.55); --glass-bd:oklch(1 0 0 / 0.10);
-      --accent:oklch(0.72 0.10 232); --warm:oklch(0.24 0.014 250);
-    }
-  }
-</style>
-</head>
-<body>
-
-<div id="вход">
-  <h1>Гилфойл</h1>
-  <p>Мысли, которые дом разберёт сам.<br>Вход тот же, что в «Разберёмся».</p>
-  <input id="почта" type="email" inputmode="email" autocomplete="username" placeholder="почта">
-  <input id="пароль" type="password" autocomplete="current-password" placeholder="пароль">
-  <button id="войти">Войти</button>
-  <div id="сказ"></div>
-</div>
-
-<div id="приложение" hidden>
-  <header>
-    <div class="потоки" id="потоки"></div>
-    <span class="кто" id="кто"></span>
-  </header>
-  <div class="искать"><input id="поиск" placeholder="искать во всех мыслях…" autocomplete="off"></div>
-  <main id="лента"></main>
-  <footer>
-    <div class="фишки" id="фишки"></div>
-    <div class="строка">
-      <textarea id="поле" rows="1" placeholder="…"></textarea>
-      <button class="кнопка" onclick="document.getElementById('файл').click()" title="фото">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
-          <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/>
-          <circle cx="12" cy="12.5" r="3.2"/></svg>
-      </button>
-      <input type="file" id="файл" accept="image/*" multiple hidden>
-    </div>
-    <div class="состояние" id="состояние"></div>
-  </footer>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script>
-/* ═══════════════════════════════════════════════════════════════════════════
-   ГИЛФОЙЛ В ОБЛАКЕ
-
-   Женя 10.08: «Я думал может просто загнать на облачный сервер… по аналогу
-   Разберёмся сделать».
-
-   Он прав, и это лучше прежнего. Локальный Гилфойл работал только рядом с маком:
-   одна Wi-Fi, сертификат, QR — три условия там, где нужно ноль. Здесь условий нет:
-   открыл ссылку и пишешь, хоть из машины, хоть из Ялты.
-
-   Что важно понимать про роли. Облако — НЕ мозг, а почтовый ящик. Мысль падает
-   сюда, дом её забирает к себе и разбирает по органам, а обратно пишет, что с ней
-   стало («→ Космос Сервис»). Так дом остаётся источником правды и продолжает
-   работать, даже если облако однажды окажется недоступным.
-
-   Три вещи, ради которых это затевалось:
-   · писать откуда угодно — телеграм это умел, но там мысли не ищутся;
-   · искать по всем мыслям сразу — здесь строка поиска бьёт по всему архиву;
-   · семья в одном месте — Саша заходит своим аккаунтом и пишет в общие потоки.
-
-   Приватность: в этой базе живут ещё пять чужих аккаунтов «Разберёмся», поэтому
-   доступ не «всем вошедшим», а строго по списку семьи (таблица gili_family).
-   Проверено: без входа не читается и не пишется ничего.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-const URL_БАЗЫ = 'https://izvwgyudjbxlixzrgpuv.supabase.co';
-const КЛЮЧ = 'sb_publishable_YtwehFnevo4R3UpmOnTTXQ_j4PQY21D';   // публичный по устройству, защита — в правилах базы
-const sb = supabase.createClient(URL_БАЗЫ, КЛЮЧ, {auth:{persistSession:true, autoRefreshToken:true}});
-
-const ПОТОКИ = [
-  {код:'работа', имя:'Работа'},
-  {код:'кодинг', имя:'Кодинг'},
-  {код:'дом',    имя:'Дом'},
-  {код:'семья',  имя:'Семья'},
-];
-let ПОТОК = 'работа', Я = null, МЫСЛИ = [], ИСКОМОЕ = '', ФОТО = [];
-
-const $ = id => document.getElementById(id);
-const экран = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-
-/* ── вход ─────────────────────────────────────────────────────────────────── */
 $('войти').onclick = async () => {
-  const почта = $('почта').value.trim(), пароль = $('пароль').value;
-  if(!почта || !пароль){ $('сказ').textContent = 'нужны почта и пароль'; return; }
-  $('войти').disabled = true; $('сказ').textContent = 'вхожу…';
-  const {error} = await sb.auth.signInWithPassword({email: почта, password: пароль});
+  if(!ЖДЁМ_КОД) return прислать_код();
+  return проверить_код();
+};
+
+async function прислать_код(){
+  const почта = $('почта').value.trim();
+  if(!почта.includes('@')){ $('сказ').textContent = 'нужна почта'; return; }
+  $('войти').disabled = true; $('сказ').textContent = 'отправляю…';
+  const {error} = await sb.auth.signInWithOtp({email: почта, options:{shouldCreateUser:true}});
   $('войти').disabled = false;
   if(error){ $('сказ').textContent = разобрать_ошибку(error); return; }
+  ПОЧТА = почта; ЖДЁМ_КОД = true;
+  $('код').hidden = false; $('код').focus();
+  $('войти').textContent = 'Войти';
+  $('сказ').textContent = 'код ушёл на почту';
+}
+
+async function проверить_код(){
+  const код = $('код').value.trim().replace(/\D/g, '');
+  if(код.length < 6){ $('сказ').textContent = 'код из шести цифр'; return; }
+  $('войти').disabled = true; $('сказ').textContent = 'проверяю…';
+  const {error} = await sb.auth.verifyOtp({email: ПОЧТА, token: код, type:'email'});
+  $('войти').disabled = false;
+  if(error){ $('сказ').textContent = 'код не подошёл — проверь письмо'; return; }
   await поднять();
-};
-$('пароль').addEventListener('keydown', e => { if(e.key === 'Enter') $('войти').click(); });
+}
+
+$('почта').addEventListener('keydown', e => { if(e.key === 'Enter') $('войти').click(); });
+$('код').addEventListener('keydown', e => { if(e.key === 'Enter') $('войти').click(); });
+$('код').addEventListener('input', e => { if(e.target.value.replace(/\D/g,'').length === 6) проверить_код(); });
 
 function разобрать_ошибку(e){
   const t = (e.message || '').toLowerCase();
-  if(t.includes('invalid login')) return 'почта или пароль не подходят';
+  if(t.includes('rate') || t.includes('seconds')) return 'слишком часто — подожди минуту';
   if(t.includes('network') || t.includes('fetch')) return 'нет связи — попробуй позже';
   return e.message || 'не вышло';
 }
