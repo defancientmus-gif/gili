@@ -242,7 +242,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
 
 const URL_БАЗЫ = 'https://izvwgyudjbxlixzrgpuv.supabase.co';
 const КЛЮЧ = 'sb_publishable_YtwehFnevo4R3UpmOnTTXQ_j4PQY21D';   // публичный по устройству; защита — правила базы
-const sb = supabase.createClient(URL_БАЗЫ, КЛЮЧ, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}});
+const sb = supabase.createClient(URL_БАЗЫ, КЛЮЧ, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}});
 
 /* Порядок потоков — Женин (10.08): дом и семья первыми, работа и код дальше.
    Он же объяснил, зачем их вообще держать: «так легче самому искать что куда
@@ -325,6 +325,10 @@ async function поднять(){
   Я = {id: user.id, имя: свой.name};
   $('кто').textContent = свой.name;
   показать('приложение');
+
+  sb.from('gili_family').select('user_id,name').then(({data}) => {
+    if(data){ data.forEach(ч => СЕМЬЯ[ч.user_id] = ч.name); нарисовать(); }
+  });
 
   нарисовать_потоки();
   МЫСЛИ = из_памяти(ПАМЯТЬ_ЛЕНТЫ);   // мгновенно — то, что видели в прошлый раз
@@ -430,9 +434,6 @@ function рисуй(html){
 const имя_потока = к => (ПОТОКИ.find(п => п.код === к) || {}).имя || к;
 let СЕМЬЯ = {};
 const имя_автора = id => СЕМЬЯ[id] || 'кто-то из семьи';
-sb.from('gili_family').select('user_id,name').then(({data}) => {
-  if(data) data.forEach(ч => СЕМЬЯ[ч.user_id] = ч.name);
-});
 
 /* Фото лежат в закрытом хранилище — прямых ссылок нет, просим временную на час. */
 async function показать_фото(){
