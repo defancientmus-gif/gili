@@ -1,8 +1,14 @@
-/* СЛУЖКА — то, что делает страницу приложением: она открывается без сети.
-   Стратегия: сеть первой, кэш запасным. Так на связи всегда свежая версия,
-   а в дороге — последняя виденная. */
-const КЭШ = "гили-облако-v4";
-const ОСНОВА = ["./", "./index.html", "./manifest.json"];
+/* СЛУЖКА — делает страницу приложением: открывается и работает без сети.
+
+   Важное отличие от первой версии: библиотека Supabase теперь лежит рядом
+   (supabase.js), а не тянется со стороннего сайта. Раньше без интернета она
+   не загружалась — и приложение показывало пустой экран ровно в тот момент,
+   ради которого затевалось. Теперь всё своё кэшируется целиком.
+
+   Стратегия: сеть первой, кэш запасным. На связи всегда свежая версия,
+   в дороге — последняя виденная. */
+const КЭШ = "гили-v5";
+const ОСНОВА = ["./", "./index.html", "./supabase.js", "./manifest.json", "./icon-180.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(КЭШ).then(c => c.addAll(ОСНОВА)).then(() => self.skipWaiting()));
@@ -14,12 +20,11 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const u = new URL(e.request.url);
   if(e.request.method !== "GET") return;
-  if(u.hostname.endsWith("supabase.co")) return;      // данные всегда живьём
+  if(u.hostname.endsWith("supabase.co")) return;      // данные и вход — всегда живьём
+  if(u.origin !== location.origin) return;
   e.respondWith(
     fetch(e.request).then(r => {
-      if(r.ok && u.origin === location.origin){
-        const копия = r.clone(); caches.open(КЭШ).then(c => c.put(e.request, копия));
-      }
+      if(r.ok){ const копия = r.clone(); caches.open(КЭШ).then(c => c.put(e.request, копия)); }
       return r;
     }).catch(() => caches.match(e.request).then(c => c || caches.match("./index.html")))
   );

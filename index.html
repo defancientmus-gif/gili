@@ -11,140 +11,206 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <style>
-  :root{
-    --bg:        oklch(0.89 0.018 210);
-    --fog:       oklch(0.91 0.011 212);
-    --fg:        oklch(0.13 0.015 230);
-    --fg-m:      oklch(0.26 0.010 230);
-    --fg-l:      oklch(0.48 0.008 230);
-    --glass-bg:  oklch(0.97 0.004 225 / 0.52);
-    --glass-bd:  oklch(1 0 0 / 0.55);
-    --accent:    oklch(0.52 0.11 235);
-    --r: 16px;
-    --sys: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:var(--sys); color:var(--fg); background:
-      radial-gradient(60% 50% at 80% 0%, var(--warm, oklch(0.94 0.015 200)) 0%, transparent 60%),
-      linear-gradient(180deg, var(--fog), var(--bg));
-    display:flex; flex-direction:column;
-    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
+/* ═══════════════════════════════════════════════════════════════════════════
+   Стиль взят у «Разберёмся» — по просьбе Жени 10.08 («исследуй разберёмся»),
+   из texts/UI_PHILOSOPHY.md и GLASS_STYLE_PROMPT.md. Оттуда три правила:
 
-  /* ── вход ── */
-  #приложение{display:contents}
-  #приложение[hidden]{display:none}
-  #вход{margin:auto; width:min(360px, 90vw); text-align:center}
-  #вход h1{font-size:22px; font-weight:650; margin:0 0 6px}
-  #вход p{color:var(--fg-l); font-size:14px; line-height:1.5; margin:0 0 22px}
-  #вход input, #вход button{
-    width:100%; font:inherit; font-size:16px; padding:13px 15px; margin-bottom:9px;
-    border-radius:13px; border:1px solid var(--glass-bd); background:var(--glass-bg);
-    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  }
-  #вход input:focus{outline:none; border-color:var(--accent)}
-  #вход button{background:var(--accent); color:#fff; border:none; font-weight:600}
-  #вход button:disabled{opacity:.5}
-  #сказ{font-size:13px; color:var(--fg-l); min-height:18px; margin-top:4px}
+   · Светло. Тёмной темы в «Разберёмся» нет вовсе, и это осознанно: приложение
+     должно выглядеть как бумага на свету, а не как консоль разработчика.
+   · Стекло — это три слоя вместе: диагональный градиент (свет сверху-слева),
+     белая полупрозрачная рамка (толщина стекла на срезе) и ДВЕ тени —
+     внутренний блик сверху и едва заметная холодная снаружи. По отдельности
+     ни один слой стекла не даёт.
+   · Блюр не больше 12px. У них аудит скорости показал: каждый backdrop-filter
+     на айфоне — отдельный проход видеокарты, а разницы между 12 и 40 глаз
+     почти не видит. Скорость важнее красивого числа в коде.
 
-  /* ── шапка ── */
-  header{display:flex; gap:6px; padding:10px 12px 6px; align-items:center}
-  header .кто{font-size:13px; color:var(--fg-l); margin-left:auto; padding:0 4px}
-  .потоки{display:flex; gap:5px; flex:1}
-  .потоки button{
-    flex:1; font:inherit; font-size:13.5px; padding:8px 4px; border-radius:11px;
-    border:1px solid transparent; background:transparent; color:var(--fg-l);
-  }
-  .потоки button.on{background:var(--glass-bg); border-color:var(--glass-bd); color:var(--fg); font-weight:600}
+   Анимации — только прозрачность и сдвиг, никогда тень и размеры: тень в
+   анимации заставляет браузер пересчитывать раскладку на каждом кадре.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:      oklch(0.89 0.018 210);
+  --fog:     oklch(0.93 0.012 212);
+  --fg:      oklch(0.20 0.020 210);
+  --fg-m:    oklch(0.38 0.015 210);
+  --fg-l:    oklch(0.55 0.020 210);
+  --line:    oklch(0.88 0.02 210 / .40);
+  --accent:  oklch(0.45 0.12 210);
+  --ждёт:    oklch(0.58 0.11 65);
+  --r:       18px;
+  --sys: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  --пружина: cubic-bezier(.34, 1.1, .64, 1);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{height:100%; overscroll-behavior-y:none}
+body{
+  margin:0; font-family:var(--sys); color:var(--fg); font-size:17px; line-height:1.5;
+  background:
+    radial-gradient(70% 45% at 78% -5%, oklch(0.96 0.014 205) 0%, transparent 62%),
+    linear-gradient(180deg, var(--fog), var(--bg));
+  display:flex; flex-direction:column;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
 
-  /* ── поиск: ради него всё и затевалось ── */
-  .искать{padding:0 12px 8px}
-  .искать input{
-    width:100%; font:inherit; font-size:15px; padding:9px 13px; border-radius:12px;
-    border:1px solid var(--glass-bd); background:var(--glass-bg); color:var(--fg);
-    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  }
-  .искать input:focus{outline:none; border-color:var(--accent)}
+/* ── стекло: один рецепт на всё приложение ────────────────────────────────── */
+.стекло{
+  background:linear-gradient(158deg, oklch(1 0 0 / .82) 0%, oklch(0.965 0.012 210 / .72) 100%);
+  border:1px solid oklch(1 0 0 / .70);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / .94),
+              0 4px 13px -3px oklch(0.32 0.035 210 / .11);
+}
 
-  /* ── лента ── */
-  main{flex:1; overflow-y:auto; padding:0 12px 8px; -webkit-overflow-scrolling:touch}
-  .день{text-align:center; font-size:12px; color:var(--fg-l); margin:14px 0 8px}
-  .мысль{
-    background:var(--glass-bg); border:1px solid var(--glass-bd); border-radius:var(--r);
-    padding:11px 13px; margin-bottom:8px; backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-    font-size:15.5px; line-height:1.45; white-space:pre-wrap; word-break:break-word;
-  }
-  .мысль.ждёт{opacity:.72}
-  .мысль .низ{display:flex; gap:7px; align-items:center; margin-top:7px; font-size:12px; color:var(--fg-l)}
-  .мысль .низ b{font-weight:600; color:var(--accent)}
-  .мысль.ждёт .низ b{color:oklch(0.6 0.09 75)}
-  .мысль .кто{margin-left:auto}
-  .мысль img{max-width:100%; border-radius:10px; margin-top:8px; display:block}
-  .пусто{text-align:center; color:var(--fg-l); font-size:14px; padding:40px 0}
-  mark{background:oklch(0.85 0.13 95 / .6); color:inherit; border-radius:3px}
+/* ── заставка: пока выясняем, вошёл ли уже ────────────────────────────────── */
+#старт{margin:auto; opacity:.35}
+#старт svg{width:44px; height:44px}
 
-  /* ── написать ── */
-  footer{padding:6px 12px calc(10px + env(safe-area-inset-bottom))}
-  .строка{display:flex; gap:7px; align-items:flex-end}
-  textarea{
-    flex:1; font:inherit; font-size:16px; line-height:1.4; resize:none; max-height:150px;
-    padding:11px 14px; border-radius:15px; border:1px solid var(--glass-bd);
-    background:var(--glass-bg); color:var(--fg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  }
-  textarea:focus{outline:none; border-color:var(--accent)}
-  .кнопка{
-    width:44px; height:44px; flex:none; border-radius:50%; border:1px solid var(--glass-bd);
-    background:var(--glass-bg); color:var(--fg-m); display:grid; place-items:center;
-    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  }
-  .кнопка svg{width:21px; height:21px}
-  .фишки{display:flex; gap:6px; padding:0 0 7px; flex-wrap:wrap}
-  .фишка{position:relative; width:52px; height:52px; border-radius:10px; overflow:hidden}
-  .фишка img{width:100%; height:100%; object-fit:cover}
-  .фишка button{
-    position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%;
-    border:none; background:oklch(0.2 0 0 / .6); color:#fff; font-size:12px; line-height:1; padding:0;
-  }
-  .состояние{font-size:12px; color:var(--fg-l); text-align:center; padding:3px 0 0; min-height:16px}
+/* ── вход ─────────────────────────────────────────────────────────────────── */
+#вход{margin:auto; width:min(340px, 88vw); text-align:center; animation:явь .35s var(--пружина)}
+#вход h1{font-size:26px; font-weight:700; letter-spacing:-.4px; margin:0 0 7px}
+#вход p{color:var(--fg-l); font-size:15px; margin:0 0 26px}
+#вход input{
+  width:100%; font:inherit; font-size:16px; padding:14px 16px; margin-bottom:10px;
+  border-radius:15px; border:1px solid oklch(1 0 0 / .70); color:var(--fg);
+  background:linear-gradient(158deg, oklch(1 0 0 / .82), oklch(0.965 0.012 210 / .72));
+  box-shadow:inset 0 1px 0 oklch(1 0 0 / .94);
+  transition:border-color .18s;
+}
+#вход input:focus{outline:none; border-color:var(--accent)}
+#вход button{
+  width:100%; font:inherit; font-size:16px; font-weight:600; padding:14px;
+  border-radius:15px; border:none; background:var(--accent); color:#fff;
+  transition:opacity .18s, transform .12s;
+}
+#вход button:active{opacity:.85; transform:scale(.97)}
+#вход button:disabled{opacity:.45}
+#сказ{font-size:13.5px; color:var(--fg-l); min-height:19px; margin-top:10px}
+#сказ.плохо{color:oklch(0.50 0.15 20)}
 
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:oklch(0.19 0.012 235); --fog:oklch(0.23 0.010 235); --fg:oklch(0.95 0.005 230);
-      --fg-m:oklch(0.82 0.006 230); --fg-l:oklch(0.62 0.008 230);
-      --glass-bg:oklch(0.28 0.012 235 / 0.55); --glass-bd:oklch(1 0 0 / 0.10);
-      --accent:oklch(0.72 0.10 232); --warm:oklch(0.24 0.014 250);
-    }
-  }
+/* ── шапка: потоки ────────────────────────────────────────────────────────── */
+#приложение{display:contents}
+#приложение[hidden]{display:none}
+header{padding:8px 12px 4px}
+.потоки{display:flex; gap:4px; padding:3px; border-radius:15px;
+  background:oklch(1 0 0 / .34); border:1px solid oklch(1 0 0 / .55)}
+.потоки button{
+  flex:1; font:inherit; font-size:14px; padding:8px 2px; border-radius:12px;
+  border:none; background:transparent; color:var(--fg-l);
+  transition:color .18s, background .22s var(--пружина);
+}
+.потоки button.on{
+  background:linear-gradient(158deg, oklch(1 0 0 / .92), oklch(0.98 0.008 210 / .84));
+  color:var(--fg); font-weight:600;
+  box-shadow:inset 0 1px 0 oklch(1 0 0 / .94), 0 2px 8px -2px oklch(0.32 0.035 210 / .14);
+}
+.подшапка{display:flex; align-items:center; gap:8px; padding:8px 12px 6px}
+.подшапка input{
+  flex:1; font:inherit; font-size:15px; padding:9px 14px; border-radius:13px;
+  border:1px solid oklch(1 0 0 / .70); color:var(--fg);
+  background:linear-gradient(158deg, oklch(1 0 0 / .74), oklch(0.965 0.012 210 / .62));
+  transition:border-color .18s;
+}
+.подшапка input:focus{outline:none; border-color:var(--accent)}
+.подшапка .кто{font-size:13px; color:var(--fg-l); white-space:nowrap}
+
+/* ── лента ────────────────────────────────────────────────────────────────── */
+main{flex:1; overflow-y:auto; padding:2px 12px 6px; -webkit-overflow-scrolling:touch}
+.день{text-align:center; font-size:12px; color:var(--fg-l); margin:14px 0 9px}
+.мысль{
+  border-radius:var(--r); padding:12px 14px; margin-bottom:9px;
+  font-size:16px; line-height:1.45; white-space:pre-wrap; word-break:break-word;
+  animation:явь .26s var(--пружина);
+}
+.мысль.ждёт{opacity:.78}
+.низ{display:flex; align-items:center; gap:7px; margin-top:8px; font-size:12.5px; color:var(--fg-l)}
+.низ b{font-weight:600; color:var(--accent)}
+.мысль.ждёт .низ b{color:var(--ждёт)}
+.низ .чей{margin-left:auto; font-weight:500}
+.мысль img{max-width:100%; border-radius:12px; margin-top:9px; display:block;
+  animation:проявь .3s ease}
+.пусто{text-align:center; color:var(--fg-l); font-size:15px; padding:44px 14px; line-height:1.6}
+mark{background:oklch(0.90 0.10 95 / .75); color:inherit; border-radius:3px; padding:0 1px}
+
+/* ── написать ─────────────────────────────────────────────────────────────── */
+footer{padding:4px 12px calc(8px + env(safe-area-inset-bottom))}
+.фишки{display:flex; gap:7px; padding-bottom:8px; flex-wrap:wrap}
+.фишка{position:relative; width:56px; height:56px; border-radius:12px; overflow:hidden;
+  animation:явь .24s var(--пружина)}
+.фишка img{width:100%; height:100%; object-fit:cover}
+.фишка button{
+  position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%;
+  border:none; background:oklch(0.25 0.02 210 / .62); color:#fff; font-size:13px;
+  line-height:1; padding:0; display:grid; place-items:center;
+}
+.строка{display:flex; gap:8px; align-items:flex-end}
+textarea{
+  flex:1; font:inherit; font-size:16px; line-height:1.4; resize:none; max-height:148px;
+  padding:12px 15px; border-radius:19px; border:1px solid oklch(1 0 0 / .70); color:var(--fg);
+  background:linear-gradient(158deg, oklch(1 0 0 / .82), oklch(0.965 0.012 210 / .72));
+  box-shadow:inset 0 1px 0 oklch(1 0 0 / .94);
+  transition:border-color .18s;
+}
+textarea:focus{outline:none; border-color:var(--accent)}
+.круг{
+  width:46px; height:46px; flex:none; border-radius:50%; display:grid; place-items:center;
+  border:1px solid oklch(1 0 0 / .70); color:var(--fg-m);
+  background:linear-gradient(158deg, oklch(1 0 0 / .82), oklch(0.965 0.012 210 / .72));
+  box-shadow:inset 0 1px 0 oklch(1 0 0 / .94);
+  transition:opacity .18s, transform .14s var(--пружина), background .2s, color .2s;
+}
+.круг:active{opacity:.85; transform:scale(.94)}
+.круг svg{width:21px; height:21px}
+/* кнопка «отправить» появляется, когда есть что отправлять — иначе не занимает внимание */
+#послать{background:var(--accent); border-color:transparent; color:#fff;
+  transform:scale(.6); opacity:0; pointer-events:none; width:0; margin-left:-8px}
+#послать.видна{transform:scale(1); opacity:1; pointer-events:auto; width:46px; margin-left:0}
+.состояние{font-size:12.5px; color:var(--fg-l); text-align:center; padding-top:5px; min-height:17px}
+
+@keyframes явь{from{opacity:0; transform:translateY(7px)} to{opacity:1; transform:none}}
+@keyframes проявь{from{opacity:0} to{opacity:1}}
+@keyframes кружись{to{transform:rotate(360deg)}}
+.крутится{animation:кружись 1s linear infinite}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important; transition:none !important}
+}
 </style>
 </head>
 <body>
 
-<div id="вход">
+<div id="старт">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" class="крутится">
+    <path d="M12 3a9 9 0 1 0 9 9"/>
+  </svg>
+</div>
+
+<div id="вход" hidden>
   <h1>Гилфойл</h1>
-  <p>Мысли, которые дом разберёт сам.<br>Аккаунт тот же, что в «Разберёмся».</p>
-  <input id="почта" type="email" inputmode="email" autocomplete="username" placeholder="почта">
-  <input id="код" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="код из письма" hidden>
+  <p>Мысли, которые дом разберёт сам</p>
+  <input id="почта" type="email" inputmode="email" autocomplete="email" placeholder="почта">
+  <input id="код" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="код из письма" hidden>
   <button id="войти">Прислать код</button>
   <div id="сказ"></div>
 </div>
 
 <div id="приложение" hidden>
-  <header>
-    <div class="потоки" id="потоки"></div>
+  <header><div class="потоки" id="потоки"></div></header>
+  <div class="подшапка">
+    <input id="поиск" placeholder="искать во всех мыслях…" autocomplete="off">
     <span class="кто" id="кто"></span>
-  </header>
-  <div class="искать"><input id="поиск" placeholder="искать во всех мыслях…" autocomplete="off"></div>
+  </div>
   <main id="лента"></main>
   <footer>
     <div class="фишки" id="фишки"></div>
     <div class="строка">
       <textarea id="поле" rows="1" placeholder="…"></textarea>
-      <button class="кнопка" onclick="document.getElementById('файл').click()" title="фото">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+      <button class="круг" id="камера" title="фото">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round">
           <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/>
           <circle cx="12" cy="12.5" r="3.2"/></svg>
+      </button>
+      <button class="круг" id="послать" title="отправить">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19V5M5 12l7-7 7 7"/></svg>
       </button>
       <input type="file" id="файл" accept="image/*" multiple hidden>
     </div>
@@ -152,75 +218,80 @@
   </footer>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════
-   ГИЛФОЙЛ В ОБЛАКЕ
+   ГИЛФОЙЛ — заметочник семьи
 
-   Женя 10.08: «Я думал может просто загнать на облачный сервер… по аналогу
-   Разберёмся сделать».
+   Женя 10.08: «Главное чтоб Саше было легко и удобно туда скидывать».
+   Отсюда всё остальное. Приложение открывается и работает мгновенно, ждать
+   его не приходится нигде:
 
-   Он прав, и это лучше прежнего. Локальный Гилфойл работал только рядом с маком:
-   одна Wi-Fi, сертификат, QR — три условия там, где нужно ноль. Здесь условий нет:
-   открыл ссылку и пишешь, хоть из машины, хоть из Ялты.
+   · Мысли показываются из памяти телефона СРАЗУ, ещё до ответа сервера.
+     Сеть потом тихо обновит. Пустого экрана при открытии не бывает.
+   · Библиотека лежит рядом, а не тянется со стороннего сайта — иначе без
+     интернета приложение не запускалось бы вовсе (первая версия этим и болела).
+   · Написанное без сети ложится в телефон и уезжает само. Разницы между
+     «онлайн» и «офлайн» человек не замечает — в этом и смысл.
 
-   Что важно понимать про роли. Облако — НЕ мозг, а почтовый ящик. Мысль падает
-   сюда, дом её забирает к себе и разбирает по органам, а обратно пишет, что с ней
-   стало («→ Космос Сервис»). Так дом остаётся источником правды и продолжает
-   работать, даже если облако однажды окажется недоступным.
-
-   Три вещи, ради которых это затевалось:
-   · писать откуда угодно — телеграм это умел, но там мысли не ищутся;
-   · искать по всем мыслям сразу — здесь строка поиска бьёт по всему архиву;
-   · семья в одном месте — Саша заходит своим аккаунтом и пишет в общие потоки.
-
-   Приватность: в этой базе живут ещё пять чужих аккаунтов «Разберёмся», поэтому
-   доступ не «всем вошедшим», а строго по списку семьи (таблица gili_family).
-   Проверено: без входа не читается и не пишется ничего.
+   Роли: облако — почтовый ящик, дом — мозг. Дом забирает мысли, разбирает
+   по органам и пишет обратно, что с мыслью стало.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const URL_БАЗЫ = 'https://izvwgyudjbxlixzrgpuv.supabase.co';
-const КЛЮЧ = 'sb_publishable_YtwehFnevo4R3UpmOnTTXQ_j4PQY21D';   // публичный по устройству, защита — в правилах базы
-const sb = supabase.createClient(URL_БАЗЫ, КЛЮЧ, {auth:{persistSession:true, autoRefreshToken:true}});
+const КЛЮЧ = 'sb_publishable_YtwehFnevo4R3UpmOnTTXQ_j4PQY21D';   // публичный по устройству; защита — правила базы
+const sb = supabase.createClient(URL_БАЗЫ, КЛЮЧ, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}});
 
+/* Порядок потоков — Женин (10.08): дом и семья первыми, работа и код дальше.
+   Он же объяснил, зачем их вообще держать: «так легче самому искать что куда
+   отправил, как папочки». */
 const ПОТОКИ = [
-  {код:'работа', имя:'Работа'},
-  {код:'кодинг', имя:'Кодинг'},
   {код:'дом',    имя:'Дом'},
   {код:'семья',  имя:'Семья'},
+  {код:'работа', имя:'Работа'},
+  {код:'кодинг', имя:'Кодинг'},
 ];
-let ПОТОК = 'работа', Я = null, МЫСЛИ = [], ИСКОМОЕ = '', ФОТО = [];
+const ПАМЯТЬ_ЛЕНТЫ = 'гили_лента', ПАМЯТЬ_ОЧЕРЕДИ = 'гили_очередь', ПАМЯТЬ_ПОТОКА = 'гили_поток';
+
+let Я = null, МЫСЛИ = [], ФОТО = [], ИСКОМОЕ = '';
+let ПОТОК = localStorage.getItem(ПАМЯТЬ_ПОТОКА) || 'дом';
 
 const $ = id => document.getElementById(id);
 const экран = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-/* ── вход ─────────────────────────────────────────────────────────────────── */
-/* Пароля нет и не будет: в «Разберёмся» вход по коду из письма, и здесь тот же
-   аккаунт. Одна почта — один человек, помнить нечего. */
+/* ── вход ─────────────────────────────────────────────────────────────────────
+   Пароля нет: в «Разберёмся» вход по коду из письма, и здесь тот же аккаунт.
+   Экран входа показывается не сразу, а только когда выяснилось, что человек
+   ещё не вошёл — иначе при каждом открытии он мигал бы почтой поверх ленты. */
 let ЖДЁМ_КОД = false, ПОЧТА = '';
 
 $('войти').onclick = () => ЖДЁМ_КОД ? проверить_код() : прислать_код();
 
+function сказать(текст, плохо){
+  $('сказ').textContent = текст;
+  $('сказ').classList.toggle('плохо', !!плохо);
+}
+
 async function прислать_код(){
-  const почта = $('почта').value.trim();
-  if(!почта.includes('@')){ $('сказ').textContent = 'нужна почта'; return; }
-  $('войти').disabled = true; $('сказ').textContent = 'отправляю…';
+  const почта = $('почта').value.trim().toLowerCase();
+  if(!почта.includes('@')){ сказать('нужна почта', true); return; }
+  $('войти').disabled = true; сказать('отправляю…');
   const {error} = await sb.auth.signInWithOtp({email: почта, options:{shouldCreateUser:true}});
   $('войти').disabled = false;
-  if(error){ $('сказ').textContent = разобрать_ошибку(error); return; }
+  if(error){ сказать(по_русски(error), true); return; }
   ПОЧТА = почта; ЖДЁМ_КОД = true;
   $('код').hidden = false; $('код').focus();
   $('войти').textContent = 'Войти';
-  $('сказ').textContent = 'код ушёл на почту';
+  сказать('код ушёл на почту');
 }
 
 async function проверить_код(){
-  const код = $('код').value.trim().replace(/\D/g, '');
-  if(код.length < 6){ $('сказ').textContent = 'код из шести цифр'; return; }
-  $('войти').disabled = true; $('сказ').textContent = 'проверяю…';
+  const код = $('код').value.replace(/\D/g, '');
+  if(код.length < 6){ сказать('код из шести цифр', true); return; }
+  $('войти').disabled = true; сказать('проверяю…');
   const {error} = await sb.auth.verifyOtp({email: ПОЧТА, token: код, type:'email'});
   $('войти').disabled = false;
-  if(error){ $('сказ').textContent = 'код не подошёл — проверь письмо'; return; }
+  if(error){ сказать('код не подошёл — проверь письмо', true); return; }
   await поднять();
 }
 
@@ -228,27 +299,35 @@ $('почта').addEventListener('keydown', e => { if(e.key === 'Enter') $('во
 $('код').addEventListener('keydown', e => { if(e.key === 'Enter') $('войти').click(); });
 $('код').addEventListener('input', e => { if(e.target.value.replace(/\D/g,'').length === 6) проверить_код(); });
 
-function разобрать_ошибку(e){
+function по_русски(e){
   const t = (e.message || '').toLowerCase();
   if(t.includes('rate') || t.includes('seconds')) return 'слишком часто — подожди минуту';
-  if(t.includes('network') || t.includes('fetch')) return 'нет связи — попробуй позже';
+  if(t.includes('network') || t.includes('fetch') || t.includes('failed')) return 'нет связи — попробуй позже';
   return e.message || 'не вышло';
+}
+
+function показать(что){
+  for(const id of ['старт','вход','приложение']) $(id).hidden = (id !== что);
 }
 
 async function поднять(){
   const {data:{user}} = await sb.auth.getUser();
-  if(!user) return;
-  const {data: семья} = await sb.from('gili_family').select('user_id,name').eq('user_id', user.id).maybeSingle();
-  if(!семья){
-    $('сказ').textContent = 'этот аккаунт не в семье — скажи Жене, он добавит';
+  if(!user){ показать('вход'); return; }
+
+  const {data: свой} = await sb.from('gili_family').select('name').eq('user_id', user.id).maybeSingle();
+  if(!свой){
+    показать('вход');
+    сказать('этот аккаунт ещё не в семье — скажи Жене', true);
     await sb.auth.signOut(); return;
   }
-  Я = {id: user.id, имя: семья.name};
-  $('вход').hidden = true; $('вход').style.display = 'none';
-  $('приложение').hidden = false;
-  $('кто').textContent = Я.имя;
+  Я = {id: user.id, имя: свой.name};
+  $('кто').textContent = свой.name;
+  показать('приложение');
+
   нарисовать_потоки();
-  await загрузить();
+  МЫСЛИ = из_памяти(ПАМЯТЬ_ЛЕНТЫ);   // мгновенно — то, что видели в прошлый раз
+  нарисовать();
+  загрузить();                        // и тихо освежить
   подписаться();
   везти_очередь();
 }
@@ -258,67 +337,101 @@ function нарисовать_потоки(){
   $('потоки').innerHTML = ПОТОКИ.map(п =>
     `<button data-код="${п.код}" class="${п.код === ПОТОК ? 'on' : ''}">${п.имя}</button>`).join('');
   $('потоки').querySelectorAll('button').forEach(б => б.onclick = () => {
-    ПОТОК = б.dataset.код; нарисовать_потоки(); нарисовать();
+    ПОТОК = б.dataset.код;
+    localStorage.setItem(ПАМЯТЬ_ПОТОКА, ПОТОК);
+    $('потоки').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === б));
+    нарисовать();
+    $('лента').scrollTop = $('лента').scrollHeight;
   });
 }
 
 /* ── лента ────────────────────────────────────────────────────────────────── */
+const из_памяти = ключ => { try{ return JSON.parse(localStorage.getItem(ключ) || '[]'); }catch{ return []; } };
+const в_память = (ключ, что) => { try{ localStorage.setItem(ключ, JSON.stringify(что)); }catch{} };
+
 async function загрузить(){
   const {data, error} = await sb.from('gili_notes')
     .select('id,flow,body,photos,created_at,status,author')
-    .order('created_at', {ascending:false}).limit(300);
-  if(!error && data) МЫСЛИ = data;
+    .order('created_at', {ascending:false}).limit(200);
+  if(error || !data) return;                 // нет связи — остаёмся на том, что видно
+  МЫСЛИ = data;
+  в_память(ПАМЯТЬ_ЛЕНТЫ, data.slice(0, 80));  // с запасом на следующее открытие
   нарисовать();
 }
+
+const день_ключ = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+function день(iso){
+  const d = new Date(iso), с = new Date();
+  if(день_ключ(d) === день_ключ(с)) return 'сегодня';
+  const в = new Date(с); в.setDate(в.getDate() - 1);
+  if(день_ключ(d) === день_ключ(в)) return 'вчера';
+  return d.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+}
+const часы = iso => new Date(iso).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
 
 function подсветить(текст){
   if(!ИСКОМОЕ) return экран(текст);
   const i = текст.toLowerCase().indexOf(ИСКОМОЕ);
   if(i < 0) return экран(текст);
-  return экран(текст.slice(0,i)) + '<mark>' + экран(текст.slice(i, i+ИСКОМОЕ.length)) + '</mark>' + экран(текст.slice(i+ИСКОМОЕ.length));
+  return экран(текст.slice(0,i)) + '<mark>' + экран(текст.slice(i, i+ИСКОМОЕ.length)) +
+         '</mark>' + экран(текст.slice(i+ИСКОМОЕ.length));
 }
-
-function день(iso){
-  const d = new Date(iso), сегодня = new Date();
-  const к = x => x.toISOString().slice(0,10);
-  if(к(d) === к(сегодня)) return 'сегодня';
-  const вчера = new Date(сегодня); вчера.setDate(вчера.getDate() - 1);
-  if(к(d) === к(вчера)) return 'вчера';
-  return d.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
-}
-const часы = iso => new Date(iso).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
 
 function нарисовать(){
-  // ждущие отправки — сверху ленты, они самые свежие
-  const свои = очередь().filter(з => ИСКОМОЕ || з.поток === ПОТОК).map(з => ({
-    id:'ж'+з.когда, flow:з.поток, body:з.текст + ((з.фото||[]).length ? `\n📷 ${з.фото.length} фото в телефоне` : ''),
-    created_at:new Date(з.когда).toISOString(), ждёт:true, автор_имя:Я?.имя
-  }));
-  let список = МЫСЛИ.filter(м => ИСКОМОЕ ? true : м.flow === ПОТОК);
-  if(ИСКОМОЕ) список = список.filter(м => (м.body||'').toLowerCase().includes(ИСКОМОЕ));
-  список = свои.concat(список);
+  const ждущие = очередь()
+    .filter(з => ИСКОМОЕ || з.поток === ПОТОК)
+    .map(з => ({
+      id:'ж'+з.когда, flow:з.поток, created_at:new Date(з.когда).toISOString(), ждёт:true,
+      body: з.текст + ((з.фото||[]).length ? `\n${з.фото.length} фото ждёт отправки` : ''),
+    }));
+
+  let список = ИСКОМОЕ
+    ? МЫСЛИ.filter(м => (м.body||'').toLowerCase().includes(ИСКОМОЕ))
+    : МЫСЛИ.filter(м => м.flow === ПОТОК);
+  список = ждущие.concat(список).slice(0, 200);
 
   if(!список.length){
-    $('лента').innerHTML = `<div class="пусто">${ИСКОМОЕ ? 'ничего не нашлось' : 'пусто'}</div>`;
+    рисуй(`<div class="пусто">${ИСКОМОЕ ? 'ничего не нашлось' : 'Здесь пусто.\nНапиши мысль внизу — дом её разберёт.'}</div>`);
     return;
   }
+
   let html = '', прошлый = '';
-  for(const м of список){
+  // лента идёт снизу вверх: свежее у поля ввода, как в переписке
+  for(const м of список.slice().reverse()){
     const д = день(м.created_at);
     if(д !== прошлый){ html += `<div class="день">${д}</div>`; прошлый = д; }
     const фото = (м.photos || []).map(п => `<img loading="lazy" data-путь="${экран(п)}" alt="">`).join('');
-    const чей = м.author && Я && м.author !== Я.id ? 'Саша' : '';
-    html += `<div class="мысль ${м.ждёт ? 'ждёт' : ''}">${подсветить(м.body || '')}${фото}` +
-            `<div class="низ"><span>${часы(м.created_at)}</span>` +
-            `<b>${м.ждёт ? '⏳ в телефоне' : (м.status || '✓ записано')}</b>` +
-            (ИСКОМОЕ ? `<span>${экран(ПОТОКИ.find(п=>п.код===м.flow)?.имя || м.flow)}</span>` : '') +
-            (чей ? `<span class="кто">${чей}</span>` : '') + `</div></div>`;
+    const чей = (м.author && Я && м.author !== Я.id) ? имя_автора(м.author) : '';
+    html += `<div class="мысль стекло ${м.ждёт ? 'ждёт' : ''}">${подсветить(м.body || '')}${фото}` +
+            `<div class="низ"><span>${часы(м.created_at)}</span><span>·</span>` +
+            `<b>${м.ждёт ? 'в телефоне' : (м.status || 'записано')}</b>` +
+            (ИСКОМОЕ ? `<span>${имя_потока(м.flow)}</span>` : '') +
+            (чей ? `<span class="чей">${экран(чей)}</span>` : '') +
+            `</div></div>`;
   }
-  $('лента').innerHTML = html;
+  рисуй(html);
+}
+
+/* Не перерисовываем одно и то же: замена разметки убивает прокрутку и мигает.
+   (Та же грабля была в домашнем Гилфойле — лента моргала под курсором.) */
+function рисуй(html){
+  const л = $('лента');
+  if(л.dataset.было === html) return;
+  const внизу = л.scrollHeight - л.scrollTop - л.clientHeight < 60;
+  л.dataset.было = html;
+  л.innerHTML = html;
+  if(внизу) л.scrollTop = л.scrollHeight;
   показать_фото();
 }
 
-/* Фото лежат в закрытом хранилище: прямых ссылок нет, для каждого просим временную. */
+const имя_потока = к => (ПОТОКИ.find(п => п.код === к) || {}).имя || к;
+let СЕМЬЯ = {};
+const имя_автора = id => СЕМЬЯ[id] || 'кто-то из семьи';
+sb.from('gili_family').select('user_id,name').then(({data}) => {
+  if(data) data.forEach(ч => СЕМЬЯ[ч.user_id] = ч.name);
+});
+
+/* Фото лежат в закрытом хранилище — прямых ссылок нет, просим временную на час. */
 async function показать_фото(){
   for(const img of $('лента').querySelectorAll('img[data-путь]')){
     const путь = img.dataset.путь; delete img.dataset.путь;
@@ -334,40 +447,41 @@ function подписаться(){
 }
 
 /* ── очередь: без сети мысль не теряется ──────────────────────────────────── */
-const КЛЮЧ_ОЧЕРЕДИ = 'гили_очередь';
-const очередь = () => { try{ return JSON.parse(localStorage.getItem(КЛЮЧ_ОЧЕРЕДИ) || '[]'); }catch{ return []; } };
-function в_очередь(з){ const q = очередь(); q.push(з); localStorage.setItem(КЛЮЧ_ОЧЕРЕДИ, JSON.stringify(q)); нарисовать(); }
-function из_очереди(когда){ localStorage.setItem(КЛЮЧ_ОЧЕРЕДИ, JSON.stringify(очередь().filter(з => з.когда !== когда))); }
+const очередь = () => из_памяти(ПАМЯТЬ_ОЧЕРЕДИ);
+function в_очередь(з){ в_память(ПАМЯТЬ_ОЧЕРЕДИ, очередь().concat(з)); нарисовать(); обновить_состояние(); }
+function из_очереди(когда){ в_память(ПАМЯТЬ_ОЧЕРЕДИ, очередь().filter(з => з.когда !== когда)); }
+
+function обновить_состояние(){
+  const n = очередь().length;
+  $('состояние').textContent = n ? (n === 1 ? 'одна мысль уедет, когда появится сеть'
+                                            : `${n} мысли уедут, когда появится сеть`) : '';
+}
 
 let ВЕЗУ = false;
 async function везти_очередь(){
-  if(ВЕЗУ || !Я || !navigator.onLine) return;
-  const q = очередь(); if(!q.length) return;
+  if(ВЕЗУ || !Я || !navigator.onLine || !очередь().length) return;
   ВЕЗУ = true;
-  for(const з of q){
+  for(const з of очередь()){
     try{
       const пути = [];
-      for(const ф of (з.фото || [])){
-        const путь = await залить(избуквы(ф.буква), ф.ext);
-        пути.push(путь);
-      }
+      for(const ф of (з.фото || [])) пути.push(await залить(избуквы(ф.буква)));
       const {error} = await sb.from('gili_notes').insert({author: Я.id, flow: з.поток, body: з.текст, photos: пути});
       if(error) throw error;
       из_очереди(з.когда);
-    }catch(e){ break; }        // облако молчит — остальное подождёт, порядок сохраняем
+    }catch(e){ break; }      // облако молчит — остальное подождёт, порядок сохраняем
   }
   ВЕЗУ = false;
+  обновить_состояние();
   await загрузить();
-  const n = очередь().length;
-  $('состояние').textContent = n ? `${n} ждёт отправки` : '';
 }
 window.addEventListener('online', везти_очередь);
+document.addEventListener('visibilitychange', () => { if(!document.hidden){ везти_очередь(); загрузить(); } });
 setInterval(везти_очередь, 20000);
 
-/* ── фото ─────────────────────────────────────────────────────────────────── */
-/* Ужимаем в телефоне: снимок айфона весит 3–5 МБ, и такой не влезет ни в память
-   телефона на время без сети, ни в разумный трафик. 1600 px хватает, чтобы
-   прочитать ценник или бумагу. */
+/* ── фото ─────────────────────────────────────────────────────────────────────
+   Ужимаем прямо в телефоне: снимок айфона весит 3–5 МБ, и такой не влезет
+   ни в память телефона на время без сети, ни в разумный трафик. 1600 px
+   хватает, чтобы прочитать ценник, накладную или бумагу. */
 async function ужать(файл){
   if(!файл.type.startsWith('image/')) return null;
   const bmp = await createImageBitmap(файл).catch(() => null);
@@ -377,6 +491,7 @@ async function ужать(файл){
   const c = document.createElement('canvas');
   c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
   c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  bmp.close?.();
   const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.72));
   return blob && blob.size < файл.size ? new File([blob], 'фото.jpg', {type:'image/jpeg'}) : файл;
 }
@@ -387,13 +502,14 @@ function избуквы(строка){
   for(let i = 0; i < б.length; i++) a[i] = б.charCodeAt(i);
   return new Blob([a], {type: (шапка.match(/:(.*?);/) || [,'image/jpeg'])[1]});
 }
-async function залить(blob, ext){
-  const путь = `${Я.id}/${Date.now().toString(36)}-${Math.round(performance.now())}.${ext || 'jpg'}`;
+async function залить(blob){
+  const путь = `${Я.id}/${Date.now().toString(36)}${Math.round(Math.random()*1e6).toString(36)}.jpg`;
   const {error} = await sb.storage.from('gili').upload(путь, blob, {contentType: blob.type || 'image/jpeg'});
   if(error) throw error;
   return путь;
 }
 
+$('камера').onclick = () => $('файл').click();
 $('файл').onchange = async e => {
   const файлы = [...(e.target.files || [])]; e.target.value = '';
   for(const ф of файлы){
@@ -401,50 +517,79 @@ $('файл').onchange = async e => {
     ФОТО.push({файл: у, ссылка: URL.createObjectURL(у)});
   }
   нарисовать_фишки();
-  if(!$('поле').value.trim()) отправить();     // снял и пошёл — подпись не обязательна
+  if(!$('поле').value.trim()) отправить();    // снял и пошёл — подпись не обязательна
 };
 function нарисовать_фишки(){
   $('фишки').innerHTML = ФОТО.map((ф,i) =>
-    `<span class="фишка"><img src="${ф.ссылка}" alt=""><button onclick="убрать_фото(${i})">×</button></span>`).join('');
+    `<span class="фишка"><img src="${ф.ссылка}" alt=""><button data-и="${i}">×</button></span>`).join('');
+  $('фишки').querySelectorAll('button').forEach(б => б.onclick = () => {
+    URL.revokeObjectURL(ФОТО[+б.dataset.и].ссылка);
+    ФОТО.splice(+б.dataset.и, 1); нарисовать_фишки(); показать_кнопку();
+  });
+  показать_кнопку();
 }
-function убрать_фото(i){ ФОТО.splice(i,1); нарисовать_фишки(); }
 
-/* ── написать ─────────────────────────────────────────────────────────────── */
+/* ── написать ─────────────────────────────────────────────────────────────────
+   Женя 10.08: «я не смог сообщение отправить, кнопки ентер нет». Правильно:
+   на телефоне Enter переносит строку, а отправлять нечем. Теперь есть кнопка —
+   она появляется, только когда есть что отправить, и не мозолит глаза. */
 const поле = $('поле');
-поле.addEventListener('input', () => { поле.style.height = 'auto'; поле.style.height = Math.min(поле.scrollHeight, 150) + 'px'; });
+поле.addEventListener('input', () => {
+  поле.style.height = 'auto';
+  поле.style.height = Math.min(поле.scrollHeight, 148) + 'px';
+  показать_кнопку();
+});
 поле.addEventListener('keydown', e => {
+  // на компьютере привычнее Enter; на телефоне он переносит строку
   if(e.key === 'Enter' && !e.shiftKey && window.innerWidth >= 860){ e.preventDefault(); отправить(); }
 });
+function показать_кнопку(){
+  $('послать').classList.toggle('видна', !!поле.value.trim() || !!ФОТО.length);
+}
+$('послать').onclick = отправить;
 
 async function отправить(){
   const текст = поле.value.trim();
   if(!текст && !ФОТО.length) return;
-  const фото = ФОТО.slice(); ФОТО = []; нарисовать_фишки();
+  const фото = ФОТО.slice(); ФОТО = [];
   поле.value = ''; поле.style.height = 'auto';
+  нарисовать_фишки();
   const тело = текст || 'фото';
+
+  // мысль видна сразу — человек не ждёт сервер, чтобы поверить, что записалось
+  const мгновенная = {id:'…'+Date.now(), flow:ПОТОК, body:тело, photos:[],
+                      created_at:new Date().toISOString(), status:'отправляю…', author:Я.id};
+  МЫСЛИ = [мгновенная].concat(МЫСЛИ);
+  нарисовать();
 
   try{
     if(!navigator.onLine) throw new Error('нет сети');
     const пути = [];
-    for(const ф of фото) пути.push(await залить(ф.файл, 'jpg'));
+    for(const ф of фото) пути.push(await залить(ф.файл));
     const {error} = await sb.from('gili_notes').insert({author: Я.id, flow: ПОТОК, body: тело, photos: пути});
     if(error) throw error;
     await загрузить();
-    $('состояние').textContent = '';
   }catch(e){
-    // облака нет — мысль ложится в память телефона и уедет сама
+    МЫСЛИ = МЫСЛИ.filter(м => м.id !== мгновенная.id);
     const в_буквах = [];
-    for(const ф of фото) в_буквах.push({буква: await вбукву(ф.файл), ext:'jpg'});
+    for(const ф of фото) в_буквах.push({буква: await вбукву(ф.файл)});
     в_очередь({когда: Date.now(), поток: ПОТОК, текст: тело, фото: в_буквах});
-    $('состояние').textContent = `${очередь().length} ждёт отправки`;
   }
+  фото.forEach(ф => URL.revokeObjectURL(ф.ссылка));
 }
 
 /* ── поиск ────────────────────────────────────────────────────────────────── */
-$('поиск').addEventListener('input', e => { ИСКОМОЕ = e.target.value.trim().toLowerCase(); нарисовать(); });
+let таймер_поиска;
+$('поиск').addEventListener('input', e => {
+  clearTimeout(таймер_поиска);
+  const v = e.target.value.trim().toLowerCase();
+  таймер_поиска = setTimeout(() => { ИСКОМОЕ = v; нарисовать(); }, 90);
+});
 
 /* ── старт ────────────────────────────────────────────────────────────────── */
-sb.auth.getSession().then(({data:{session}}) => { if(session) поднять(); });
+sb.auth.getSession().then(({data:{session}}) => session ? поднять() : показать('вход'))
+  .catch(() => показать('вход'));
+обновить_состояние();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
