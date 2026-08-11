@@ -7,7 +7,7 @@
 
    Стратегия: сеть первой, кэш запасным. На связи всегда свежая версия,
    в дороге — последняя виденная. */
-const КЭШ = "гили-v7";
+const КЭШ = "гили-v8";
 const ОСНОВА = ["./", "./index.html", "./supabase.js", "./manifest.json", "./icon-180.png"];
 
 self.addEventListener("install", e => {

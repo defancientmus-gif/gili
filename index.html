@@ -127,8 +127,23 @@ main > *{flex:none}
 .низ b{font-weight:600; color:var(--accent)}
 .мысль.ждёт .низ b{color:var(--ждёт)}
 .низ .чей{margin-left:auto; font-weight:500}
-.мысль img{max-width:100%; border-radius:12px; margin-top:9px; display:block;
-  animation:проявь .3s ease}
+.снимки{display:flex; gap:7px; flex-wrap:wrap; margin-top:9px}
+.снимки img{
+  width:84px; height:84px; object-fit:cover; border-radius:12px; display:block;
+  border:1px solid oklch(1 0 0 / .7); animation:проявь .3s ease;
+  transition:transform .14s var(--пружина);
+}
+.снимки img:active{transform:scale(.95)}
+/* просмотр во весь экран: снимок открывается поверх всего, закрывается касанием */
+#лупа{
+  position:fixed; inset:0; z-index:50; display:none; place-items:center;
+  background:oklch(0.16 0.02 210 / .82); padding:16px;
+  animation:проявь .18s ease;
+}
+#лупа.видна{display:grid}
+#лупа img{max-width:100%; max-height:100%; border-radius:14px;
+  animation:вырасти .24s var(--пружина)}
+@keyframes вырасти{from{opacity:0; transform:scale(.92)} to{opacity:1; transform:none}}
 .пусто{text-align:center; color:var(--fg-l); font-size:15px; padding:44px 14px; line-height:1.6}
 mark{background:oklch(0.90 0.10 95 / .75); color:inherit; border-radius:3px; padding:0 1px}
 
@@ -407,7 +422,10 @@ function нарисовать(){
   for(const м of список.slice().reverse()){
     const д = день(м.created_at);
     if(д !== прошлый){ html += `<div class="день">${д}</div>`; прошлый = д; }
-    const фото = (м.photos || []).map(п => `<img loading="lazy" data-путь="${экран(п)}" alt="">`).join('');
+    const снимки = (м.photos || []);
+    const фото = снимки.length
+      ? `<div class="снимки">` + снимки.map(п => `<img loading="lazy" data-путь="${экран(п)}" alt="снимок">`).join('') + `</div>`
+      : '';
     const чей = (м.author && Я && м.author !== Я.id) ? имя_автора(м.author) : '';
     html += `<div class="мысль стекло ${м.ждёт ? 'ждёт' : ''}">${подсветить(м.body || '')}${фото}` +
             `<div class="низ"><span>${часы(м.created_at)}</span><span>·</span>` +
@@ -435,7 +453,9 @@ const имя_потока = к => (ПОТОКИ.find(п => п.код === к) || 
 let СЕМЬЯ = {};
 const имя_автора = id => СЕМЬЯ[id] || 'кто-то из семьи';
 
-/* Фото лежат в закрытом хранилище — прямых ссылок нет, просим временную на час. */
+/* Фото лежат в закрытом хранилище — прямых ссылок нет, просим временную на час.
+   В ленте показываем маленькое: Женя 11.08 — «накладная на весь экран, пусть сжимается
+   до маленького превью, после открытия только разворачивается». */
 async function показать_фото(){
   for(const img of $('лента').querySelectorAll('img[data-путь]')){
     const путь = img.dataset.путь; delete img.dataset.путь;
@@ -443,6 +463,17 @@ async function показать_фото(){
     if(data?.signedUrl) img.src = data.signedUrl;
   }
 }
+
+const лупа = document.createElement('div');
+лупа.id = 'лупа'; лупа.innerHTML = '<img alt="">';
+document.body.appendChild(лупа);
+лупа.onclick = () => { лупа.classList.remove('видна'); лупа.querySelector('img').src = ''; };
+document.addEventListener('click', e => {
+  const img = e.target.closest('.снимки img'); if(!img || !img.src) return;
+  лупа.querySelector('img').src = img.src;
+  лупа.classList.add('видна');
+});
+document.addEventListener('keydown', e => { if(e.key === 'Escape') лупа.click(); });
 
 /* Мысль от Саши появляется у Жени сама, без обновления страницы. */
 function подписаться(){
@@ -499,7 +530,9 @@ async function ужать(файл){
   c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
   c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
   bmp.close?.();
-  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.72));
+  // 0.6 вместо 0.72: накладная и ценник читаются так же, а весит вдвое меньше —
+  // это и трафик, и место в общей квоте базы
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.6));
   return blob && blob.size < файл.size ? new File([blob], 'фото.jpg', {type:'image/jpeg'}) : файл;
 }
 const вбукву = ф => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(ф); });
