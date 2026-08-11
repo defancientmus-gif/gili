@@ -125,6 +125,8 @@ main > *{flex:none}
 .мысль.ждёт{opacity:.78}
 .низ{display:flex; align-items:center; gap:7px; margin-top:8px; font-size:12.5px; color:var(--fg-l)}
 .низ b{font-weight:600; color:var(--accent)}
+.низ b.молчит{color:oklch(0.55 0.16 30)}      /* задача лежит у кодера без движения */
+.низ b.готово{color:oklch(0.52 0.13 150)}     /* закрыто — глазу приятно видеть зелёное */
 .мысль.ждёт .низ b{color:var(--ждёт)}
 .низ .чей{margin-left:auto; font-weight:500}
 .снимки{display:flex; gap:7px; flex-wrap:wrap; margin-top:9px}
@@ -430,7 +432,7 @@ function нарисовать(){
     const чей = (м.author && Я && м.author !== Я.id) ? имя_автора(м.author) : '';
     html += `<div class="мысль стекло ${м.ждёт ? 'ждёт' : ''}">${подсветить(м.body || '')}${фото}` +
             `<div class="низ"><span>${часы(м.created_at)}</span><span>·</span>` +
-            `<b>${м.ждёт ? 'в телефоне' : (м.status || 'записано')}</b>` +
+            `<b class="${окраска(м.status)}">${м.ждёт ? 'в телефоне' : (м.status || 'записано')}</b>` +
             (ИСКОМОЕ ? `<span>${имя_потока(м.flow)}</span>` : '') +
             (чей ? `<span class="чей">${экран(чей)}</span>` : '') +
             `</div></div>`;
@@ -451,6 +453,8 @@ function рисуй(html){
 }
 
 const имя_потока = к => (ПОТОКИ.find(п => п.код === к) || {}).имя || к;
+/* Судьба задачи цветом: молчание видно боковым зрением, закрытое радует. */
+const окраска = с => /молчит/.test(с || '') ? 'молчит' : /сделано/.test(с || '') ? 'готово' : '';
 let СЕМЬЯ = {};
 const имя_автора = id => СЕМЬЯ[id] || 'кто-то из семьи';
 
