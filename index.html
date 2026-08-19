@@ -422,12 +422,20 @@ async function загрузить(){
 }
 
 const день_ключ = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+/* ВОЗРАСТ ЦИФРОЙ, А НЕ В УМЕ (задача Жени 12.08). «3 августа» заставляет считать в уме,
+   сколько это дней назад. Считать — работа механизма, а не человека. То же исправление
+   уехало в окно на маке: разделители дней говорят одинаково в обоих окнах. */
 function день(iso){
   const d = new Date(iso), с = new Date();
   if(день_ключ(d) === день_ключ(с)) return 'сегодня';
   const в = new Date(с); в.setDate(в.getDate() - 1);
   if(день_ключ(d) === день_ключ(в)) return 'вчера';
-  return d.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+  const дата = d.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+  const дней = Math.round((new Date(с.getFullYear(), с.getMonth(), с.getDate()) -
+                           new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+  return дата + ' · ' + (дней < 7 ? дней + ' дн'
+                       : дней < 31 ? Math.round(дней / 7) + ' нед'
+                       : Math.round(дней / 30) + ' мес');
 }
 const часы = iso => new Date(iso).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
 
