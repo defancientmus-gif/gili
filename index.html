@@ -820,16 +820,44 @@ async function залить(blob){
   return путь;
 }
 
+// Один путь для всех источников снимка: камера, файл, буфер обмена, перетаскивание.
+// Ужимаем и складываем фишкой — отправку решает уже вызывающий.
+async function добавить_фото(файлы){
+  let добавлено = 0;
+  for(const ф of файлы){
+    if(!ф || !ф.type?.startsWith('image/')) continue;
+    const у = await ужать(ф); if(!у) continue;
+    ФОТО.push({файл: у, ссылка: URL.createObjectURL(у)});
+    добавлено++;
+  }
+  if(добавлено) нарисовать_фишки();
+  return добавлено;
+}
+
 $('камера').onclick = () => $('файл').click();
 $('файл').onchange = async e => {
   const файлы = [...(e.target.files || [])]; e.target.value = '';
-  for(const ф of файлы){
-    const у = await ужать(ф); if(!у) continue;
-    ФОТО.push({файл: у, ссылка: URL.createObjectURL(у)});
-  }
-  нарисовать_фишки();
-  if(!$('поле').value.trim()) отправить();    // снял и пошёл — подпись не обязательна
+  await добавить_фото(файлы);
+  if(ФОТО.length && !$('поле').value.trim()) отправить();  // снял и пошёл — подпись не обязательна
 };
+
+// Женя 30.08: «добавь возможность вставлять фото из буфера». На маке это уже было,
+// а в окне из интернета (телефон, любой браузер) — нет. Вставка НЕ отправляет сама:
+// картинку из буфера обычно хочется подписать, поэтому она встаёт фишкой и ждёт.
+document.addEventListener('paste', async e => {
+  const файлы = [...(e.clipboardData?.items || [])]
+    .filter(п => п.kind === 'file' && п.type.startsWith('image/'))
+    .map(п => п.getAsFile()).filter(Boolean);
+  if(!файлы.length) return;
+  e.preventDefault();
+  await добавить_фото(файлы);
+});
+['dragover','drop'].forEach(соб => document.addEventListener(соб, async e => {
+  const файлы = [...(e.dataTransfer?.items || [])].some(п => п.kind === 'file');
+  if(!файлы) return;
+  e.preventDefault();
+  if(соб === 'drop') await добавить_фото([...(e.dataTransfer?.files || [])]);
+}));
 function нарисовать_фишки(){
   $('фишки').innerHTML = ФОТО.map((ф,i) =>
     `<span class="фишка"><img src="${ф.ссылка}" alt=""><button data-и="${i}">×</button></span>`).join('');
