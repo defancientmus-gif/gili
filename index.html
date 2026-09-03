@@ -162,6 +162,19 @@ main > *{flex:none}
 .правка button:active{transform:scale(.94)}
 .правка button.готово{color:oklch(0.42 0.13 150)}
 .правка button.убрать{color:oklch(0.5 0.15 20)}
+/* редактор на месте текста мысли: тот же шрифт и та же ширина, что у самой мысли —
+   человек правит то, что видел, а не переписывает в другом окне */
+.мысль textarea.редактор{width:100%; min-height:44px; margin:0; padding:9px 11px;
+     font:inherit; line-height:1.45; border:1px solid var(--accent); border-radius:12px;
+     background:oklch(1 0 0 / .7); color:var(--fg); resize:none; outline:none; display:block}
+.правка-низ{display:flex; justify-content:flex-end; gap:6px; margin-top:8px}
+.правка-низ button{font:inherit; font-size:12.5px; padding:6px 12px; border-radius:10px;
+     cursor:pointer; transition:transform .14s var(--пружина), opacity .18s}
+.правка-низ button:active{transform:scale(.94)}
+.правка-нет{border:1px solid oklch(1 0 0 / .70); color:var(--fg-m);
+     background:linear-gradient(158deg, oklch(1 0 0 / .8), oklch(0.965 0.012 210 / .68))}
+.правка-да{border:1px solid var(--accent); background:var(--accent); color:#fff}
+.правка-да:hover{opacity:.88}
 .мысль.выбрана{border-color:var(--accent)}
 /* ГОЛОС В КАРТОЧКЕ. Мысль встаёт в ленту в ту же секунду, когда отпустил кнопку,
    а слова догоняют с мака. Пока их нет — карточка честно говорит, чего ждёт, и даёт
@@ -495,6 +508,11 @@ $('вид').onclick = () => {
 };
 
 function нарисовать(){
+  // Пока человек правит, фоновое обновление ленты карточку не перерисовывает — иначе
+  // textarea пересоздастся и набранное пропадёт на полуслове. Закрытие правки ОБЯЗАНО
+  // сначала обнулить ПРАВЛЮ и только потом звать нарисовать(): в окне на маке такой же
+  // замок 02.09 держал правку открытой навсегда — «нельзя удалить окно )))».
+  if(ПРАВЛЮ && document.querySelector('.редактор')) return;
   const ждущие = очередь()
     // при поиске ждущие ищутся наравне с остальными, а не показываются всегда
     .filter(з => ИСКОМОЕ ? (з.текст||'').toLowerCase().includes(ИСКОМОЕ) : з.поток === ПОТОК)
@@ -538,7 +556,9 @@ function нарисовать(){
     const чей = (м.author && Я && м.author !== Я.id) ? имя_автора(м.author) : '';
     const открыта = ОТКРЫТА === м.id;
     // сказанное вслух: пока слов нет, карточка говорит, чего ждёт, и даёт послушать
-    const тело = ждёт_слов(м) ? `<span class="распознаётся">${ЗНАК_ГОЛОСА} распознаю…</span>`
+    const правится = ПРАВЛЮ === м.id;
+    const тело = правится ? редактор(м)
+               : ждёт_слов(м) ? `<span class="распознаётся">${ЗНАК_ГОЛОСА} распознаю…</span>`
                : м.звук_ждёт  ? `<span class="распознаётся">${ЗНАК_ГОЛОСА} запись ждёт сети</span>`
                : подсветить(м.body || '');
     const послушать = (ждёт_слов(м) && м.audio !== ЖДУ)
@@ -550,7 +570,7 @@ function нарисовать(){
             послушать +
             (ИСКОМОЕ ? `<span>${имя_потока(м.flow)}</span>` : '') +
             (чей ? `<span class="чей">${экран(чей)}</span>` : '') + `</div>` +
-            (открыта && !м.ждёт ? панель(м) : '') + `</div>`;
+            (открыта && !м.ждёт && !правится ? панель(м) : '') + `</div>`;
   }
   рисуй(html);
 }
@@ -583,14 +603,40 @@ function панель(м){
    Пока дом статус не разбирает, правка честно говорит, что доехала не до конца —
    врать про «исправлено» нельзя, это та же тихая ложь, что и «✓ записано» у голоса,
    который до дома не добирался. */
-async function править(ид){
+/* ПРАВКА ПРЯМО В КАРТОЧКЕ. Женя 31.08 19:42: «Что за уродство )) Хочу прчм как в тг
+   внутри сообщения редактировать». Уродством было системное окошко prompt() — я поставил
+   его 31.08, чтобы правка появилась хоть какая-то, и оно честно заработало. Но он прав:
+   окно, вырванное из ленты, — это не правка, это допрос. Теперь текст раскрывается в
+   поле на месте самой мысли, под ним «отменить» и «сохранить», остальное как было:
+   status 'правка' говорит дому «забери заново», карточка честно пишет «правка ждёт дома». */
+function редактор(м){
+  return `<textarea class="редактор" rows="2" autocorrect="off" autocapitalize="off" spellcheck="false">${экран(м.body || '')}</textarea>` +
+         `<div class="правка-низ"><button class="правка-нет" onclick="отменить_правку()">отменить</button>` +
+         `<button class="правка-да" onclick="сохранить_правку('${м.id}')">сохранить</button></div>`;
+}
+
+function править(ид){
   const м = МЫСЛИ.find(x => x.id === ид); if(!м) return;
-  const было = м.body || '';
-  const стало = prompt('Изменить мысль:', было);
-  if(стало === null) return;                       // передумал — ничего не трогаем
-  const текст = стало.trim();
-  if(!текст || текст === было.trim()) return;
-  ОТКРЫТА = null;
+  ОТКРЫТА = null; ПРАВЛЮ = ид; нарисовать();
+  const ta = document.querySelector('.редактор'); if(!ta) return;
+  const рост = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+  рост(); ta.addEventListener('input', рост);
+  ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+  ta.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){ e.preventDefault(); отменить_правку(); }
+    // Enter на телефоне — перенос строки, как в переписке; сохраняет кнопка или ⌘/Ctrl+Enter
+    if(e.key === 'Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); сохранить_правку(ид); }
+  });
+}
+
+function отменить_правку(){ ПРАВЛЮ = null; нарисовать(); }
+
+async function сохранить_правку(ид){
+  const м = МЫСЛИ.find(x => x.id === ид); if(!м){ ПРАВЛЮ = null; нарисовать(); return; }
+  const ta = document.querySelector('.редактор');
+  const было = м.body || '', текст = (ta ? ta.value : '').trim();
+  ПРАВЛЮ = null;                                    // сначала снять замок, потом рисовать
+  if(!текст || текст === было.trim()){ нарисовать(); return; }
   м.body = текст; м.status = 'правка'; нарисовать();   // на экране сразу, без ожидания сети
   const {error} = await sb.from('gili_notes').update({body: текст, status: 'правка'}).eq('id', ид);
   if(error){ м.body = было; нарисовать(); сказать('правка не ушла: ' + error.message); return; }
@@ -674,8 +720,10 @@ function человечно(статус){
 }
 
 let ОТКРЫТА = null;                       // какая мысль сейчас показывает действия
+let ПРАВЛЮ = null;                        // какая мысль сейчас правится прямо в карточке
 document.addEventListener('click', e => {
-  if(e.target.closest('.правка') || e.target.closest('.снимки') || e.target.closest('.звук')) return;
+  if(e.target.closest('.правка') || e.target.closest('.снимки') || e.target.closest('.звук')
+     || e.target.closest('.редактор') || e.target.closest('.правка-низ')) return;
   const м = e.target.closest('.мысль');
   const ид = м?.dataset.ид || null;
   ОТКРЫТА = (ид && ид !== ОТКРЫТА) ? ид : null;
