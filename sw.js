@@ -7,7 +7,7 @@
 
    Стратегия: сеть первой, кэш запасным. На связи всегда свежая версия,
    в дороге — последняя виденная. */
-const КЭШ = "гили-v19";     // 03.09: Правка на телефоне — внутри карточки, а не в системном окошке
+const КЭШ = "гили-v20";     // 11.09: Мгновенный старт на телефоне: лента из памяти сразу, служка кэш-первым
 const ОСНОВА = ["./", "./index.html", "./supabase.js", "./manifest.json", "./icon-180.png"];
 
 self.addEventListener("install", e => {
@@ -15,17 +15,26 @@ self.addEventListener("install", e => {
 });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== КЭШ).map(x => caches.delete(x))))
-    .then(() => self.clients.claim()));
+    .then(() => self.clients.claim())
+    .then(() => self.clients.matchAll({type: "window"}).then(cs =>
+      cs.forEach(c => c.postMessage("новая-версия")))));
 });
 self.addEventListener("fetch", e => {
   const u = new URL(e.request.url);
   if(e.request.method !== "GET") return;
   if(u.hostname.endsWith("supabase.co")) return;      // данные и вход — всегда живьём
   if(u.origin !== location.origin) return;
+  /* КЭШ ПЕРВЫМ, СЕТЬ ДОГОНЯЕТ. Было наоборот — «сеть первой, кэш запасным», и телефон ждал
+     ответа сети даже когда всё своё лежало рядом. Женя 11.09: «на телефоне медленно грузится».
+     Теперь из кэша отдаём мгновенно, свежее подтягиваем следом и кладём на следующий раз;
+     о новой версии страницу предупреждаем сообщением, она перечитывает себя сама. */
   e.respondWith(
-    fetch(e.request).then(r => {
-      if(r.ok){ const копия = r.clone(); caches.open(КЭШ).then(c => c.put(e.request, копия)); }
-      return r;
-    }).catch(() => caches.match(e.request).then(c => c || caches.match("./index.html")))
+    caches.match(e.request).then(изкэша => {
+      const изсети = fetch(e.request).then(r => {
+        if(r.ok){ const копия = r.clone(); caches.open(КЭШ).then(c => c.put(e.request, копия)); }
+        return r;
+      }).catch(() => изкэша || caches.match("./index.html"));
+      return изкэша || изсети;
+    })
   );
 });
