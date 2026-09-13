@@ -7,6 +7,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Гилфойл">
+<script>
+/* Обновление должно запуститься даже если основной код приложения сломался. */
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
 <meta name="theme-color" content="#dfe7ea">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -62,6 +66,7 @@ body{
 
 /* ── заставка: пока выясняем, вошёл ли уже ────────────────────────────────── */
 #старт{margin:auto; opacity:.35}
+#старт[hidden]{display:none}
 #старт svg{width:44px; height:44px}
 
 /* ── вход ─────────────────────────────────────────────────────────────────── */
@@ -89,6 +94,7 @@ body{
 /* ── шапка: потоки ────────────────────────────────────────────────────────── */
 #приложение{display:contents}
 #приложение[hidden]{display:none}
+.мобильный-бренд,.поиск-знак,#сцена,.фото-меню,.старт-слово{display:none}
 header{padding:8px 12px 4px}
 .потоки{display:flex; gap:4px; padding:3px; border-radius:15px;
   background:oklch(1 0 0 / .34); border:1px solid oklch(1 0 0 / .55)}
@@ -257,17 +263,190 @@ textarea:focus{outline:none; border-color:var(--accent)}
 @keyframes кружись{to{transform:rotate(360deg)}}
 .крутится{animation:кружись 1s linear infinite}
 
+/* ── Гили на телефоне: одно лицо с «Разберёмся» ────────────────────────────
+   Десктоп остаётся прежним. На телефоне Гили — не таблица заметок, а спокойный
+   разговор: живой верх, бусы потоков, сообщения-листы и одна большая строка.
+   Стекло неподвижное, анимации только transform/opacity — iPhone не греется. */
+@media (max-width:720px){
+  :root{--r:20px; --пружина:cubic-bezier(.22,1,.36,1)}
+  html,body{height:100%; height:100dvh}
+  body{
+    font-size:16px;
+    background:oklch(.91 .02 218) url('gili-sky-v1.jpg') center/cover no-repeat;
+    overflow:hidden;
+  }
+  body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,oklch(1 0 0/.04),oklch(.92 .02 214/.16) 44%,oklch(.78 .06 210/.24));}
+  #сцена{display:block;position:fixed;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;opacity:.55}
+  #старт,#вход,#приложение{position:relative;z-index:2}
+  #старт{display:flex;flex-direction:column;align-items:center;gap:12px;color:oklch(.25 .05 215);opacity:1}
+  #старт[hidden]{display:none}
+  #старт .крутится{opacity:.62}
+  .старт-слово{display:flex;flex-direction:column;align-items:center;text-shadow:0 1px 12px oklch(1 0 0/.8)}
+  .старт-слово strong{font-size:25px;font-weight:720}
+  .старт-слово span{font-size:13px;color:oklch(.38 .04 215)}
+  #приложение{width:100%; min-height:0; flex:1; display:flex; flex-direction:column; overflow:hidden}
+  #приложение[hidden]{display:none}
+
+  header{padding:10px 14px 4px; flex:none}
+  .мобильный-бренд{height:48px; display:flex; align-items:center; gap:11px; padding:0 3px 7px}
+  .мобильный-знак{
+    width:38px; height:38px; flex:none; display:grid; place-items:center; border-radius:13px;
+    color:oklch(0.43 0.13 218);
+    background:linear-gradient(150deg,oklch(1 0 0/.86),oklch(.95 .022 210/.65));
+    border:1px solid oklch(1 0 0/.82);
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.96),0 5px 14px -6px oklch(.32 .06 218/.25);
+  }
+  .мобильный-знак svg{width:24px;height:24px;overflow:visible}
+  .мобильный-знак circle{transform-origin:center;animation:сигнал 2.8s ease-in-out infinite}
+  .мобильный-знак circle:nth-child(2){animation-delay:-.9s}
+  .мобильный-знак circle:nth-child(3){animation-delay:-1.8s}
+  .мобильный-имя{min-width:0; display:flex; flex-direction:column; line-height:1.1}
+  .мобильный-имя strong{font-size:21px; font-weight:710; letter-spacing:0}
+  .мобильный-имя span{margin-top:4px; color:var(--fg-l); font-size:11.5px; font-weight:500}
+  .живая-связь{margin-left:auto; display:flex; align-items:center; gap:6px; color:var(--fg-l); font-size:11.5px}
+  .живая-связь i{width:7px;height:7px;border-radius:50%;background:oklch(.58 .13 158);box-shadow:0 0 0 4px oklch(.75 .08 158/.18)}
+  .живая-связь.нет i{background:oklch(.62 .04 215);box-shadow:0 0 0 4px oklch(.75 .03 215/.16)}
+  .живая-связь .верс{font-weight:600;font-size:10px;opacity:.4;letter-spacing:.3px}
+
+  .потоки{
+    gap:7px; padding:3px 1px 7px; overflow-x:auto; scrollbar-width:none;
+    border:0; border-radius:0; background:transparent; scroll-snap-type:x proximity;
+  }
+  .потоки::-webkit-scrollbar{display:none}
+  .потоки button{
+    flex:0 0 auto; min-width:72px; padding:8px 14px; border-radius:999px; scroll-snap-align:start;
+    font-size:13px; font-weight:570; color:var(--fg-m);
+    border:1px solid oklch(1 0 0/.66); background:oklch(1 0 0/.28);
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.55);
+    transition:transform .14s var(--пружина),background .18s,color .18s;
+  }
+  .потоки button:active{transform:scale(.96)}
+  .потоки button.on{
+    color:oklch(.31 .075 218); font-weight:680;
+    background:linear-gradient(155deg,oklch(1 0 0/.92),oklch(.95 .025 212/.75));
+    border-color:oklch(1 0 0/.86);
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.98),0 5px 15px -8px oklch(.30 .08 218/.34);
+  }
+
+  .подшапка{gap:7px; padding:3px 14px 7px; flex:none; position:relative}
+  .поиск-знак{display:grid; place-items:center; position:absolute; left:27px; z-index:1; color:var(--fg-l); pointer-events:none}
+  .поиск-знак svg{width:16px;height:16px}
+  .подшапка input{
+    min-width:0; height:42px; padding:9px 13px 9px 37px; border-radius:15px; font-size:14px;
+    background:oklch(1 0 0/.47); border-color:oklch(1 0 0/.66);
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.72);
+  }
+  .вид{height:42px; padding:7px 12px; border-radius:15px; background:oklch(1 0 0/.42)}
+  .подшапка .кто{display:none}
+
+  main{min-height:0; justify-content:flex-start; gap:0; padding:4px 14px 12px; scroll-padding-bottom:18px}
+  .день{margin:12px 0 8px; font-size:11.5px; font-weight:580; letter-spacing:.01em}
+  .мысль{
+    width:94%; padding:13px 15px 11px; margin-bottom:9px; border-radius:20px;
+    font-size:15.5px; line-height:1.46;
+    translate:0 var(--gravity,0);
+    background:linear-gradient(155deg,oklch(1 0 0/.82),oklch(.96 .015 214/.68));
+    border-color:oklch(1 0 0/.74);
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.94),0 8px 22px -15px oklch(.30 .07 218/.32);
+    animation:мысль-вход .28s var(--пружина);
+  }
+  .мысль.своя{align-self:flex-end; border-bottom-right-radius:8px}
+  .мысль.чужая{
+    align-self:flex-start; border-bottom-left-radius:8px;
+    background:linear-gradient(155deg,oklch(.98 .018 188/.84),oklch(.93 .028 196/.70));
+  }
+  .мысль.готовая{opacity:.56}
+  .низ{margin-top:7px; gap:5px; font-size:11.5px}
+  .правка{gap:5px; padding-top:2px}
+  .правка button{padding:7px 10px; border-radius:11px; background:oklch(1 0 0/.48)}
+  .снимки img{width:76px;height:76px;border-radius:13px}
+  .пусто{margin:auto 0; padding:44px 24px; font-size:15px}
+
+  footer{
+    flex:none; padding:8px 12px max(9px,env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,oklch(.91 .018 216/0),oklch(.91 .018 216/.94) 25%);
+  }
+  .фишки{padding:0 3px 7px}
+  .строка{
+    min-height:58px; gap:3px; align-items:flex-end; padding:5px; border-radius:23px;
+    background:linear-gradient(155deg,oklch(1 0 0/.82),oklch(.95 .018 214/.72));
+    border:1px solid oklch(1 0 0/.78);
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.96),0 9px 28px -16px oklch(.27 .07 218/.42);
+  }
+  .строка textarea{
+    order:2; min-width:0; min-height:46px; max-height:132px; padding:12px 8px 10px;
+    border:0; border-radius:16px; background:transparent; box-shadow:none; font-size:16px;
+  }
+  .строка textarea:focus{border:0}
+  .строка textarea::placeholder{color:var(--fg-l);opacity:.9}
+  .круг{width:44px;height:44px; border:0; color:oklch(.43 .10 216); background:transparent; box-shadow:none}
+  .круг svg{width:22px;height:22px}
+  #камера{order:1}
+  #микрофон,#послать{order:3}
+  #послать{height:44px;border-radius:16px;background:oklch(.43 .13 218);box-shadow:inset 0 1px 0 oklch(1 0 0/.30),0 5px 12px -6px oklch(.30 .12 218/.55)}
+  #послать.видна{width:44px;margin-left:0}
+  #микрофон.пишет{border-radius:16px;background:oklch(.43 .13 218);color:white}
+  .состояние{min-height:0;padding-top:4px;font-size:11.5px}
+  .состояние:empty{display:none}
+  #камера.манит,#микрофон.манит{animation:позови 1.15s var(--пружина) 2}
+
+  .фото-меню{position:fixed;inset:0;z-index:90;align-items:flex-end;justify-content:center;padding:12px 12px max(12px,env(safe-area-inset-bottom))}
+  .фото-меню.открыта{display:flex}
+  .фото-тень{position:absolute;inset:0;border:0;background:oklch(.12 .025 215/.30);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+  .фото-лист{
+    position:relative;z-index:1;width:100%;max-width:480px;max-height:min(78dvh,680px);overflow:auto;
+    padding:10px 14px 16px;border-radius:30px;
+    background:linear-gradient(155deg,oklch(1 0 0/.88),oklch(.94 .022 210/.74));
+    border:1px solid oklch(1 0 0/.86);box-shadow:inset 0 1px 0 oklch(1 0 0/.98),0 26px 70px -30px oklch(.20 .07 220/.55);
+    animation:фото-вверх .34s var(--пружина);
+  }
+  .фото-ручка{width:38px;height:4px;border-radius:4px;background:oklch(.45 .02 215/.18);margin:1px auto 12px}
+  .фото-шапка{display:flex;align-items:flex-start;justify-content:space-between;margin:0 2px 14px}
+  .фото-шапка strong{display:block;font-size:21px;line-height:1.2}
+  .фото-шапка span{display:block;margin-top:3px;font-size:12px;color:var(--fg-l)}
+  .фото-закрыть{width:34px;height:34px;border:0;border-radius:50%;background:oklch(.45 .04 215/.09);font:inherit;font-size:20px;color:var(--fg-m)}
+  .фото-источники{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .фото-источник{
+    min-height:112px;border-radius:21px;border:1px solid oklch(1 0 0/.78);padding:14px;
+    display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;text-align:left;
+    color:var(--fg);font:inherit;font-weight:650;
+    background:linear-gradient(150deg,oklch(1 0 0/.72),oklch(.91 .035 210/.58));
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.96);transition:transform .14s var(--пружина);
+  }
+  .фото-источник:active{transform:scale(.97)}
+  .фото-источник svg{width:29px;height:29px;color:oklch(.42 .12 215)}
+  .фото-источник small{display:block;font-size:11px;font-weight:500;color:var(--fg-l);margin-top:2px}
+  .фото-сетка{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+  .фото-кадр{position:relative;aspect-ratio:1;border:0;padding:0;border-radius:14px;overflow:hidden;background:oklch(.88 .02 215)}
+  .фото-кадр img{width:100%;height:100%;object-fit:cover;display:block}
+  .фото-кадр b{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:oklch(.18 .02 215/.7);color:white;font-size:15px;font-weight:500}
+  .фото-подпись{width:100%;margin-top:10px;min-height:52px;max-height:110px;padding:13px 14px;border-radius:16px;border:1px solid oklch(1 0 0/.8);background:oklch(1 0 0/.56);box-shadow:inset 0 1px 0 oklch(1 0 0/.9)}
+  .фото-действия{display:flex;gap:8px;margin-top:10px}
+  .фото-еще,.фото-готово{height:46px;border-radius:15px;font:inherit;font-weight:650}
+  .фото-еще{width:48px;border:1px solid oklch(1 0 0/.8);background:oklch(1 0 0/.5);color:var(--accent);font-size:23px}
+  .фото-готово{flex:1;border:0;background:oklch(.40 .14 218);color:white}
+  .фото-пусто{text-align:center;color:var(--fg-l);font-size:13px;padding:14px 4px 2px}
+
+  @keyframes позови{0%,100%{transform:none}45%{transform:translateY(-3px) scale(1.10)}70%{transform:translateY(1px) scale(.98)}}
+  @keyframes фото-вверх{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
+
+  @keyframes сигнал{0%,100%{opacity:.35;transform:scale(.84)}50%{opacity:1;transform:scale(1)}}
+  @keyframes мысль-вход{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+}
+
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important; transition:none !important}
 }
 </style>
 </head>
 <body>
+<canvas id="сцена" aria-hidden="true"></canvas>
 
 <div id="старт">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" class="крутится">
     <path d="M12 3a9 9 0 1 0 9 9"/>
   </svg>
+  <div class="старт-слово"><strong>Гили</strong><span>возвращаю твой поток</span></div>
 </div>
 
 <div id="вход" hidden>
@@ -280,8 +459,23 @@ textarea:focus{outline:none; border-color:var(--accent)}
 </div>
 
 <div id="приложение" hidden>
-  <header><div class="потоки" id="потоки"></div></header>
+  <header>
+    <div class="мобильный-бренд">
+      <div class="мобильный-знак" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M4.5 12c2.1-4.7 5-7 7.5-7s5.4 2.3 7.5 7c-2.1 4.7-5 7-7.5 7s-5.4-2.3-7.5-7Z"/>
+          <circle cx="8" cy="12" r="1.15" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="1.15" fill="currentColor" stroke="none"/>
+          <circle cx="16" cy="12" r="1.15" fill="currentColor" stroke="none"/>
+        </svg>
+      </div>
+      <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v23</b></div>
+    </div>
+    <div class="потоки" id="потоки"></div>
+  </header>
   <div class="подшапка">
+    <span class="поиск-знак" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg></span>
     <input id="поиск" placeholder="искать во всех мыслях…" autocomplete="off">
     <button class="вид" id="вид" title="показать обработанные">ждёт</button>
     <span class="кто" id="кто"></span>
@@ -306,9 +500,36 @@ textarea:focus{outline:none; border-color:var(--accent)}
           <path d="M12 19V5M5 12l7-7 7 7"/></svg>
       </button>
       <input type="file" id="файл" accept="image/*" multiple hidden>
+      <input type="file" id="снять" accept="image/*" capture="environment" hidden>
     </div>
     <div class="состояние" id="состояние"></div>
   </footer>
+</div>
+<div class="фото-меню" id="фото-меню" aria-hidden="true">
+  <button class="фото-тень" id="фото-тень" aria-label="закрыть"></button>
+  <section class="фото-лист" role="dialog" aria-modal="true" aria-labelledby="фото-заголовок">
+    <div class="фото-ручка"></div>
+    <div class="фото-шапка">
+      <div><strong id="фото-заголовок">Фото</strong><span>сними сейчас или выбери несколько</span></div>
+      <button class="фото-закрыть" id="фото-закрыть" aria-label="закрыть">×</button>
+    </div>
+    <div class="фото-источники">
+      <button class="фото-источник" id="фото-снять">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="12.5" r="3.2"/></svg>
+        <span>Камера<small>снять новый кадр</small></span>
+      </button>
+      <button class="фото-источник" id="фото-выбрать">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.4"/><path d="m5.5 17 4.2-4.2 3.1 3.1 2.1-2.1 3.6 3.2"/></svg>
+        <span>Медиатека<small>выбрать несколько</small></span>
+      </button>
+    </div>
+    <div class="фото-сетка" id="фото-сетка"></div>
+    <textarea class="фото-подпись" id="фото-подпись" rows="2" placeholder="Что важно увидеть на фото?"></textarea>
+    <div class="фото-действия">
+      <button class="фото-еще" id="фото-еще" aria-label="добавить ещё">+</button>
+      <button class="фото-готово" id="фото-готово">Добавить в сообщение</button>
+    </div>
+  </section>
 </div>
 
 <script src="supabase.js"></script>
@@ -419,7 +640,10 @@ function кто_в_памяти(){
 function забыть_кто(){ try{ localStorage.removeItem(ПАМЯТЬ_КТО); }catch{} }
 
 function открыть_ленту(){
-  if(!запомнен) открыть_ленту();      // при мгновенном старте это уже нарисовано выше
+  нарисовать_потоки();
+  МЫСЛИ = из_памяти(ПАМЯТЬ_ЛЕНТЫ);
+  нарисовать();
+  по_ссылке();
 }
 
 async function поднять(){
@@ -431,10 +655,27 @@ async function поднять(){
     открыть_ленту();
     загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов)) догонять_голос(); });
   }
-  const {data:{user}} = await sb.auth.getUser();
+  // ВХОД НЕ ДОЛЖЕН ЖДАТЬ СЕТИ. Женя 13.09: «хочу чтобы он при любых раскладах записывал… даже офлайн».
+  // getUser() ходит на сервер. Без сети он возвращает user:null (или ошибку сети) — и старый код
+  // выкидывал залогиненного ко входу и стирал память, после чего приложение скрыто и писать некуда.
+  // Теперь: сеть молчит → остаёмся тем, кем себя помним, запись копится в очереди и уедет сама.
+  // Ко входу выкидываем только на ЯВНЫЙ ответ сервера «ты не тот» (получен при живой сети).
+  let user = null, ошибка_входа = null;
+  try{ const r = await sb.auth.getUser(); user = r.data && r.data.user; ошибка_входа = r.error; }
+  catch(e){ ошибка_входа = e; }
+  const сеть_молчит = !navigator.onLine ||
+    (ошибка_входа && /fetch|network|timeout|failed|retryable|load/i.test((ошибка_входа.name||'') + ' ' + (ошибка_входа.message||'')));
+  if(сеть_молчит){
+    if(!запомнен) показать('вход');   // впервые открыли без сети и без памяти — показать нечего
+    return;                            // помним человека → он уже в приложении, очередь довезёт
+  }
   if(!user){ забыть_кто(); показать('вход'); return; }
 
-  const {data: свой} = await sb.from('gili_family').select('name').eq('user_id', user.id).maybeSingle();
+  const {data: свой, error: ошибка_семьи} = await sb.from('gili_family').select('name').eq('user_id', user.id).maybeSingle();
+  if(ошибка_семьи){                     // база молчит (таймаут/403) — не выходим, если помним себя
+    if(!запомнен) показать('вход');
+    return;
+  }
   if(!свой){
     забыть_кто();
     показать('вход');
@@ -450,12 +691,10 @@ async function поднять(){
     if(data){ data.forEach(ч => СЕМЬЯ[ч.user_id] = ч.name); нарисовать(); }
   });
 
-  нарисовать_потоки();
-  МЫСЛИ = из_памяти(ПАМЯТЬ_ЛЕНТЫ);   // мгновенно — то, что видели в прошлый раз
-  нарисовать();
-  по_ссылке();                        // пришли из уведомления — сразу показать ту мысль
-  // и тихо освежить; если с прошлого раза осталась мысль без слов — подождём их активно
-  загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов)) догонять_голос(); });
+  if(!запомнен){
+    открыть_ленту();                  // при мгновенном старте это уже нарисовано выше
+    загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов)) догонять_голос(); });
+  }
   подписаться();
   везти_очередь();
 }
@@ -592,7 +831,8 @@ function нарисовать(){
                : подсветить(м.body || '');
     const послушать = (ждёт_слов(м) && м.audio !== ЖДУ)
       ? `<button class="звук" data-звук="${экран(м.audio)}">${ЗНАК_ГОЛОСА}послушать</button>` : '';
-    html += `<div class="мысль стекло ${м.ждёт ? 'ждёт' : ''}${обработана(м) ? ' готовая' : ''}` +
+    const сторона = (!м.author || м.ждёт || (Я && м.author === Я.id)) ? ' своя' : ' чужая';
+    html += `<div class="мысль стекло${сторона} ${м.ждёт ? 'ждёт' : ''}${обработана(м) ? ' готовая' : ''}` +
             `${открыта ? ' выбрана' : ''}" data-ид="${м.id}">${тело}${фото}` +
             `<div class="низ"><span>${часы(м.created_at)}</span><span>·</span>` +
             `<b class="${окраска(м.status)}">${м.ждёт ? 'в телефоне' : человечно(м.status)}</b>` +
@@ -944,11 +1184,42 @@ async function добавить_фото(файлы){
   return добавлено;
 }
 
-$('камера').onclick = () => $('файл').click();
-$('файл').onchange = async e => {
+function открыть_фото(){
+  $('фото-меню').classList.add('открыта');
+  $('фото-меню').setAttribute('aria-hidden','false');
+  $('фото-подпись').value = $('поле').value;
+  нарисовать_фото_меню();
+}
+function закрыть_фото(){
+  $('фото-меню').classList.remove('открыта');
+  $('фото-меню').setAttribute('aria-hidden','true');
+}
+function нарисовать_фото_меню(){
+  const с = $('фото-сетка'); if(!с) return;
+  с.innerHTML = ФОТО.length ? ФОТО.map((ф,i) =>
+    `<button class="фото-кадр" data-фото="${i}" aria-label="убрать фото"><img src="${ф.ссылка}" alt=""><b>×</b></button>`).join('')
+    : '<div class="фото-пусто" style="grid-column:1/-1">Выбранные кадры появятся здесь</div>';
+  с.querySelectorAll('[data-фото]').forEach(б => б.onclick = () => {
+    const i = +б.dataset.фото; URL.revokeObjectURL(ФОТО[i].ссылка); ФОТО.splice(i,1);
+    нарисовать_фишки();
+  });
+  $('фото-готово').textContent = ФОТО.length ? `Добавить ${ФОТО.length} в сообщение` : 'Добавить в сообщение';
+}
+async function выбраны_фото(e){
   const файлы = [...(e.target.files || [])]; e.target.value = '';
   await добавить_фото(файлы);
-  if(ФОТО.length && !$('поле').value.trim()) отправить();  // снял и пошёл — подпись не обязательна
+  открыть_фото();
+}
+$('камера').onclick = открыть_фото;
+$('фото-снять').onclick = () => $('снять').click();
+$('фото-выбрать').onclick = $('фото-еще').onclick = () => $('файл').click();
+$('файл').onchange = выбраны_фото;
+$('снять').onchange = выбраны_фото;
+$('фото-закрыть').onclick = $('фото-тень').onclick = закрыть_фото;
+$('фото-готово').onclick = () => {
+  const подпись = $('фото-подпись').value.trim();
+  if(подпись){ $('поле').value = подпись; поле.dispatchEvent(new Event('input')); }
+  закрыть_фото(); показать_кнопку();
 };
 
 // Женя 30.08: «добавь возможность вставлять фото из буфера». На маке это уже было,
@@ -975,6 +1246,7 @@ function нарисовать_фишки(){
     URL.revokeObjectURL(ФОТО[+б.dataset.и].ссылка);
     ФОТО.splice(+б.dataset.и, 1); нарисовать_фишки(); показать_кнопку();
   });
+  нарисовать_фото_меню();
   показать_кнопку();
 }
 
@@ -1150,6 +1422,9 @@ async function отправить(){
                       created_at:new Date().toISOString(), status:'отправляю…', author:Я.id};
   МЫСЛИ = [мгновенная].concat(МЫСЛИ);
   нарисовать();
+  const лента = $('лента');
+  лента.scrollTop = лента.scrollHeight;
+  requestAnimationFrame(() => { лента.scrollTop = лента.scrollHeight; });
 
   try{
     if(!navigator.onLine) throw new Error('нет сети');
@@ -1205,6 +1480,71 @@ function по_ссылке(){
 window.addEventListener('hashchange', () => { if(Я) по_ссылке(); });
 
 /* ── старт ────────────────────────────────────────────────────────────────── */
+function оживить_сцену(){
+  if(!matchMedia('(max-width:720px)').matches || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const c = $('сцена'), ctx = c.getContext('2d', {alpha:true});
+  let w=0,h=0,dpr=1,кадр=0,жив=true;
+  const размер = () => {
+    dpr = Math.min(devicePixelRatio || 1, 1.6); w = innerWidth; h = innerHeight;
+    c.width = Math.round(w*dpr); c.height = Math.round(h*dpr); c.style.width=w+'px'; c.style.height=h+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  };
+  const рисовать = t => {
+    if(!жив) return;
+    ctx.clearRect(0,0,w,h);
+    const верх = h*.62, шаг = Math.max(13,h*.019);
+    ctx.lineWidth=.7;
+    for(let i=0;i<12;i++){
+      const y=верх+i*шаг, a=.045+i*.006;
+      ctx.beginPath();
+      for(let x=-12;x<=w+12;x+=9){
+        const yy=y+Math.sin(x*.021+t*.0012+i*.72)*2.3+Math.sin(x*.008-t*.0007+i)*1.4;
+        x===-12?ctx.moveTo(x,yy):ctx.lineTo(x,yy);
+      }
+      ctx.strokeStyle=`rgba(255,255,255,${a})`;ctx.stroke();
+    }
+    кадр=requestAnimationFrame(рисовать);
+  };
+  addEventListener('resize', размер,{passive:true});
+  document.addEventListener('visibilitychange',()=>{
+    жив=!document.hidden;
+    if(жив){cancelAnimationFrame(кадр);кадр=requestAnimationFrame(рисовать)}
+  });
+  размер(); кадр=requestAnimationFrame(рисовать);
+
+  const л=$('лента'); let ждём=false;
+  л.addEventListener('scroll',()=>{
+    if(ждём) return; ждём=true;
+    requestAnimationFrame(()=>{
+      ждём=false; const середина=л.getBoundingClientRect().top+l.clientHeight/2;
+      л.querySelectorAll('.мысль').forEach(м=>{
+        const r=м.getBoundingClientRect(), d=Math.max(-1,Math.min(1,(r.top+r.height/2-середина)/л.clientHeight));
+        м.style.setProperty('--gravity',(d*3.5).toFixed(2)+'px');
+      });
+    });
+  },{passive:true});
+}
+function обновить_связь(){
+  const связь = $('связь'); if(!связь) return;
+  const есть = navigator.onLine;
+  связь.classList.toggle('нет', !есть);
+  связь.querySelector('span').textContent = есть ? 'на связи' : 'без сети';
+}
+addEventListener('online', обновить_связь);
+addEventListener('offline', обновить_связь);
+обновить_связь();
+
+let таймер_зова=0;
+function позвать_органы(){
+  if(innerWidth>720 || document.hidden || поле.value.trim() || ФОТО.length) return;
+  const б = Math.random()>.48 ? $('микрофон') : $('камера');
+  б.classList.remove('манит'); requestAnimationFrame(()=>б.classList.add('манит'));
+  setTimeout(()=>б.classList.remove('манит'),2600);
+}
+setTimeout(позвать_органы,1800);
+таймер_зова=setInterval(позвать_органы,14000);
+оживить_сцену();
+
 if(кто_в_памяти()) поднять();        // помним человека — открываемся сразу, проверка внутри
 else sb.auth.getSession().then(({data:{session}}) => session ? поднять() : показать('вход'))
   .catch(() => показать('вход'));
