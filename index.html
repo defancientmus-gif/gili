@@ -434,6 +434,371 @@ textarea:focus{outline:none; border-color:var(--accent)}
   @keyframes мысль-вход{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
 }
 
+/* ── v25 · AERO LIQUID OS ──────────────────────────────────────────────────
+   Не обои с кнопками, а три физических слоя: воздух в шапке, оптические
+   пластины мыслей и водяной док ввода. На длинной ленте карточки намеренно
+   без backdrop-filter: кромка и внутренний свет дают глубину дешевле. */
+@media (max-width:720px){
+  :root{
+    --aero:oklch(.46 .13 218);
+    --aero-hi:oklch(.79 .12 204);
+    --glass-line:oklch(1 0 0/.84);
+  }
+  body::before{
+    content:"";position:fixed;z-index:1;pointer-events:none;
+    width:72vw;height:72vw;left:-38vw;top:16dvh;border-radius:50%;
+    background:radial-gradient(circle,oklch(.88 .11 198/.22),transparent 66%);
+    mix-blend-mode:screen;opacity:.72;
+    animation:аэро-дрейф 13s ease-in-out infinite alternate;
+  }
+
+  header{
+    position:relative;isolation:isolate;overflow:hidden;
+    padding:9px 14px 7px;
+    background:
+      radial-gradient(90% 150% at 4% -40%,oklch(1 0 0/.72),transparent 61%),
+      linear-gradient(165deg,oklch(1 0 0/.38),oklch(.90 .035 210/.19));
+    border-bottom:1px solid oklch(1 0 0/.66);
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.82),0 14px 36px -28px oklch(.25 .10 220/.55);
+    backdrop-filter:blur(11px) saturate(1.25);
+    -webkit-backdrop-filter:blur(11px) saturate(1.25);
+  }
+  header::before{
+    content:"";position:absolute;z-index:-1;top:-45%;bottom:-45%;left:-42%;width:36%;
+    background:linear-gradient(90deg,transparent,oklch(1 0 0/.50),transparent);
+    transform:skewX(-18deg);animation:аэро-скан 8s ease-in-out infinite;
+  }
+  header::after{
+    content:"";position:absolute;left:15%;right:15%;bottom:-1px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--aero-hi),transparent);
+    opacity:.82;
+  }
+  .мобильный-бренд{height:55px;gap:12px;padding:0 2px 8px}
+  .мобильный-знак{
+    position:relative;width:44px;height:44px;border-radius:17px;
+    color:oklch(.39 .16 218);
+    background:
+      radial-gradient(circle at 32% 22%,oklch(1 0 0/.96),transparent 32%),
+      linear-gradient(145deg,oklch(.98 .02 202/.82),oklch(.80 .09 211/.44));
+    border:1px solid oklch(1 0 0/.92);
+    box-shadow:inset 0 1px 1px white,inset 0 -7px 18px oklch(.54 .13 211/.12),
+               0 7px 18px -8px oklch(.28 .14 220/.55);
+  }
+  .мобильный-знак::before{
+    content:"";position:absolute;inset:-5px;border-radius:21px;
+    border:1px solid oklch(.80 .11 205/.38);opacity:.72;
+    animation:аэро-кольцо 3.6s ease-in-out infinite;
+  }
+  .мобильный-знак::after{
+    content:"";position:absolute;width:5px;height:5px;border-radius:50%;right:-3px;top:8px;
+    background:oklch(.72 .16 191);box-shadow:0 0 12px 3px oklch(.72 .16 191/.42);
+  }
+  .мобильный-имя strong{font-size:22px;font-weight:760}
+  .мобильный-имя span{color:oklch(.34 .045 218/.72);font-size:11px}
+  .живая-связь{
+    padding:6px 8px;border-radius:999px;background:oklch(1 0 0/.24);
+    border:1px solid oklch(1 0 0/.38);color:oklch(.32 .04 215/.70);
+  }
+  .живая-связь i{box-shadow:0 0 0 3px oklch(.75 .10 158/.16),0 0 11px oklch(.60 .16 158/.55)}
+  .живая-связь .верс{display:none}
+
+  .потоки{gap:8px;padding:3px 0 3px}
+  .потоки button{
+    position:relative;overflow:hidden;min-width:76px;padding:9px 15px;
+    border-color:oklch(1 0 0/.60);
+    background:linear-gradient(155deg,oklch(1 0 0/.34),oklch(.87 .05 210/.16));
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.60);
+  }
+  .потоки button::after{
+    content:"";position:absolute;left:25%;right:25%;bottom:3px;height:2px;border-radius:2px;
+    background:var(--aero-hi);opacity:0;transform:scaleX(.25);
+    transition:opacity .2s,transform .32s var(--пружина);
+  }
+  .потоки button.on{
+    color:oklch(.26 .10 219);
+    background:
+      radial-gradient(100% 180% at 16% -30%,white,transparent 52%),
+      linear-gradient(145deg,oklch(.95 .035 206/.90),oklch(.77 .11 211/.54));
+    box-shadow:inset 0 1px 0 white,inset 0 -8px 20px oklch(.52 .13 216/.10),
+               0 7px 20px -11px oklch(.29 .15 221/.64);
+  }
+  .потоки button.on::after{opacity:1;transform:scaleX(1)}
+
+  .подшапка{
+    padding:9px 13px 8px;
+    background:linear-gradient(180deg,oklch(.88 .035 212/.24),transparent);
+  }
+  .подшапка input,.вид{
+    border:1px solid var(--glass-line);
+    background:
+      radial-gradient(100% 160% at 10% -40%,white,transparent 54%),
+      linear-gradient(145deg,oklch(1 0 0/.62),oklch(.85 .06 210/.34));
+    box-shadow:inset 0 1px 0 white,0 7px 18px -14px oklch(.24 .12 218/.60);
+  }
+  .подшапка input:focus{border-color:oklch(.73 .12 207/.85);box-shadow:inset 0 1px 0 white,0 0 0 3px oklch(.72 .12 207/.15)}
+  .вид{font-weight:690;color:oklch(.31 .075 218)}
+
+  main{perspective:900px;padding-top:8px}
+  .день{
+    align-self:center;padding:4px 10px;border-radius:999px;
+    color:oklch(.29 .05 216/.70);background:oklch(1 0 0/.22);
+    border:1px solid oklch(1 0 0/.30);text-shadow:0 1px 8px white;
+  }
+  .мысль{
+    position:relative;isolation:isolate;overflow:hidden;
+    padding:15px 16px 11px;border-radius:23px;
+    scale:var(--focus,1);
+    background:
+      radial-gradient(100% 100% at 0 0,oklch(1 0 0/.94),transparent 48%),
+      linear-gradient(145deg,oklch(.99 .008 206/.79),oklch(.83 .075 211/.55));
+    border:1px solid var(--glass-line);
+    box-shadow:inset 0 1px 0 white,inset 0 -12px 28px oklch(.53 .10 213/.08),
+               0 14px 34px -22px oklch(.22 .12 220/.62);
+  }
+  .мысль::before{
+    content:"";position:absolute;z-index:-1;left:-15%;top:-26px;width:68%;height:58px;
+    border-radius:50%;background:oklch(1 0 0/.44);filter:blur(13px);
+    transform:rotate(-8deg);pointer-events:none;
+  }
+  .мысль::after{
+    content:"";position:absolute;right:11px;top:10px;width:7px;height:7px;border-radius:50%;
+    border:1px solid oklch(1 0 0/.85);background:oklch(.73 .10 200/.28);
+    box-shadow:0 0 12px oklch(.68 .13 205/.48);
+  }
+  .мысль.своя{border-bottom-right-radius:7px}
+  .мысль.чужая{
+    border-bottom-left-radius:7px;
+    background:
+      radial-gradient(100% 100% at 0 0,oklch(1 0 0/.94),transparent 48%),
+      linear-gradient(145deg,oklch(.97 .025 190/.80),oklch(.77 .10 194/.50));
+    box-shadow:inset 0 1px 0 white,inset 4px 0 0 oklch(.72 .14 190/.32),
+               0 14px 34px -22px oklch(.20 .12 202/.62);
+  }
+  .мысль.выбрана{border-color:oklch(.69 .15 207);box-shadow:inset 0 1px 0 white,0 0 0 3px oklch(.72 .14 207/.18),0 18px 38px -22px oklch(.22 .15 216/.70)}
+  .низ{padding-top:7px;border-top:1px solid oklch(1 0 0/.38);color:oklch(.32 .04 216/.62)}
+  .низ b{color:oklch(.34 .08 213)}
+
+  footer{padding:10px 11px max(10px,env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,oklch(.83 .055 211/.24) 35%,oklch(.77 .07 211/.38))}
+  .строка{
+    position:relative;isolation:isolate;overflow:hidden;min-height:64px;padding:7px;border-radius:28px;
+    background:
+      radial-gradient(90% 160% at 10% -55%,white,transparent 58%),
+      linear-gradient(150deg,oklch(1 0 0/.73),oklch(.77 .09 209/.46));
+    border:1px solid oklch(1 0 0/.90);
+    box-shadow:inset 0 1px 0 white,inset 0 -12px 28px oklch(.45 .14 215/.10),
+               0 18px 44px -22px oklch(.20 .16 222/.74);
+    backdrop-filter:blur(12px) saturate(1.30);
+    -webkit-backdrop-filter:blur(12px) saturate(1.30);
+  }
+  .строка::before{
+    content:"";position:absolute;z-index:-1;top:-45%;bottom:-45%;left:-32%;width:26%;
+    background:linear-gradient(90deg,transparent,oklch(1 0 0/.54),transparent);
+    transform:skewX(-20deg);animation:док-блик 7s ease-in-out infinite;
+  }
+  .строка textarea{min-height:48px;color:oklch(.22 .035 216);font-weight:520}
+  .круг{
+    position:relative;width:48px;height:48px;border-radius:19px;
+    color:oklch(.32 .15 217);
+    background:radial-gradient(circle at 35% 25%,white,oklch(.80 .10 207/.46) 58%,oklch(.64 .13 215/.30));
+    border:1px solid oklch(1 0 0/.78);
+    box-shadow:inset 0 1px 0 white,0 7px 18px -10px oklch(.24 .17 220/.70);
+  }
+  .круг:active{transform:scale(.91) translateY(1px)}
+  #послать,#микрофон.пишет{
+    border-radius:19px;color:white;border-color:oklch(.81 .10 204/.58);
+    background:linear-gradient(145deg,oklch(.65 .16 202),oklch(.38 .18 224));
+    box-shadow:inset 0 1px 0 oklch(1 0 0/.40),0 7px 20px -8px oklch(.31 .19 222/.82);
+  }
+  #камера.манит,#микрофон.манит{animation:орган-зов 1.15s var(--пружина) 2}
+  .фишка{background:oklch(1 0 0/.65);border-color:white;box-shadow:0 7px 18px -13px oklch(.22 .14 220/.70)}
+
+  .фото-лист{
+    background:
+      radial-gradient(100% 80% at 0 0,white,transparent 48%),
+      linear-gradient(155deg,oklch(.98 .015 205/.92),oklch(.76 .10 210/.72));
+    border-color:white;box-shadow:inset 0 1px 0 white,0 30px 80px -30px oklch(.16 .16 222/.72);
+    backdrop-filter:blur(12px) saturate(1.25);-webkit-backdrop-filter:blur(12px) saturate(1.25);
+  }
+  .фото-источник{background:linear-gradient(145deg,oklch(1 0 0/.74),oklch(.77 .10 209/.42));box-shadow:inset 0 1px 0 white,0 10px 24px -18px oklch(.22 .14 220/.62)}
+
+  @keyframes аэро-дрейф{from{transform:translate3d(0,-4%,0) scale(.94);opacity:.46}to{transform:translate3d(54vw,12%,0) scale(1.13);opacity:.78}}
+  @keyframes аэро-скан{0%,64%{transform:translateX(0) skewX(-18deg);opacity:0}74%{opacity:.58}100%{transform:translateX(410%) skewX(-18deg);opacity:0}}
+  @keyframes аэро-кольцо{0%,100%{transform:scale(.92);opacity:.26}50%{transform:scale(1.04);opacity:.72}}
+  @keyframes док-блик{0%,68%{transform:translateX(0) skewX(-20deg);opacity:0}78%{opacity:.68}100%{transform:translateX(520%) skewX(-20deg);opacity:0}}
+  @keyframes орган-зов{0%,100%{transform:none}35%{transform:translateY(-4px) scale(1.08)}58%{transform:translateY(1px) scale(.98)}75%{transform:translateY(-2px) scale(1.035)}}
+}
+
+/* ── v27 · FLUID FIELD ─────────────────────────────────────────────────────
+   Контролы больше не отдельные плашки. Потоки живут в общей линзе, сообщения
+   преломляют сцену, а камера и голос являются световыми точками одного дока. */
+@media (max-width:720px){
+  :root{
+    --ion-cyan:oklch(.78 .17 194);
+    --ion-blue:oklch(.59 .20 239);
+    --ion-mint:oklch(.80 .14 164);
+    --touch-x:50vw;--touch-y:50dvh;
+  }
+  body::before{
+    width:68vw;height:68vw;left:0;top:0;
+    background:radial-gradient(circle,
+      oklch(.83 .18 190/.30) 0%,
+      oklch(.70 .17 230/.12) 35%,
+      transparent 68%);
+    opacity:.82;animation:none;mix-blend-mode:screen;
+    transform:translate3d(calc(var(--touch-x) - 34vw),calc(var(--touch-y) - 34vw),0);
+    transition:transform .7s cubic-bezier(.16,1,.3,1);
+    will-change:transform;
+  }
+
+  header{
+    overflow:visible;padding:8px 14px 5px;
+    background:transparent;border:0;box-shadow:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+  }
+  header::before{
+    z-index:-1;inset:-20px -12px -12px;
+    width:auto;background:
+      radial-gradient(70% 75% at 12% 12%,oklch(1 0 0/.34),transparent 70%);
+    transform:none;animation:поле-дыхание 7s ease-in-out infinite;
+  }
+  header::after{display:none}
+  .мобильный-бренд{height:53px}
+  .мобильный-знак{
+    width:43px;height:43px;border-radius:50%;color:oklch(.30 .18 225);
+    background:oklch(1 0 0/.18);border:0;
+    box-shadow:inset 0 0 0 1px oklch(1 0 0/.52),
+               inset 7px 9px 18px oklch(1 0 0/.28),
+               0 0 24px oklch(.68 .18 202/.22);
+    backdrop-filter:blur(10px) saturate(1.5);-webkit-backdrop-filter:blur(10px) saturate(1.5);
+  }
+  .мобильный-знак::before{
+    inset:-4px;border:0;
+    background:conic-gradient(from 40deg,var(--ion-cyan),transparent 25%,var(--ion-blue) 48%,transparent 70%,var(--ion-mint));
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 1px),#000 0);
+    mask:radial-gradient(farthest-side,transparent calc(100% - 1px),#000 0);
+    animation:кольцо-плывёт 7s linear infinite;opacity:.78;
+  }
+  .мобильный-знак::after{width:4px;height:4px;right:1px;top:4px;background:var(--ion-cyan)}
+  .мобильный-имя strong{font-size:23px;font-weight:730}
+  .мобильный-имя span{opacity:.70}
+  .живая-связь{padding:0;background:none;border:0;font-size:10.5px}
+  .живая-связь i{width:6px;height:6px}
+
+  .потоки{
+    position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;
+    padding:4px;border-radius:22px;overflow:hidden;
+    background:oklch(1 0 0/.15);border:0;
+    box-shadow:inset 0 0 0 1px oklch(1 0 0/.32),0 14px 32px -26px oklch(.23 .19 230/.70);
+    backdrop-filter:blur(14px) saturate(1.55);-webkit-backdrop-filter:blur(14px) saturate(1.55);
+  }
+  .потоки button{
+    isolation:isolate;min-width:0;padding:9px 3px;border:0;border-radius:18px;
+    background:none;box-shadow:none;color:oklch(.26 .045 220/.68);
+    font-size:12.5px;font-weight:570;
+  }
+  .потоки button::before{
+    content:"";position:absolute;z-index:-1;inset:0;border-radius:inherit;
+    background:linear-gradient(115deg,oklch(.82 .18 188/.46),oklch(.63 .19 239/.26),oklch(.82 .15 165/.38));
+    opacity:0;transform:scale(.72);transition:transform .48s cubic-bezier(.16,1,.3,1),opacity .28s;
+    will-change:transform,opacity;
+  }
+  .потоки button::after{
+    left:42%;right:42%;bottom:4px;height:3px;background:var(--ion-cyan);
+    box-shadow:0 0 10px var(--ion-cyan);
+  }
+  .потоки button.on{background:none;border:0;box-shadow:inset 0 0 0 1px oklch(1 0 0/.26);color:oklch(.20 .11 226);font-weight:710}
+  .потоки button.on::before{opacity:1;transform:scale(1);animation:линза-цвет 6s ease-in-out infinite alternate}
+
+  .подшапка{padding:8px 14px 5px;background:none}
+  .подшапка input{
+    height:44px;border:0;border-radius:22px;
+    background:oklch(1 0 0/.19);
+    box-shadow:inset 0 0 0 1px oklch(1 0 0/.35),inset 8px 10px 24px oklch(1 0 0/.15);
+    backdrop-filter:blur(15px) saturate(1.5);-webkit-backdrop-filter:blur(15px) saturate(1.5);
+  }
+  .подшапка input:focus{border:0;box-shadow:inset 0 0 0 1px oklch(.80 .16 190/.65),0 0 24px oklch(.70 .18 200/.18)}
+  .вид{
+    width:auto;height:44px;padding:0 7px;border:0;border-radius:0;
+    background:none;box-shadow:none;color:oklch(.24 .10 220/.78);font-size:11px;
+  }
+
+  main{padding:8px 14px 15px;perspective:1100px}
+  .день{
+    width:100%;display:flex;align-items:center;gap:9px;padding:2px 0;
+    background:none;border:0;text-shadow:0 1px 9px white;
+  }
+  .день::before,.день::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,oklch(1 0 0/.52))}
+  .день::after{transform:scaleX(-1)}
+  .мысль{
+    width:92%;padding:16px 17px 12px;border:0;border-radius:30px 30px 30px 11px;
+    translate:0 var(--gravity,0);scale:var(--focus,1);
+    transform:perspective(900px) rotateX(var(--tilt,0deg));
+    transition:transform .16s linear,scale .16s linear;
+    color:oklch(.17 .025 224);
+    background:linear-gradient(140deg,oklch(1 0 0/.34),oklch(.78 .12 198/.13));
+    box-shadow:inset 0 0 0 1px oklch(1 0 0/.53),
+               inset 10px 14px 30px oklch(1 0 0/.12),
+               0 18px 40px -28px oklch(.18 .19 226/.72);
+    backdrop-filter:blur(17px) saturate(1.55) brightness(1.05);
+    -webkit-backdrop-filter:blur(17px) saturate(1.55) brightness(1.05);
+    content-visibility:auto;contain-intrinsic-size:88px;
+  }
+  .мысль::before{
+    z-index:0;left:-45%;top:-20%;width:28%;height:140%;border-radius:0;filter:none;
+    background:linear-gradient(90deg,transparent,oklch(.86 .16 188/.16),oklch(1 0 0/.38),transparent);
+    transform:skewX(-17deg);animation:призма 11s ease-in-out infinite;
+    will-change:transform,opacity;
+  }
+  .мысль:nth-of-type(3n)::before{animation-delay:-3.7s}
+  .мысль:nth-of-type(3n+1)::before{animation-delay:-7.4s}
+  .мысль::after{
+    right:18px;top:12px;width:30px;height:2px;border:0;border-radius:4px;
+    background:linear-gradient(90deg,transparent,var(--ion-cyan));box-shadow:0 0 10px oklch(.75 .18 195/.30);
+  }
+  .мысль.своя{border-radius:30px 30px 11px 30px;background:linear-gradient(140deg,oklch(1 0 0/.31),oklch(.65 .16 232/.11))}
+  .мысль.чужая{
+    border-radius:30px 30px 30px 11px;
+    background:linear-gradient(140deg,oklch(1 0 0/.30),oklch(.72 .17 173/.13));
+    box-shadow:inset 0 0 0 1px oklch(1 0 0/.48),inset 3px 0 0 oklch(.76 .18 174/.40),0 18px 40px -28px oklch(.16 .17 194/.70);
+  }
+  .низ{position:relative;z-index:1;padding-top:8px;border:0;color:oklch(.25 .05 224/.62)}
+
+  footer{padding:8px 11px max(10px,env(safe-area-inset-bottom));background:none}
+  .строка{
+    min-height:62px;padding:6px 8px;border:0;border-radius:31px;
+    background:oklch(1 0 0/.18);
+    box-shadow:inset 0 0 0 1px oklch(1 0 0/.50),inset 10px 14px 28px oklch(1 0 0/.15),0 20px 46px -25px oklch(.17 .20 231/.74);
+    backdrop-filter:blur(18px) saturate(1.65);-webkit-backdrop-filter:blur(18px) saturate(1.65);
+  }
+  .строка textarea{min-height:50px;font-weight:540}
+  .круг{
+    width:50px;height:50px;border:0;border-radius:50%;background:transparent;box-shadow:none;
+    color:oklch(.27 .18 221);
+  }
+  .круг::before{
+    content:"";position:absolute;inset:7px;border-radius:50%;
+    background:radial-gradient(circle,oklch(.82 .18 188/.23),transparent 68%);
+    opacity:.64;animation:орган-дышит 3.4s ease-in-out infinite;
+    will-change:transform,opacity;
+  }
+  .круг svg{position:relative;z-index:1;filter:drop-shadow(0 0 7px oklch(.70 .18 202/.35))}
+  #послать,#микрофон.пишет{
+    color:white;background:linear-gradient(145deg,oklch(.76 .18 187/.82),oklch(.43 .22 238/.86));
+    box-shadow:inset 0 0 0 1px oklch(1 0 0/.38),0 0 24px oklch(.55 .22 220/.34);
+    will-change:transform,opacity;
+  }
+  .фото-лист{background:oklch(.90 .045 202/.55);backdrop-filter:blur(22px) saturate(1.65);-webkit-backdrop-filter:blur(22px) saturate(1.65)}
+  .фото-источники{padding:4px;border-radius:25px;background:oklch(1 0 0/.13);box-shadow:inset 0 0 0 1px oklch(1 0 0/.30)}
+  .фото-источник{min-height:104px;border:0;background:transparent;box-shadow:none}
+  .фото-источник svg{width:45px;height:45px;padding:10px;border-radius:17px;background:oklch(1 0 0/.18);box-shadow:inset 0 0 0 1px oklch(1 0 0/.30)}
+
+  @keyframes поле-дыхание{50%{opacity:.54;transform:translateY(3px)}}
+  @keyframes кольцо-плывёт{to{transform:rotate(360deg)}}
+  @keyframes линза-цвет{from{transform:scale(1) translateX(-1px)}to{transform:scale(1.035) translateX(1px)}}
+  @keyframes призма{0%,68%{transform:translateX(0) skewX(-17deg);opacity:0}76%{opacity:.72}100%{transform:translateX(560%) skewX(-17deg);opacity:0}}
+  @keyframes орган-дышит{0%,100%{transform:scale(.76);opacity:.35}50%{transform:scale(1.20);opacity:.82}}
+}
+
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important; transition:none !important}
 }
@@ -470,7 +835,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v23</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v28</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -710,7 +1075,7 @@ function нарисовать_потоки(){
     $('потоки').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === б));
     подпись_потока();
     нарисовать();
-    $('лента').scrollTop = $('лента').scrollHeight;
+    к_низу();
   });
 }
 
@@ -951,7 +1316,7 @@ function рисуй(html){
   л.innerHTML = html;
 
   if(внизу){
-    л.scrollTop = л.scrollHeight;
+    к_низу();
   } else if(якоря.length){
     const вернуть = () => {
       for(const я of якоря){
@@ -963,6 +1328,25 @@ function рисуй(html){
     requestAnimationFrame(вернуть);        // и после того, как браузер пересчитал размеры
   }
   показать_фото();
+}
+
+/* К НИЗУ — ДО НАСТОЯЩЕГО НИЗА. Женя 09.09: «когда отправляю… сообщение, оно падает вниз,
+   нужно пролистывать». Замер 23.09 на стенде: после отрисовки лента стоит ровно внизу
+   (scrollHeight 1728), а через мгновение низ уезжает на ~1000 px (2716) без единой
+   перерисовки. Виноват `content-visibility:auto` у карточек v27: вне экрана карточка
+   считается высотой 88 px и получает настоящую, только доехав до экрана. Один
+   `scrollTop = scrollHeight` прокручивает к прикидке, а настоящий низ уезжает вместе
+   с твоей мыслью. Поэтому держимся за низ, пока высота ленты не перестанет расти. */
+function к_низу(){
+  const л = $('лента');
+  let было = -1, тихо = 0, кадров = 0;
+  const шаг = () => {
+    л.scrollTop = л.scrollHeight;
+    тихо = л.scrollHeight === было ? тихо + 1 : 0;
+    было = л.scrollHeight;
+    if(тихо < 3 && ++кадров < 40) requestAnimationFrame(шаг);
+  };
+  шаг();
 }
 
 const имя_потока = к => (ПОТОКИ.find(п => п.код === к) || {}).имя || к;
@@ -1102,12 +1486,35 @@ function обновить_состояние(){
   $('состояние').textContent = `${n === 1 ? 'одна' : n} ${слово}, когда появится сеть`;
 }
 
+/* Расклад 3 (сервер УСПЕЛ записать, а ответ не дошёл): insert бросил ошибку → мысль
+   осталась в очереди → повторная вставка задвоила бы её. Идемпотентности у insert нет,
+   а уникальный индекс ставить нельзя — в ленте лежат старые дубли, миграция упадёт на них.
+   Поэтому перед вставкой спрашиваем ленту: нет ли уже мысли этого автора с тем же «когда».
+   «Когда» на сервере — это created_at той самой записи, а метку очереди мы снимаем тем же
+   мигом (± время заливки фото/звука и потери ответа), поэтому сверяем по окну вокруг метки.
+   Штаб просил «когда+кто»; добавил ещё совпадение тела — иначе две РАЗНЫЕ мысли, попавшие
+   в одно окно, схлопнулись бы в одну, и живая мысль пропала бы (потерять мысль хуже дубля). */
+async function уже_записано(з){
+  try{
+    const окно = 180000;   // ±3 мин: заливка, потеря ответа и скос часов телефона укладываются
+    const {data, error} = await sb.from('gili_notes')
+      .select('body,audio,created_at')
+      .eq('author', Я.id)
+      .gte('created_at', new Date(з.когда - окно).toISOString())
+      .lte('created_at', new Date(з.когда + окно).toISOString());
+    if(error || !data || !data.length) return false;   // не проверили или пусто — вставляем
+    if(з.звук) return data.some(м => м.audio);          // голос: свой звук в окне — та самая мысль
+    return data.some(м => (м.body || '') === (з.текст || ''));  // текст/фото: тело совпало
+  }catch{ return false; }
+}
+
 let ВЕЗУ = false;
 async function везти_очередь(){
   if(ВЕЗУ || !Я || !navigator.onLine || !очередь().length) return;
   ВЕЗУ = true;
   for(const з of очередь()){
     try{
+      if(await уже_записано(з)){ из_очереди(з.когда); continue; }  // расклад 3: не дублируем
       if(з.звук){            // сказанное без сети: звук ждал в телефоне буквами, теперь уезжает
         const путь = await залить_звук(избуквы(з.звук));
         const {error} = await sb.from('gili_notes').insert(
@@ -1422,9 +1829,7 @@ async function отправить(){
                       created_at:new Date().toISOString(), status:'отправляю…', author:Я.id};
   МЫСЛИ = [мгновенная].concat(МЫСЛИ);
   нарисовать();
-  const лента = $('лента');
-  лента.scrollTop = лента.scrollHeight;
-  requestAnimationFrame(() => { лента.scrollTop = лента.scrollHeight; });
+  к_низу();
 
   try{
     if(!navigator.onLine) throw new Error('нет сети');
@@ -1456,7 +1861,7 @@ if(window.visualViewport){
   const подстроиться = () => {
     const скрыто = Math.max(0, window.innerHeight - вид.height - вид.offsetTop);
     document.body.style.height = `calc(100% - ${скрыто}px)`;
-    if(document.activeElement === поле) $('лента').scrollTop = $('лента').scrollHeight;
+    if(document.activeElement === поле) к_низу();
   };
   вид.addEventListener('resize', подстроиться);
   вид.addEventListener('scroll', подстроиться);
@@ -1483,7 +1888,7 @@ window.addEventListener('hashchange', () => { if(Я) по_ссылке(); });
 function оживить_сцену(){
   if(!matchMedia('(max-width:720px)').matches || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
   const c = $('сцена'), ctx = c.getContext('2d', {alpha:true});
-  let w=0,h=0,dpr=1,кадр=0,жив=true;
+  let w=0,h=0,dpr=1,кадр=0,жив=true,рябь=[];
   const размер = () => {
     dpr = Math.min(devicePixelRatio || 1, 1.6); w = innerWidth; h = innerHeight;
     c.width = Math.round(w*dpr); c.height = Math.round(h*dpr); c.style.width=w+'px'; c.style.height=h+'px';
@@ -1503,8 +1908,32 @@ function оживить_сцену(){
       }
       ctx.strokeStyle=`rgba(255,255,255,${a})`;ctx.stroke();
     }
+    рябь = рябь.filter(к => {
+      const возраст=t-к.t;
+      if(возраст>1050) return false;
+      const ход=возраст/1050, радиус=12+ход*105, альфа=(1-ход)*.34;
+      ctx.beginPath();ctx.arc(к.x,к.y,радиус,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(128,245,255,${альфа})`;ctx.lineWidth=1.15;ctx.stroke();
+      ctx.beginPath();ctx.arc(к.x,к.y,радиус*.58,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(255,255,255,${альфа*.72})`;ctx.lineWidth=.65;ctx.stroke();
+      return true;
+    });
     кадр=requestAnimationFrame(рисовать);
   };
+  let движение=0;
+  const след = e => {
+    if(движение) return;
+    const x=e.clientX,y=e.clientY;
+    движение=requestAnimationFrame(()=>{
+      движение=0;
+      document.documentElement.style.setProperty('--touch-x',x+'px');
+      document.documentElement.style.setProperty('--touch-y',y+'px');
+    });
+  };
+  addEventListener('pointermove',след,{passive:true});
+  addEventListener('pointerdown',e=>{
+    след(e);рябь.push({x:e.clientX,y:e.clientY,t:performance.now()});
+  },{passive:true});
   addEventListener('resize', размер,{passive:true});
   document.addEventListener('visibilitychange',()=>{
     жив=!document.hidden;
@@ -1516,10 +1945,12 @@ function оживить_сцену(){
   л.addEventListener('scroll',()=>{
     if(ждём) return; ждём=true;
     requestAnimationFrame(()=>{
-      ждём=false; const середина=л.getBoundingClientRect().top+l.clientHeight/2;
+      ждём=false; const середина=л.getBoundingClientRect().top+л.clientHeight/2;
       л.querySelectorAll('.мысль').forEach(м=>{
         const r=м.getBoundingClientRect(), d=Math.max(-1,Math.min(1,(r.top+r.height/2-середина)/л.clientHeight));
         м.style.setProperty('--gravity',(d*3.5).toFixed(2)+'px');
+        м.style.setProperty('--focus',(1-Math.abs(d)*.018).toFixed(3));
+        м.style.setProperty('--tilt',(d*-1.7).toFixed(2)+'deg');
       });
     });
   },{passive:true});
