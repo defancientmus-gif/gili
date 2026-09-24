@@ -188,19 +188,47 @@ main > *{flex:none}
 .внутри i{display:block; margin-top:6px; font-style:normal; color:var(--fg)}
 .внутри.ход{background:none; box-shadow:none; padding:2px 0 0; color:var(--fg-l); font-size:12.5px}
 .внутри.подробно span{white-space:pre-wrap; font-size:12.5px; overflow-x:auto}
-/* РУЧНАЯ СОРТИРОВКА. Женя 11.08: «алгоритмы распознавания сортировали заметки сами,
-   но и инструменты для ручной сортировки были». Алгоритм ошибается — человек поправляет
-   одним касанием, и эта поправка учит разбор (перенос попадает в уроки дома). */
-.правка{display:flex; gap:6px; flex-wrap:wrap; margin-top:9px; animation:явь .2s var(--пружина)}
-.правка button{
-  font:inherit; font-size:12.5px; padding:6px 11px; border-radius:10px;
-  border:1px solid oklch(1 0 0 / .70); color:var(--fg-m);
-  background:linear-gradient(158deg, oklch(1 0 0 / .8), oklch(0.965 0.012 210 / .68));
-  transition:transform .14s var(--пружина), color .18s;
+/* МЕНЮ МЫСЛИ — как в ТГ (Женя 24.09: «прям 1 в 1 как в тг»). Мысль поднимается над притихшей
+   лентой, рядом столбик действий. Ручная сортировка (Женя 11.08) живёт здесь же: «Перенести»
+   учит разбор, как и раньше. Стекло то же, что у листа фото; линий нет — держит воздух. */
+.меню-мысли{position:fixed; inset:0; z-index:85; touch-action:none; overscroll-behavior:contain}
+.меню-фон{position:absolute; inset:0; background:oklch(.12 .025 215/.20);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); animation:меню-фон .18s ease-out both}
+.меню-копия{position:fixed; display:flex; flex-direction:column; overflow:auto; touch-action:pan-y;
+  overscroll-behavior:contain; border-radius:var(--r); animation:меню-подъём .26s var(--пружина) both}
+.меню-мысли .меню-копия .мысль{margin:0; transform:none; animation:none; content-visibility:visible;
+  flex:none; align-self:stretch; width:100%; max-width:none;
+  -webkit-user-select:none; user-select:none; border-color:oklch(1 0 0/.9);
+  box-shadow:inset 0 1px 0 white, 0 0 0 3px oklch(.72 .14 207/.16), 0 18px 38px -20px oklch(.22 .15 216/.55)}
+.меню-список{position:fixed; min-width:220px; max-width:calc(100vw - 24px); padding:5px; border-radius:20px;
+  background:linear-gradient(155deg, oklch(1 0 0/.9), oklch(.95 .02 210/.82));
+  border:1px solid oklch(1 0 0/.86);
+  box-shadow:inset 0 1px 0 oklch(1 0 0/.98), 0 22px 50px -24px oklch(.20 .07 220/.5);
+  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); animation:меню-явь .2s var(--пружина) both}
+.меню-список .пункт{display:flex; align-items:center; justify-content:space-between; gap:18px; width:100%;
+  min-height:44px; padding:0 12px 0 14px; border:0; border-radius:15px; background:none;
+  font:inherit; font-size:16px; color:var(--fg); text-align:left; cursor:pointer; transition:background .12s}
+.меню-список .пункт svg{width:20px; height:20px; flex:none; fill:none; stroke:currentColor; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round; color:var(--fg-m)}
+.меню-список .пункт.опасно{margin-top:4px}
+.меню-список .пункт.опасно, .меню-список .пункт.опасно svg{color:oklch(0.52 0.16 25)}
+.меню-список .пункт.назад{justify-content:flex-start; gap:8px; color:var(--fg-m)}
+@media (hover:hover){.меню-список .пункт:hover{background:oklch(.32 .035 210/.06)}}
+.меню-список .пункт:active{background:oklch(.32 .035 210/.10)}
+.меню-список .пункт:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+.меню-мысли.уходит{opacity:0; transition:opacity .14s ease-out; pointer-events:none}
+@keyframes меню-фон{from{opacity:0}}
+@keyframes меню-подъём{from{transform:translateY(var(--сдвиг, 0px))}}
+@keyframes меню-явь{from{opacity:0; transform:scale(.9) translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){
+  .меню-фон, .меню-копия, .меню-список{animation:none}
+  .меню-мысли.уходит{transition:none}
 }
-.правка button:active{transform:scale(.94)}
-.правка button.готово{color:oklch(0.42 0.13 150)}
-.правка button.убрать{color:oklch(0.5 0.15 20)}
+/* на телефоне долгое нажатие — это меню мысли, а не выделение текста (копирует «Копировать») */
+@media (hover:none){
+  #лента .мысль{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none}
+  #лента .мысль textarea{-webkit-user-select:text; user-select:text}
+}
 /* редактор на месте текста мысли: тот же шрифт и та же ширина, что у самой мысли —
    человек правит то, что видел, а не переписывает в другом окне */
 .мысль textarea.редактор{width:100%; min-height:44px; margin:0; padding:9px 11px;
@@ -214,7 +242,6 @@ main > *{flex:none}
      background:linear-gradient(158deg, oklch(1 0 0 / .8), oklch(0.965 0.012 210 / .68))}
 .правка-да{border:1px solid var(--accent); background:var(--accent); color:#fff}
 .правка-да:hover{opacity:.88}
-.мысль.выбрана{border-color:var(--accent)}
 /* ГОЛОС В КАРТОЧКЕ. Мысль встаёт в ленту в ту же секунду, когда отпустил кнопку,
    а слова догоняют с мака. Пока их нет — карточка честно говорит, чего ждёт, и даёт
    послушать: человек должен видеть, что мысль спасена, а не гадать. */
@@ -249,7 +276,21 @@ main > *{flex:none}
 mark{background:oklch(0.90 0.10 95 / .75); color:inherit; border-radius:3px; padding:0 1px}
 
 /* ── написать ─────────────────────────────────────────────────────────────── */
-footer{padding:4px 12px calc(8px + env(safe-area-inset-bottom))}
+footer{position:relative; padding:4px 12px calc(8px + env(safe-area-inset-bottom))}
+/* «↓ К СВЕЖИМ» — как в ТГ: ушёл вверх по ленте, над полем круглая кнопка возвращает вниз */
+.к-свежим{position:absolute; right:16px; bottom:calc(100% + 10px); z-index:3; width:42px; height:42px;
+  display:grid; place-items:center; padding:0; border-radius:50%; cursor:pointer; color:var(--fg-m);
+  background:linear-gradient(158deg, oklch(1 0 0/.9), oklch(.95 .02 210/.8)); border:1px solid oklch(1 0 0/.8);
+  box-shadow:inset 0 1px 0 oklch(1 0 0/.96), 0 8px 20px -10px oklch(.2 .07 220/.45);
+  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+  opacity:0; visibility:hidden; transform:translateY(8px) scale(.9);
+  transition:opacity .18s, transform .2s var(--пружина), visibility 0s linear .2s}
+.к-свежим.видна{opacity:1; visibility:visible; transform:none;
+  transition:opacity .18s, transform .2s var(--пружина), visibility 0s}
+.к-свежим svg{width:22px; height:22px}
+.к-свежим:active{transform:scale(.92)}
+.к-свежим:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.к-свежим, .к-свежим.видна{transition:none}}
 .фишки{display:flex; gap:7px; padding-bottom:8px; flex-wrap:wrap}
 .фишка{position:relative; width:56px; height:56px; border-radius:12px; overflow:hidden;
   animation:явь .24s var(--пружина)}
@@ -394,8 +435,6 @@ textarea:focus{outline:none; border-color:var(--accent)}
   }
   .мысль.готовая{opacity:.56}
   .низ{margin-top:7px; gap:5px; font-size:11.5px}
-  .правка{gap:5px; padding-top:2px}
-  .правка button{padding:7px 10px; border-radius:11px; background:oklch(1 0 0/.48)}
   .снимки img{width:76px;height:76px;border-radius:13px}
   .пусто{margin:auto 0; padding:44px 24px; font-size:15px}
 
@@ -611,7 +650,6 @@ textarea:focus{outline:none; border-color:var(--accent)}
     box-shadow:inset 0 1px 0 white,inset 4px 0 0 oklch(.72 .14 190/.32),
                0 14px 34px -22px oklch(.20 .12 202/.62);
   }
-  .мысль.выбрана{border-color:oklch(.69 .15 207);box-shadow:inset 0 1px 0 white,0 0 0 3px oklch(.72 .14 207/.18),0 18px 38px -22px oklch(.22 .15 216/.70)}
   .низ{padding-top:7px;border-top:1px solid oklch(1 0 0/.38);color:oklch(.32 .04 216/.62)}
   .низ b{color:oklch(.34 .08 213)}
 
@@ -873,7 +911,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v34</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v36</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -885,6 +923,9 @@ textarea:focus{outline:none; border-color:var(--accent)}
   </div>
   <main id="лента"></main>
   <footer>
+    <button class="к-свежим" id="к-свежим" aria-label="к свежим мыслям">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
+    </button>
     <div class="фишки" id="фишки"></div>
     <div class="строка">
       <textarea id="поле" rows="1" placeholder="…" autocorrect="off" autocapitalize="off" spellcheck="false" autocomplete="off"></textarea>
@@ -1278,19 +1319,24 @@ function нарисовать(){
     дни[дни.length - 1].мысли.push(м);
   }
   let html = '';
+  ПОКАЗАНО.clear();
   дни.forEach((д, i) => {
     const последний = i === дни.length - 1;
     // живой разговор (последний день), поиск и день, где что-то открыто, — всегда целиком
     const целиком = последний || ИСКОМОЕ ||
       д.мысли.some(м => м.ждёт || м.id === ОТКРЫТА || м.id === ПРАВЛЮ);
     if(целиком) html += `<div class="день">${день(д.мысли[0].created_at)}</div>`;
-    else html += полоса(д, РАСКРЫТЫ.has(д.ключ));
+    // день, где были только напоминания дома, полосой не встаёт: суть дня — мысли людей,
+    // а проверки дома («сверить расход») выдавали себя за неё (Дом 24.09). Найти их — поиском.
+    else if(д.мысли.some(м => !напоминание_ли(м))) html += полоса(д, РАСКРЫТЫ.has(д.ключ));
+    else return;
     if(целиком || РАСКРЫТЫ.has(д.ключ)) html += д.мысли.map(карточка).join('');
   });
   рисуй(html);
 }
 
 function карточка(м){
+  ПОКАЗАНО.set(м.id, м);                     // меню берёт мысль отсюда: ждущих в МЫСЛИ нет
   const снимки = (м.photos || []);
   const фото = снимки.length
     ? `<div class="снимки">` + снимки.map(п => `<img loading="lazy" data-путь="${экран(п)}" alt="снимок">`).join('') + `</div>`
@@ -1315,9 +1361,7 @@ function карточка(м){
           `<b class="${окраска(м.status)}">${м.ждёт ? (НА_МАКЕ ? 'ждёт отправки' : 'в телефоне') : человечно(м.status)}</b>` +
           послушать +
           (ИСКОМОЕ ? `<span>${имя_потока(м.flow)}</span>` : '') +
-          (чей ? `<span class="чей">${экран(чей)}</span>` : '') + `</div>` +
-          // «отправляю…» живёт долю секунды и ещё не имеет своего номера в ленте — править нечего
-          (открыта && !правится && !String(м.id).startsWith('…') ? (м.ждёт ? панель_ждущей(м) : панель(м)) : '') + `</div>`;
+          (чей ? `<span class="чей">${экран(чей)}</span>` : '') + `</div></div>`;
 }
 
 /* ПОЛОСЫ ПРОШЕДШИХ ДНЕЙ. Женя 24.09 (ответ на вопрос про «сверху вниз»): «верх сортировать
@@ -1361,18 +1405,19 @@ function суть_мысли(м){
 const мыслей = n => n + ' ' + ((n % 10 === 1 && n % 100 !== 11) ? 'мысль'
   : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 'мысли' : 'мыслей');
 function полоса(д, раскрыта){
-  const сути = [...new Set(д.мысли.map(суть_мысли).filter(Boolean))];
+  const люди = д.мысли.filter(м => !напоминание_ли(м));   // «дом напомнил» — не суть дня
+  const сути = [...new Set(люди.map(суть_мысли).filter(Boolean))];
   const куда = {};
-  for(const м of д.мысли){
+  for(const м of люди){
     const с = человечно(м.status || '');
     if(с.startsWith('→')) куда[с] = (куда[с] || 0) + 1;
   }
   const метки = Object.entries(куда).sort((a, b) => b[1] - a[1]).slice(0, 2)
     .map(([к, n]) => n > 1 ? `${к} ${n}` : к);
-  const снимки = д.мысли.flatMap(м => м.photos || []).slice(0, 3);
+  const снимки = люди.flatMap(м => м.photos || []).slice(0, 3);
   return `<button class="полоса стекло${раскрыта ? ' раскрыта' : ''}" data-ид="д${д.ключ}" data-день="${д.ключ}">` +
     `<span class="когда">${экран(день(д.мысли[0].created_at))}` +
-      `<small>${раскрыта ? 'свернуть' : [мыслей(д.мысли.length), ...метки].map(экран).join(' · ')}</small></span>` +
+      `<small>${раскрыта ? 'свернуть' : [мыслей(люди.length), ...метки].map(экран).join(' · ')}</small></span>` +
     `<span class="суть">${экран(сути.slice(0, 4).join(' · ') || (снимки.length ? 'снимки' : ''))}</span>` +
     (снимки.length ? `<span class="мини">` +
       снимки.map(п => `<img loading="lazy" data-путь="${экран(п)}" alt="">`).join('') + `</span>` : '') +
@@ -1381,27 +1426,145 @@ function полоса(д, раскрыта){
 
 /* Не перерисовываем одно и то же: замена разметки убивает прокрутку и мигает.
    (Та же грабля была в домашнем Гилфойле — лента моргала под курсором.) */
-/* Панель под мыслью: куда переложить, отметить сделанной, убрать совсем. */
-function панель(м){
-  const кнопки = ПОТОКИ.filter(п => п.код !== м.flow)
-    .map(п => `<button onclick="перенести('${м.id}','${п.код}')">→ ${п.имя}</button>`).join('');
-  return `<div class="правка">` +
-         `<button onclick="править('${м.id}')">изменить</button>${кнопки}` +
-         (обработана(м) ? '' : `<button class="готово" onclick="пометить_готовой('${м.id}')">✓ сделано</button>`) +
-         `<button class="убрать" onclick="убрать('${м.id}')">убрать</button></div>`;
+/* МЕНЮ МЫСЛИ — КАК В ТЕЛЕГРАМЕ. Женя 24.09 12:32 о старой логике касания: «Да давай прям
+   1 в 1 как в тг. Удобно и понятно». Было: касание раскрывало под мыслью строку из шести
+   кнопок (изменить, три потока, сделано, убрать). Лента под пальцем разъезжалась, а половину
+   строки занимали потоки. Теперь как в ТГ: касание или долгое нажатие поднимает мысль над
+   притихшей лентой, рядом столбик действий. «Перенести» открывает потоки в том же меню, как
+   «Переслать» в ТГ. На маке то же по щелчку и правому щелчку. Закрыть можно касанием мимо или Esc.
+   Длинное (вывод напоминания, суть ссылки) раскрывается касанием по самой вставке, как «ещё» в ТГ.
+
+   ЖДУЩУЮ МЫСЛЬ ТОЖЕ МОЖНО ИСПРАВИТЬ (Женя 24.09 03:59: «Исправлять заметки нельзя»). Две его
+   мысли той ночи дошли до мака в одну секунду: их довезла очередь, а пока они ждали, касание
+   не давало ничего. Ждущая лежит в памяти окна, правим её прямо в очереди. «Убрать» и
+   «Перенести» у неё нет намеренно: её ещё нет в ленте, убранная пропала бы без следа. */
+const ЗНАЧКИ = {
+  править: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M14 6l4 4"/>',
+  копировать: '<rect x="9" y="9" width="11" height="11" rx="3"/><path d="M15 9V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v5a3 3 0 0 0 3 3h2"/>',
+  куда: '<path d="M14 5l6 6-6 6"/><path d="M20 11h-9a6 6 0 0 0-6 6v2"/>',
+  готово: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  убрать: '<path d="M5 7h14"/><path d="M10 7V5h4v2"/><path d="M7 7l1 12h8l1-12"/>',
+  назад: '<path d="M15 5l-7 7 7 7"/>',
+};
+const значок = к => `<svg viewBox="0 0 24 24" aria-hidden="true">${ЗНАЧКИ[к]}</svg>`;
+let МЕНЮ = null;                           // {ид, шаг: 'главное' | 'куда'}, пока меню открыто
+const ПОКАЗАНО = new Map();                // ид → мысль, какой её сейчас видно (с ждущими)
+let ГЛОТАТЬ = false;                       // меню открыто долгим нажатием: отпускание пальца — не щелчок
+
+function пункты_меню(м){
+  if(МЕНЮ.шаг === 'куда')
+    return [['назад', 'Назад', 'назад']].concat(ПОТОКИ.filter(п => п.код !== м.flow)
+      .map(п => ['в:' + п.код, п.имя, '']));
+  const слова = !м.звук_ждёт && !ждёт_слов(м) && !!(м.сырое ?? м.body ?? '').trim();
+  const своя = !м.author || м.ждёт || (Я && м.author === Я.id);
+  return [
+    слова && своя && !напоминание_ли(м) && ['править', 'Изменить', 'править'],
+    слова && ['копировать', 'Копировать', 'копировать'],
+    !м.ждёт && ['куда', 'Перенести', 'куда'],
+    !м.ждёт && !обработана(м) && ['готово', 'Сделано', 'готово'],
+    !м.ждёт && ['убрать', 'Убрать', 'убрать'],
+  ].filter(Boolean);
 }
 
-/* ЖДУЩУЮ МЫСЛЬ ТОЖЕ МОЖНО ИСПРАВИТЬ. Женя 24.09 03:59: «Исправлять заметки нельзя».
-   Замер по ленте: две его мысли той ночи дошли до мака в одну и ту же секунду, 03:56:43.
-   Руками так не отправить, это очередь довезла их разом. А до этого они висели карточками
-   «в телефоне», и касание по ним не давало ничего: панели у ждущей мысли не было вовсе.
-   В первой стояла опечатка («Позоже»). Ждущая мысль лежит здесь же, в памяти окна, так что
-   править её проще всех: меняем текст в очереди, и до дома едет уже исправленная.
-   «Убрать» здесь нет намеренно: ждущей мысли ещё нет в ленте, убранная пропадёт без следа. */
-function панель_ждущей(м){
-  if(м.звук_ждёт) return '';                         // у сказанного ещё нет слов — править нечего
-  return `<div class="правка"><button onclick="править('${м.id}')">изменить</button></div>`;
+function открыть_меню(ид, карточка){
+  // «отправляю…» живёт долю секунды и ещё не имеет своего номера — делать с ней нечего
+  if(!карточка || ПРАВЛЮ || МЕНЮ?.ид === ид || String(ид).startsWith('…')) return;
+  const м = ПОКАЗАНО.get(ид); if(!м) return;
+  МЕНЮ = {ид, шаг: 'главное'};
+  if(!пункты_меню(м).length){ МЕНЮ = null; return; }
+  $('меню-мысли')?.remove();
+  // Размер берём без наклона ленты (--tilt, --focus): рамка повёрнутой карточки на пару пикселей
+  // уже настоящей, и в копии текст переносился по-другому (замер: 4 строки из 40).
+  const о = карточка.getBoundingClientRect(), ш = карточка.offsetWidth, в = карточка.offsetHeight;
+  const r = {left: о.left + (о.width - ш) / 2, top: о.top + (о.height - в) / 2, width: ш, height: в};
+  r.right = r.left + ш;
+  const копия = карточка.cloneNode(true);
+  копия.removeAttribute('style');
+  [копия, ...копия.querySelectorAll('[data-ид]')].forEach(е => е.removeAttribute('data-ид'));
+  const слой = document.createElement('div');
+  слой.id = 'меню-мысли'; слой.className = 'меню-мысли';
+  слой.innerHTML = `<div class="меню-фон"></div><div class="меню-копия"></div>` +
+                   `<div class="меню-список" role="menu" aria-label="что сделать с мыслью"></div>`;
+  слой.querySelector('.меню-копия').append(копия);
+  document.body.append(слой);
+  нарисовать_меню();
+
+  // Место как в ТГ: мысль остаётся где была, меню под ней. Не влезает — мысль уезжает вверх,
+  // а слишком длинная ужимается и листается внутри.
+  const вв = window.visualViewport;
+  const сверху = (вв?.offsetTop || 0) + Math.max(12, безопасно_сверху());
+  const снизу = (вв ? вв.offsetTop + вв.height : innerHeight) - 12;
+  const с = слой.querySelector('.меню-список'), к = слой.querySelector('.меню-копия');
+  к.style.width = r.width + 'px';
+  // высоту меряем у копии: у ленты карточки рисуются лениво (content-visibility), и рамка
+  // карточки вне экрана — прикидка в 88 px, а не настоящая высота
+  const меню_в = с.offsetHeight, зазор = 8, своя_в = Math.max(r.height, копия.offsetHeight);
+  const выс = Math.min(своя_в, Math.max(96, снизу - сверху - меню_в - зазор));
+  const верх = Math.max(сверху, Math.min(r.top, снизу - меню_в - зазор - выс));
+  к.style.cssText = `top:${верх}px; left:${r.left}px; width:${r.width}px; max-height:${выс}px; ` +
+                    `--сдвиг:${(r.top - верх).toFixed(1)}px`;
+  const справа = карточка.classList.contains('своя');     // своя мысль справа — меню к правому краю
+  с.style.top = (верх + выс + зазор) + 'px';
+  с.style.transformOrigin = справа ? 'top right' : 'top left';
+  if(справа) с.style.right = Math.max(12, innerWidth - r.right) + 'px';
+  else с.style.left = Math.max(12, r.left) + 'px';
 }
+
+function нарисовать_меню(){
+  const с = document.querySelector('#меню-мысли .меню-список');
+  const м = МЕНЮ && ПОКАЗАНО.get(МЕНЮ.ид);
+  if(!с || !м) return закрыть_меню();
+  с.innerHTML = пункты_меню(м).map(([д, имя, зн]) => д === 'назад'
+    ? `<button class="пункт назад" role="menuitem" data-дело="назад">${значок(зн)}<span>${имя}</span></button>`
+    : `<button class="пункт${д === 'убрать' ? ' опасно' : ''}" role="menuitem" data-дело="${д}">` +
+      `<span>${экран(имя)}</span>${зн ? значок(зн) : ''}</button>`).join('');
+  // фокус внутрь — только если меню ведут клавишами: у пальца рамки быть не должно, как в ТГ
+  if(document.activeElement?.closest?.('#меню-мысли')) с.querySelector('.пункт')?.focus({preventScroll: true});
+}
+
+function закрыть_меню(){
+  МЕНЮ = null;
+  const слой = $('меню-мысли');
+  if(!слой || слой.classList.contains('уходит')) return;
+  слой.classList.add('уходит');
+  const тихо = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  setTimeout(() => слой.remove(), тихо ? 0 : 150);
+}
+
+function дело_меню(д){
+  if(!МЕНЮ) return;
+  const ид = МЕНЮ.ид, м = ПОКАЗАНО.get(ид);
+  if(д === 'куда' || д === 'назад'){ МЕНЮ.шаг = д === 'куда' ? 'куда' : 'главное'; нарисовать_меню(); return; }
+  закрыть_меню();
+  if(д === 'править') return править(ид);
+  if(д === 'копировать') return скопировать(м);
+  if(д === 'готово') return пометить_готовой(ид);
+  if(д === 'убрать') return убрать(ид);
+  if(д.startsWith('в:')) return перенести(ид, д.slice(2));
+}
+
+function скопировать(м){
+  const т = ((м && (м.сырое ?? м.body)) || '').trim();
+  const вышло = () => сказать_внизу('скопировано', 1600);
+  const руками = () => {                     // старый Safari и окно мака без доступа к буферу
+    const п = document.createElement('textarea');
+    п.value = т; п.setAttribute('readonly', ''); п.style.cssText = 'position:fixed; top:0; opacity:0';
+    document.body.append(п); п.select();
+    let вышел = false; try{ вышел = document.execCommand('copy'); }catch{}
+    п.remove();
+    вышел ? вышло() : сказать_внизу('не скопировалось — телефон не дал');
+  };
+  navigator.clipboard?.writeText ? navigator.clipboard.writeText(т).then(вышло, руками) : руками();
+}
+
+// вырез и часы сверху у айфона: меню не должно заезжать под них
+function безопасно_сверху(){
+  const п = document.createElement('div');
+  п.style.cssText = 'position:fixed; top:env(safe-area-inset-top, 0px); visibility:hidden';
+  document.body.append(п); const в = п.getBoundingClientRect().top; п.remove();
+  return в;
+}
+
 const ждущая = ид => очередь().find(з => 'ж' + з.когда === ид);
 
 /* ИЗМЕНИТЬ ТЕКСТ МЫСЛИ. Женя 30.08: «редактировать сообщение с телефона в Гили нельзя».
@@ -1555,6 +1718,21 @@ function к_низу(){
   шаг();
 }
 
+/* «↓ К СВЕЖИМ» — как в ТГ (Дом 24.09: «прямо его "1 в 1 как в тг"»). Ушёл вверх по ленте
+   дальше чем на полэкрана — над полем круглая кнопка, касание возвращает к свежему. */
+{
+  const л = $('лента'), к = $('к-свежим');
+  // считаем прямо в прокрутке: три числа, а покадровый вызов в спящей вкладке не приходит вовсе
+  л.addEventListener('scroll', () =>
+    к.classList.toggle('видна', л.scrollHeight - л.scrollTop - л.clientHeight > л.clientHeight * .6),
+    {passive: true});
+  к.addEventListener('click', () => {
+    const тихо = matchMedia('(prefers-reduced-motion:reduce)').matches;
+    л.scrollTo({top: л.scrollHeight, behavior: тихо ? 'auto' : 'smooth'});
+    setTimeout(к_низу, тихо ? 0 : 450);   // ленивые карточки дорастают по пути — докручиваем
+  });
+}
+
 const имя_потока = к => (ПОТОКИ.find(п => п.код === к) || {}).имя || к;
 
 /* СТАТУС ГОВОРИТ ПО-ЧЕЛОВЕЧЕСКИ. Женя 13.08 спросил про свою же мысль: «✓✓ у Коры — чё это,
@@ -1581,11 +1759,20 @@ function человечно(статус){
   return с;
 }
 
-let ОТКРЫТА = null;                       // какая мысль сейчас показывает действия
+let ОТКРЫТА = null;                       // у какой мысли раскрыто длинное (вывод, суть ссылки)
 let ДЕРЖАТЬ = null;                       // что рисуй() обязан оставить на месте (раскрытая полоса)
 let ПРАВЛЮ = null;                        // какая мысль сейчас правится прямо в карточке
 document.addEventListener('click', e => {
-  if(e.target.closest('.правка') || e.target.closest('.снимки') || e.target.closest('.звук')
+  if(e.target.closest('#меню-мысли')){
+    const б = e.target.closest('.пункт');
+    б ? дело_меню(б.dataset.дело) : закрыть_меню();   // касание мимо или по самой мысли — закрыть
+    return;
+  }
+  if(МЕНЮ){                                  // палец отпустили после долгого нажатия — это не щелчок
+    ГЛОТАТЬ ? (ГЛОТАТЬ = false) : закрыть_меню();
+    return;
+  }
+  if(e.target.closest('.снимки') || e.target.closest('.звук')
      || e.target.closest('.редактор') || e.target.closest('.правка-низ')
      || e.target.closest('a.адрес')) return;          // ссылка открывается, карточка не мигает
   const п = e.target.closest('.полоса');
@@ -1595,11 +1782,51 @@ document.addEventListener('click', e => {
     ДЕРЖАТЬ = п.dataset.ид;          // полоса остаётся под пальцем, день раскрывается под ней
     нарисовать(); return;
   }
-  const м = e.target.closest('.мысль');
-  const ид = м?.dataset.ид || null;
-  ОТКРЫТА = (ид && ид !== ОТКРЫТА) ? ид : null;
-  нарисовать();
+  const м = e.target.closest('#лента .мысль');
+  if(!м) return;
+  if(e.target.closest('.внутри')){           // «ещё» как в ТГ: длинное раскрывается на месте
+    ОТКРЫТА = ОТКРЫТА === м.dataset.ид ? null : м.dataset.ид;
+    ДЕРЖАТЬ = м.dataset.ид; нарисовать(); return;
+  }
+  if(String(getSelection() || '').trim()) return;     // на маке выделял текст мышью — не мешаем
+  открыть_меню(м.dataset.ид, м);
 });
+// Долгое нажатие пальцем — как в ТГ. Сдвинул палец больше чем на 8 px — это прокрутка, не меню.
+let ДОЛГО = null;
+const долго_нет = () => { if(ДОЛГО){ clearTimeout(ДОЛГО.т); ДОЛГО = null; } };
+document.addEventListener('pointerdown', e => {
+  ГЛОТАТЬ = false;
+  if(e.pointerType === 'mouse' || МЕНЮ) return;
+  const м = e.target.closest('#лента .мысль');
+  if(!м || e.target.closest('a, button, textarea, .снимки')) return;
+  долго_нет();
+  ДОЛГО = {x: e.clientX, y: e.clientY, т: setTimeout(() => {
+    ДОЛГО = null; ГЛОТАТЬ = true;
+    navigator.vibrate?.(8);
+    открыть_меню(м.dataset.ид, м);
+  }, 420)};
+}, {passive: true});
+document.addEventListener('pointermove', e => {
+  if(ДОЛГО && Math.hypot(e.clientX - ДОЛГО.x, e.clientY - ДОЛГО.y) > 8) долго_нет();
+}, {passive: true});
+document.addEventListener('pointerup', долго_нет, {passive: true});
+document.addEventListener('pointercancel', долго_нет, {passive: true});
+// правый щелчок на маке; на Андроиде долгое нажатие присылает то же событие — меню уже открыто
+document.addEventListener('contextmenu', e => {
+  const м = e.target.closest('#лента .мысль');
+  if(!м || e.target.closest('a, textarea')) return;
+  e.preventDefault(); открыть_меню(м.dataset.ид, м);
+});
+document.addEventListener('keydown', e => {
+  if(!МЕНЮ) return;
+  if(e.key === 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); закрыть_меню(); return; }
+  if(e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  const п = [...document.querySelectorAll('#меню-мысли .пункт')];
+  const i = п.indexOf(document.activeElement);
+  п[(i + (e.key === 'ArrowDown' ? 1 : п.length - 1)) % п.length]?.focus();
+  e.preventDefault();
+}, true);
+addEventListener('resize', () => { if(МЕНЮ) закрыть_меню(); });   // место меню посчитано под старый размер
 
 /* Перенести в другой поток. Мысль уходит туда, куда решил человек, и это же
    становится уроком: дом запоминает слова из неё за нужным потоком. */
