@@ -94,7 +94,7 @@ body{
 /* ── шапка: потоки ────────────────────────────────────────────────────────── */
 #приложение{display:contents}
 #приложение[hidden]{display:none}
-.мобильный-бренд,.поиск-знак,#сцена,.фото-меню,.старт-слово{display:none}
+.мобильный-бренд,.поиск-знак,#сцена,#небо,.фото-меню,.старт-слово{display:none}
 header{padding:8px 12px 4px}
 .потоки{display:flex; gap:4px; padding:3px; border-radius:15px;
   background:oklch(1 0 0 / .34); border:1px solid oklch(1 0 0 / .55)}
@@ -155,6 +155,18 @@ main > *{flex:none}
 .низ b.готово{color:oklch(0.52 0.13 150)}     /* закрыто — глазу приятно видеть зелёное */
 .мысль.ждёт .низ b{color:var(--ждёт)}
 .низ .чей{margin-left:auto; font-weight:500}
+/* что за ссылкой: адрес коротко, под ним название и суть, вывод дома — по касанию */
+.мысль a.адрес{color:var(--accent); font-weight:600; text-decoration:none; border-bottom:1px solid currentColor}
+.внутри{position:relative; z-index:1; margin-top:8px; padding:9px 12px; border-radius:14px;
+  font-size:13.5px; line-height:1.4; white-space:normal;
+  background:oklch(1 0 0/.24); box-shadow:inset 0 0 0 1px oklch(1 0 0/.5)}
+.внутри b,.внутри span{display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden}
+.внутри b{font-weight:600; color:var(--fg); -webkit-line-clamp:2}
+.внутри span{margin-top:2px; color:var(--fg-m); -webkit-line-clamp:3}
+.мысль.выбрана .внутри span{-webkit-line-clamp:unset}
+.внутри i{display:block; margin-top:6px; font-style:normal; color:var(--fg)}
+.внутри.ход{background:none; box-shadow:none; padding:2px 0 0; color:var(--fg-l); font-size:12.5px}
+.внутри.подробно span{white-space:pre-wrap; font-size:12.5px; overflow-x:auto}
 /* РУЧНАЯ СОРТИРОВКА. Женя 11.08: «алгоритмы распознавания сортировали заметки сами,
    но и инструменты для ручной сортировки были». Алгоритм ошибается — человек поправляет
    одним касанием, и эта поправка учит разбор (перенос попадает в уроки дома). */
@@ -277,6 +289,10 @@ textarea:focus{outline:none; border-color:var(--accent)}
   }
   body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,oklch(1 0 0/.04),oklch(.92 .02 214/.16) 44%,oklch(.78 .06 210/.24));}
   #сцена{display:block;position:fixed;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;opacity:.55}
+  /* живое небо: та же картинка, но облака плывут, а море дышит. Проявляется, когда готов
+     первый кадр; до того и без WebGL остаётся фото фоном body — разницы глаз не заметит. */
+  #небо{display:block;position:fixed;inset:0;z-index:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
+  #небо.живо{opacity:1}
   #старт,#вход,#приложение{position:relative;z-index:2}
   #старт{display:flex;flex-direction:column;align-items:center;gap:12px;color:oklch(.25 .05 215);opacity:1}
   #старт[hidden]{display:none}
@@ -805,6 +821,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
 </style>
 </head>
 <body>
+<canvas id="небо" aria-hidden="true"></canvas>
 <canvas id="сцена" aria-hidden="true"></canvas>
 
 <div id="старт">
@@ -835,7 +852,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v28</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v32</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -920,6 +937,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
 const URL_БАЗЫ = 'https://izvwgyudjbxlixzrgpuv.supabase.co';
 const КЛЮЧ = 'sb_publishable_YtwehFnevo4R3UpmOnTTXQ_j4PQY21D';   // публичный по устройству; защита — правила базы
 const sb = supabase.createClient(URL_БАЗЫ, КЛЮЧ, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}});
+const НА_МАКЕ = !!supabase.мак;   // окно мака подкладывает свою прослойку вместо базы
 
 /* Порядок потоков — Женин (10.08): дом и семья первыми, работа и код дальше.
    Он же объяснил, зачем их вообще держать: «так легче самому искать что куда
@@ -1126,6 +1144,54 @@ function подсветить(текст){
          '</mark>' + экран(текст.slice(i+ИСКОМОЕ.length));
 }
 
+/* ССЫЛКА В МЫСЛИ — КОРОТКО, ЖИВО И С ТЕМ, ЧТО ВНУТРИ (аудит 24.09). Было: адрес на три
+   строки простым текстом — открыть нельзя, только копировать, а 36 из 68 мыслей-ссылок
+   кроме адреса не несут ни слова. Дом при этом знает, что за ссылкой (у 64 из 68 есть
+   разбор), но новый вид это выбрасывал. Теперь адрес — короткая живая ссылка, под ней
+   название и суть, по касанию — вывод дома. И поиск смотрит туда же: Женя 24.09 искал
+   «ролик с бухгалтерией» и не нашёл, пришлось кинуть его заново. */
+const АДРЕС = /https?:\/\/[^\s<>"«»]+/g;
+function короткий_адрес(url){
+  const [узел, ...путь] = url.replace(/^https?:\/\/(www\.)?/, '').split('/').filter(Boolean);
+  return узел + (путь.length ? '/' + путь[0] + (путь.length > 1 ? '/…' : '') : '');
+}
+function тело_мысли(текст){
+  let html = '', i = 0;
+  for(const н of текст.matchAll(АДРЕС)){
+    const url = н[0].replace(/[.,;:!?)]+$/, '');
+    html += подсветить(текст.slice(i, н.index)) +
+            `<a class="адрес" href="${экран(url)}" target="_blank" rel="noopener">${экран(короткий_адрес(url))}</a>`;
+    i = н.index + url.length;
+  }
+  return html + подсветить(текст.slice(i));
+}
+function что_за_ссылкой(м, открыта){
+  const р = м.разбор;
+  if(р && (р.заголовок || р.кратко))
+    return `<div class="внутри">` + (р.заголовок ? `<b>${экран(р.заголовок)}</b>` : '') +
+           (р.кратко ? `<span>${экран(р.кратко)}</span>` : '') +
+           (открыта && р.вердикт ? `<i>${экран(р.вердикт)}</i>` : '') + `</div>`;
+  const суть = (м.сводка || '').split(' — ').slice(1).join(' — ').trim();
+  if(суть) return `<div class="внутри"><span>${экран(суть)}</span></div>`;
+  return м.разбор_ход ? `<div class="внутри ход">${экран(м.разбор_ход)}</div>` : '';
+}
+/* НАПОМИНАНИЕ ДОМА — НЕ МЫСЛЬ ЖЕНИ (аудит 24.09). Отложенное возвращается в ленту строкой
+   «⏱ …» через ту же дверь, что мысль, и рисовалось как его собственное сообщение справа —
+   а у проверок дома вместе с выводом команды: таблица на весь экран («Память дня — проверка»).
+   14 таких карточек. Теперь это реплика дома слева: первая строка — о чём, вывод команды
+   свёрнут и раскрывается касанием. Данные не трогаем — только показ. */
+const напоминание_ли = м => (м.body || '').startsWith('⏱');
+function тело_напоминания(текст, открыта){
+  const строки = текст.split('\n');
+  const хвост = строки.slice(1).filter(с => с.trim() && !/^_отложено/.test(с.trim()));
+  if(!хвост.length) return тело_мысли(строки[0]);
+  return тело_мысли(строки[0]) + (открыта
+    ? `<div class="внутри подробно"><span>${экран(хвост.join('\n'))}</span></div>`
+    : `<div class="внутри ход">ещё ${хвост.length} стр. — коснись, чтобы раскрыть</div>`);
+}
+const где_искать = м => [м.body, м.сводка, м.разбор?.заголовок, м.разбор?.кратко, м.разбор?.вердикт]
+  .filter(Boolean).join('\n').toLowerCase();
+
 /* Обработанная мысль — та, с которой человеку больше делать нечего: дом её разобрал,
    кодер закрыл, или она уже уехала в дело. Всё прочее ждёт Женю и остаётся на виду. */
 const обработана = м => {
@@ -1152,11 +1218,12 @@ function нарисовать(){
     .map(з => ({
       id:'ж'+з.когда, flow:з.поток, created_at:new Date(з.когда).toISOString(), ждёт:true,
       звук_ждёт: !!з.звук,
+      сырое: з.текст,                   // редактору — текст без приписки про фото
       body: з.текст + ((з.фото||[]).length ? `\n${з.фото.length} фото ждёт отправки` : ''),
     }));
 
   let список = ИСКОМОЕ
-    ? МЫСЛИ.filter(м => (м.body||'').toLowerCase().includes(ИСКОМОЕ))
+    ? МЫСЛИ.filter(м => где_искать(м).includes(ИСКОМОЕ))
     : МЫСЛИ.filter(м => м.flow === ПОТОК);
 
   // поиск ищет везде, включая обработанное — иначе «найди ту накладную» не сработает
@@ -1186,25 +1253,29 @@ function нарисовать(){
     const фото = снимки.length
       ? `<div class="снимки">` + снимки.map(п => `<img loading="lazy" data-путь="${экран(п)}" alt="снимок">`).join('') + `</div>`
       : '';
-    const чей = (м.author && Я && м.author !== Я.id) ? имя_автора(м.author) : '';
+    const чей = напоминание_ли(м) ? 'дом напомнил'
+              : (м.author && Я && м.author !== Я.id) ? имя_автора(м.author) : '';
     const открыта = ОТКРЫТА === м.id;
     // сказанное вслух: пока слов нет, карточка говорит, чего ждёт, и даёт послушать
     const правится = ПРАВЛЮ === м.id;
     const тело = правится ? редактор(м)
                : ждёт_слов(м) ? `<span class="распознаётся">${ЗНАК_ГОЛОСА} распознаю…</span>`
                : м.звук_ждёт  ? `<span class="распознаётся">${ЗНАК_ГОЛОСА} запись ждёт сети</span>`
-               : подсветить(м.body || '');
+               : напоминание_ли(м) ? тело_напоминания(м.body, открыта || !!ИСКОМОЕ)
+               : тело_мысли(м.body || '') + что_за_ссылкой(м, открыта);
     const послушать = (ждёт_слов(м) && м.audio !== ЖДУ)
       ? `<button class="звук" data-звук="${экран(м.audio)}">${ЗНАК_ГОЛОСА}послушать</button>` : '';
-    const сторона = (!м.author || м.ждёт || (Я && м.author === Я.id)) ? ' своя' : ' чужая';
+    const сторона = напоминание_ли(м) ? ' чужая'
+                  : (!м.author || м.ждёт || (Я && м.author === Я.id)) ? ' своя' : ' чужая';
     html += `<div class="мысль стекло${сторона} ${м.ждёт ? 'ждёт' : ''}${обработана(м) ? ' готовая' : ''}` +
             `${открыта ? ' выбрана' : ''}" data-ид="${м.id}">${тело}${фото}` +
             `<div class="низ"><span>${часы(м.created_at)}</span><span>·</span>` +
-            `<b class="${окраска(м.status)}">${м.ждёт ? 'в телефоне' : человечно(м.status)}</b>` +
+            `<b class="${окраска(м.status)}">${м.ждёт ? (НА_МАКЕ ? 'ждёт отправки' : 'в телефоне') : человечно(м.status)}</b>` +
             послушать +
             (ИСКОМОЕ ? `<span>${имя_потока(м.flow)}</span>` : '') +
             (чей ? `<span class="чей">${экран(чей)}</span>` : '') + `</div>` +
-            (открыта && !м.ждёт && !правится ? панель(м) : '') + `</div>`;
+            // «отправляю…» живёт долю секунды и ещё не имеет своего номера в ленте — править нечего
+            (открыта && !правится && !String(м.id).startsWith('…') ? (м.ждёт ? панель_ждущей(м) : панель(м)) : '') + `</div>`;
   }
   рисуй(html);
 }
@@ -1220,6 +1291,19 @@ function панель(м){
          (обработана(м) ? '' : `<button class="готово" onclick="пометить_готовой('${м.id}')">✓ сделано</button>`) +
          `<button class="убрать" onclick="убрать('${м.id}')">убрать</button></div>`;
 }
+
+/* ЖДУЩУЮ МЫСЛЬ ТОЖЕ МОЖНО ИСПРАВИТЬ. Женя 24.09 03:59: «Исправлять заметки нельзя».
+   Замер по ленте: две его мысли той ночи дошли до мака в одну и ту же секунду, 03:56:43.
+   Руками так не отправить, это очередь довезла их разом. А до этого они висели карточками
+   «в телефоне», и касание по ним не давало ничего: панели у ждущей мысли не было вовсе.
+   В первой стояла опечатка («Позоже»). Ждущая мысль лежит здесь же, в памяти окна, так что
+   править её проще всех: меняем текст в очереди, и до дома едет уже исправленная.
+   «Убрать» здесь нет намеренно: ждущей мысли ещё нет в ленте, убранная пропадёт без следа. */
+function панель_ждущей(м){
+  if(м.звук_ждёт) return '';                         // у сказанного ещё нет слов — править нечего
+  return `<div class="правка"><button onclick="править('${м.id}')">изменить</button></div>`;
+}
+const ждущая = ид => очередь().find(з => 'ж' + з.когда === ид);
 
 /* ИЗМЕНИТЬ ТЕКСТ МЫСЛИ. Женя 30.08: «редактировать сообщение с телефона в Гили нельзя».
    Так и было: мысль улетала и застывала — опечатку или забытое слово исправить нечем,
@@ -1244,13 +1328,13 @@ function панель(м){
    поле на месте самой мысли, под ним «отменить» и «сохранить», остальное как было:
    status 'правка' говорит дому «забери заново», карточка честно пишет «правка ждёт дома». */
 function редактор(м){
-  return `<textarea class="редактор" rows="2" autocorrect="off" autocapitalize="off" spellcheck="false">${экран(м.body || '')}</textarea>` +
+  return `<textarea class="редактор" rows="2" autocorrect="off" autocapitalize="off" spellcheck="false">${экран(м.сырое ?? м.body ?? '')}</textarea>` +
          `<div class="правка-низ"><button class="правка-нет" onclick="отменить_правку()">отменить</button>` +
          `<button class="правка-да" onclick="сохранить_правку('${м.id}')">сохранить</button></div>`;
 }
 
 function править(ид){
-  const м = МЫСЛИ.find(x => x.id === ид); if(!м) return;
+  if(!МЫСЛИ.some(x => x.id === ид) && !ждущая(ид)) return;
   ОТКРЫТА = null; ПРАВЛЮ = ид; нарисовать();
   const ta = document.querySelector('.редактор'); if(!ta) return;
   const рост = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
@@ -1266,14 +1350,29 @@ function править(ид){
 function отменить_правку(){ ПРАВЛЮ = null; нарисовать(); }
 
 async function сохранить_правку(ид){
+  const з = ждущая(ид);
+  if(з){                                            // ещё в очереди: правим прямо в ней
+    const ta = document.querySelector('.редактор');
+    const текст = (ta ? ta.value : '').trim();
+    ПРАВЛЮ = null;
+    if(текст && текст !== (з.текст || '').trim())
+      в_память(ПАМЯТЬ_ОЧЕРЕДИ, очередь().map(x => x.когда === з.когда ? Object.assign({}, x, {текст}) : x));
+    нарисовать(); везти_очередь();
+    return;
+  }
   const м = МЫСЛИ.find(x => x.id === ид); if(!м){ ПРАВЛЮ = null; нарисовать(); return; }
   const ta = document.querySelector('.редактор');
-  const было = м.body || '', текст = (ta ? ta.value : '').trim();
+  const было = м.body || '', статус_до = м.status, текст = (ta ? ta.value : '').trim();
   ПРАВЛЮ = null;                                    // сначала снять замок, потом рисовать
   if(!текст || текст === было.trim()){ нарисовать(); return; }
   м.body = текст; м.status = 'правка'; нарисовать();   // на экране сразу, без ожидания сети
-  const {error} = await sb.from('gili_notes').update({body: текст, status: 'правка'}).eq('id', ид);
-  if(error){ м.body = было; нарисовать(); сказать('правка не ушла: ' + error.message); return; }
+  // .select: правило базы, не пустившее правку, ошибки не даёт — просто ноль строк
+  let {data, error} = await sb.from('gili_notes').update({body: текст, status: 'правка'}).eq('id', ид).select('id');
+  if(!error && Array.isArray(data) && !data.length) error = {message: 'база не дала изменить эту мысль'};
+  // Отказ — вслух и там, где человек смотрит. До 24.09 он уходил в сказать(), а это строка
+  // экрана входа, в ленте её высота 0: текст молча откатывался, и никто не знал почему.
+  if(error){ м.body = было; м.status = статус_до; нарисовать();
+             сказать_внизу('правка не ушла: ' + экран(error.message), 6000); return; }
   загрузить();
 }
 
@@ -1376,7 +1475,8 @@ let ОТКРЫТА = null;                       // какая мысль сей
 let ПРАВЛЮ = null;                        // какая мысль сейчас правится прямо в карточке
 document.addEventListener('click', e => {
   if(e.target.closest('.правка') || e.target.closest('.снимки') || e.target.closest('.звук')
-     || e.target.closest('.редактор') || e.target.closest('.правка-низ')) return;
+     || e.target.closest('.редактор') || e.target.closest('.правка-низ')
+     || e.target.closest('a.адрес')) return;          // ссылка открывается, карточка не мигает
   const м = e.target.closest('.мысль');
   const ид = м?.dataset.ид || null;
   ОТКРЫТА = (ид && ид !== ОТКРЫТА) ? ид : null;
@@ -1483,7 +1583,7 @@ function обновить_состояние(){
   const о = n % 10, д = n % 100;
   const слово = (о === 1 && д !== 11) ? 'мысль уедет'
               : (о >= 2 && о <= 4 && (д < 12 || д > 14)) ? 'мысли уедут' : 'мыслей уедут';
-  $('состояние').textContent = `${n === 1 ? 'одна' : n} ${слово}, когда появится сеть`;
+  $('состояние').textContent = `${n === 1 ? 'одна' : n} ${слово}, ${НА_МАКЕ ? 'как только мак ответит' : 'когда появится сеть'}`;
 }
 
 /* Расклад 3 (сервер УСПЕЛ записать, а ответ не дошёл): insert бросил ошибку → мысль
@@ -1513,6 +1613,7 @@ async function везти_очередь(){
   if(ВЕЗУ || !Я || !navigator.onLine || !очередь().length) return;
   ВЕЗУ = true;
   for(const з of очередь()){
+    if(ПРАВЛЮ === 'ж' + з.когда) break;   // человек её сейчас правит — уедет исправленной, порядок держим
     try{
       if(await уже_записано(з)){ из_очереди(з.когда); continue; }  // расклад 3: не дублируем
       if(з.звук){            // сказанное без сети: звук ждал в телефоне буквами, теперь уезжает
@@ -1542,7 +1643,9 @@ document.addEventListener('visibilitychange', () => {
   // вернулся в приложение — если мысль всё ещё без слов, ждём их активно, а не до случая
   загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов)) догонять_голос(); });
 });
-setInterval(везти_очередь, 20000);
+// На маке ждут не сеть, а сервер: после перезапуска он встаёт за пару секунд, и 20 с ожидания
+// там — это мысль, которая висит «ждёт отправки» без всякой причины.
+setInterval(везти_очередь, НА_МАКЕ ? 4000 : 20000);
 
 /* ── фото ─────────────────────────────────────────────────────────────────────
    Ужимаем прямо в телефоне: снимок айфона весит 3–5 МБ, и такой не влезет
@@ -1884,6 +1987,108 @@ function по_ссылке(){
 }
 window.addEventListener('hashchange', () => { if(Я) по_ссылке(); });
 
+/* ── живое небо ─────────────────────────────────────────────────────────────
+   Женя 24.09: «хочу оживить именно то изображение». Это не видео: ту же картинку двигает
+   шейдер. Небо — поток в две фазы: облака медленно плывут и меняют форму, петля бесшовная
+   по построению. Море — рябь, крупная у берега и гаснущая к горизонту, и редкие блики.
+   Горы на горизонте стоят. 30 кадров в секунду; скрытое окно не рисует. Нет WebGL,
+   просят меньше движения или шейдер не собрался — остаётся фото фоном body. */
+const НЕБО_ВЕРШИНЫ = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+const НЕБО_КРАСКИ = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform sampler2D img; uniform vec2 res, isz; uniform float t;
+const float H = .619;          /* horizon: share of image height from top */
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);
+  return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
+vec3 tex(vec2 uv){return texture2D(img,clamp(uv,0.,1.)).rgb;}
+void main(){
+  vec2 p=vec2(gl_FragCoord.x,res.y-gl_FragCoord.y)/res, uv=p;   /* same as background center/cover */
+  float sa=res.x/res.y, ia=isz.x/isz.y;
+  if(sa>ia) uv.y=(p.y-.5)*ia/sa+.5; else uv.x=(p.x-.5)*sa/ia+.5;
+  vec3 col;
+  if(uv.y<H){
+    float ph1=fract(t/12.), ph2=fract(t/12.+.5), w=abs(ph1*2.-1.);
+    vec2 f=vec2(1.,0.)+(vec2(noise(uv*3.+1.7),noise(uv*3.+9.2))-.5)*1.3;
+    f*=mix(.022,.008,uv.y/H)*(1.-smoothstep(H-.05,H-.012,uv.y));
+    col=mix(tex(uv-f*ph1),tex(uv-f*ph2),w);
+    float sun=1.-smoothstep(0.,.55,length((uv-vec2(.03,.06))*vec2(1.,.75)));
+    col+=vec3(.035)*sun*(.5+.5*sin(t*.33));
+  }else{
+    float d=clamp((uv.y-H)/(1.-H),0.,1.), z=1./(d+.06), sx=uv.x/(.35+d);
+    vec2 o=vec2(sin(sx*38.+z*2.3+t*.9)*.5+noise(vec2(sx*14.,z*1.5-t*.35))-.5,
+                cos(z*3.1-t*1.1+uv.x*9.)*.5+noise(vec2(sx*10.+5.,z*1.2+t*.28))-.5);
+    col=tex(uv+o*mix(.0004,.0065,pow(d,1.3))*vec2(1.,.6));
+    float g=noise(vec2(sx*60.,z*6.-t*.8))*noise(vec2(sx*37.+3.,z*4.2+t*.6));
+    col+=vec3(.9,.97,1.)*smoothstep(.55,.9,g)*(.04+.11*(1.-d))*smoothstep(0.,.08,d);
+  }
+  gl_FragColor=vec4(col,1.);
+}`;
+function оживить_небо(){
+  const c = $('небо');
+  if(!c || getComputedStyle(c).display === 'none' || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  let gl = null;
+  try{ gl = c.getContext('webgl', {alpha:false, antialias:false, depth:false, stencil:false, powerPreference:'low-power'}); }catch(e){}
+  if(!gl) return;
+  const собрать = (тип, код) => {
+    const ш = gl.createShader(тип); gl.shaderSource(ш, код); gl.compileShader(ш);
+    if(!gl.getShaderParameter(ш, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(ш));
+    return ш;
+  };
+  const п = gl.createProgram();
+  try{
+    gl.attachShader(п, собрать(gl.VERTEX_SHADER, НЕБО_ВЕРШИНЫ));
+    gl.attachShader(п, собрать(gl.FRAGMENT_SHADER, НЕБО_КРАСКИ));
+    gl.linkProgram(п);
+    if(!gl.getProgramParameter(п, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(п));
+  }catch(e){ console.warn('живое небо не собралось, остаётся фото:', e.message); return; }
+  gl.useProgram(п);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const а = gl.getAttribLocation(п, 'p');
+  gl.enableVertexAttribArray(а); gl.vertexAttribPointer(а, 2, gl.FLOAT, false, 0, 0);
+  const у = {res: gl.getUniformLocation(п, 'res'), isz: gl.getUniformLocation(п, 'isz'), t: gl.getUniformLocation(п, 't')};
+
+  let кадр = 0, прошлый = 0, готово = false, жив = !document.hidden;
+  const t0 = performance.now();
+  const размер = () => {
+    const к = Math.min(devicePixelRatio || 1, 1.25);      // фото 941 px в ширину: выше — только расход
+    const w = Math.round(innerWidth*к), h = Math.round(innerHeight*к);
+    if(c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+    gl.viewport(0, 0, w, h); gl.uniform2f(у.res, w, h);
+  };
+  const рисовать = now => {
+    кадр = 0;
+    if(!жив || !готово) return;
+    кадр = requestAnimationFrame(рисовать);
+    if(now - прошлый < 32) return;                        // 30 кадров хватает облакам и ряби
+    прошлый = now;
+    gl.uniform1f(у.t, ((now - t0)/1000) % 7200);           // два часа — ровно 600 циклов неба
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if(!c.classList.contains('живо')) c.classList.add('живо');
+  };
+  const пуск = () => { if(жив && готово && !кадр) кадр = requestAnimationFrame(рисовать); };
+  const фото = new Image();
+  фото.onload = () => {
+    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, фото);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.uniform2f(у.isz, фото.naturalWidth, фото.naturalHeight);
+    готово = true; размер(); пуск();
+  };
+  фото.src = 'gili-sky-v1.jpg';
+  addEventListener('resize', () => { if(готово){ размер(); пуск(); } }, {passive:true});
+  document.addEventListener('visibilitychange', () => { жив = !document.hidden; пуск(); });
+  c.addEventListener('webglcontextlost', e => { e.preventDefault(); жив = false; c.classList.remove('живо'); });
+}
+
 /* ── старт ────────────────────────────────────────────────────────────────── */
 function оживить_сцену(){
   if(!matchMedia('(max-width:720px)').matches || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
@@ -1974,6 +2179,7 @@ function позвать_органы(){
 }
 setTimeout(позвать_органы,1800);
 таймер_зова=setInterval(позвать_органы,14000);
+оживить_небо();
 оживить_сцену();
 
 if(кто_в_памяти()) поднять();        // помним человека — открываемся сразу, проверка внутри
