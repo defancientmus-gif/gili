@@ -250,6 +250,7 @@ main > *{flex:none}
 .ответ-гили{margin-top:7px; padding-top:7px; border-top:1px solid oklch(.5 .02 220 / .08); font-size:13.5px; color:var(--fg-m)}
 .ответ-гили b{font-weight:600; color:var(--accent)}
 .ответ-гили.думает{color:var(--fg-l); animation:дышит 1.8s ease-in-out infinite}
+.ответ-гили.думает i{display:inline-block; width:6px; height:6px; margin:0 7px 1px 1px; border-radius:99px; background:var(--accent)}
 @media (prefers-reduced-motion: reduce){ .ответ-гили.думает{animation:none} }
 .знак{width:14px; height:14px; vertical-align:-2.5px; margin-right:2px}
 .низ .звук{
@@ -918,7 +919,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v43</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v44</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -1124,7 +1125,7 @@ async function поднять(){
     $('кто').textContent = запомнен.имя;
     показать('приложение');
     открыть_ленту();
-    загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов)) догонять_голос(); });
+    загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов) || ГИЛИ_ОТВЕТИТ) догонять_голос(); });
   }
   // ВХОД НЕ ДОЛЖЕН ЖДАТЬ СЕТИ. Женя 13.09: «хочу чтобы он при любых раскладах записывал… даже офлайн».
   // getUser() ходит на сервер. Без сети он возвращает user:null (или ошибку сети) — и старый код
@@ -1169,7 +1170,7 @@ async function поднять(){
 
   if(!запомнен){
     открыть_ленту();                  // при мгновенном старте это уже нарисовано выше
-    загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов)) догонять_голос(); });
+    загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов) || ГИЛИ_ОТВЕТИТ) догонять_голос(); });
   }
   подписаться();
   везти_очередь();
@@ -1388,7 +1389,7 @@ function карточка(м){
              : тело_мысли(м.body || '') + что_за_ссылкой(м, открыта);
   const ответ = правится ? ''
               : ОТВЕТЫ_ГИЛИ[м.id] ? `<div class="ответ-гили"><b>Гили:</b> ${экран(ОТВЕТЫ_ГИЛИ[м.id])}</div>`
-              : (ГИЛИ_ОТВЕТИТ && м.audio === ГИЛИ_ОТВЕТИТ.путь && !ждёт_слов(м)) ? `<div class="ответ-гили думает">Гили думает над ответом…</div>` : '';
+              : (ГИЛИ_ОТВЕТИТ && м.audio === ГИЛИ_ОТВЕТИТ.путь && !ждёт_слов(м)) ? `<div class="ответ-гили думает"><i></i>Гили думает над ответом…</div>` : '';
   const послушать = (ждёт_слов(м) && м.audio !== ЖДУ)
     ? `<button class="звук" data-звук="${экран(м.audio)}">${ЗНАК_ГОЛОСА}послушать</button>` : '';
   const сторона = напоминание_ли(м) ? ' чужая'
@@ -2082,7 +2083,7 @@ document.addEventListener('visibilitychange', () => {
   if(document.hidden) return;
   везти_очередь();
   // вернулся в приложение — если мысль всё ещё без слов, ждём их активно, а не до случая
-  загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов)) догонять_голос(); });
+  загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов) || ГИЛИ_ОТВЕТИТ) догонять_голос(); });
 });
 // На маке ждут не сеть, а сервер: после перезапуска он встаёт за пару секунд, и 20 с ожидания
 // там — это мысль, которая висит «ждёт отправки» без всякой причины.
@@ -2259,7 +2260,9 @@ $('микрофон').onclick = () => {
 const ГОЛОС_ГИЛИ = new Audio();
 const СЛЫШУ = 'slyshu-sekundu.mp3';       // «Слышу, секунду.» голосом Гилфойла, 0,9 с (синтез Дома 26.09)
 var ОТВЕТЫ_ГИЛИ = (() => { try{ return JSON.parse(localStorage.getItem('гили-ответы') || '{}'); }catch{ return {}; } })();
-var ГИЛИ_ОТВЕТИТ = null;                   // {путь, до} — запись, на которую ждём ответ; var: карточка читает её и до этой строки
+// ждём ответ и после перезагрузки: айфон выгружает вкладку, стоит отвлечься; звук тогда не сыграет, а текст встанет
+var ГИЛИ_ОТВЕТИТ = (() => { try{ const ж = JSON.parse(localStorage.getItem('гили-ждёт') || 'null');
+                              return ж && ж.до > Date.now() ? ж : null; }catch{ return null; } })();                   // {путь, до} — запись, на которую ждём ответ; var: карточка читает её и до этой строки
 function разбудить_голос(звук){
   try{
     ГОЛОС_ГИЛИ.src = звук || 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
@@ -2268,7 +2271,7 @@ function разбудить_голос(звук){
 }
 async function ответ_голосом(){
   const ж = ГИЛИ_ОТВЕТИТ; if(!ж) return;
-  if(Date.now() > ж.до){ ГИЛИ_ОТВЕТИТ = null; нарисовать(); return; }
+  if(Date.now() > ж.до){ ГИЛИ_ОТВЕТИТ = null; в_память('гили-ждёт', null); нарисовать(); return; }
   if(ж.смотрю) return;                     // прошлый вопрос к хранилищу ещё в пути
   const м = МЫСЛИ.find(x => x.audio === ж.путь);
   if(!м) return;
@@ -2279,8 +2282,9 @@ async function ответ_голосом(){
     if(файл) ответ = JSON.parse(await файл.text());
   }catch(e){ /* ещё не готов или сеть моргнула — спросим на следующем круге */ }
   ж.смотрю = false;
-  if(!ответ || !ответ.текст) return;
-  ГИЛИ_ОТВЕТИТ = null;
+  if(!ответ) return;
+  ГИЛИ_ОТВЕТИТ = null; в_память('гили-ждёт', null);
+  if(!ответ.текст){ нарисовать(); return; }    // занят, квота, мак молчит — облако кладёт текст null: индикатор просто гаснет
   ОТВЕТЫ_ГИЛИ[м.id] = ответ.текст;
   в_память('гили-ответы', Object.fromEntries(Object.entries(ОТВЕТЫ_ГИЛИ).slice(-60)));
   нарисовать();
@@ -2350,6 +2354,7 @@ async function отправить_голос(звук){
       {author: Я.id, flow: ПОТОК, body: '', photos: [], audio: путь, status: 'распознаётся'});
     if(error) throw error;
     ГИЛИ_ОТВЕТИТ = {путь, до: Date.now() + 3 * 60 * 1000};
+    в_память('гили-ждёт', ГИЛИ_ОТВЕТИТ);
     await загрузить();
     догонять_голос();
   }catch(e){
