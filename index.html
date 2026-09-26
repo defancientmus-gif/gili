@@ -918,7 +918,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v42</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v43</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -1387,7 +1387,7 @@ function карточка(м){
              : напоминание_ли(м) ? тело_напоминания(м.body, открыта || !!ИСКОМОЕ)
              : тело_мысли(м.body || '') + что_за_ссылкой(м, открыта);
   const ответ = правится ? ''
-              : м.reply_text ? `<div class="ответ-гили"><b>Гили:</b> ${экран(м.reply_text)}</div>`
+              : ОТВЕТЫ_ГИЛИ[м.id] ? `<div class="ответ-гили"><b>Гили:</b> ${экран(ОТВЕТЫ_ГИЛИ[м.id])}</div>`
               : (ГИЛИ_ОТВЕТИТ && м.audio === ГИЛИ_ОТВЕТИТ.путь && !ждёт_слов(м)) ? `<div class="ответ-гили думает">Гили думает над ответом…</div>` : '';
   const послушать = (ждёт_слов(м) && м.audio !== ЖДУ)
     ? `<button class="звук" data-звук="${экран(м.audio)}">${ЗНАК_ГОЛОСА}послушать</button>` : '';
@@ -2241,33 +2241,51 @@ const умеет_слушать = !!(navigator.mediaDevices?.getUserMedia && win
 if(!умеет_слушать) $('микрофон').hidden = true;   // старый браузер или адрес без https
 
 $('микрофон').onclick = () => {
-  разбудить_голос();                       // касание — единственный миг, когда айфон разрешает звук
-  if(ЗАПИСЬ){ try{ ЗАПИСЬ.rec.stop(); }catch(e){} return; }
+  // касание — единственный миг, когда айфон разрешает звук: на «стоп» сразу «Слышу, секунду»,
+  // на «старт» будим тот же плеер тишиной (стоп может нажать и сторож трёх минут, без касания)
+  if(ЗАПИСЬ){ разбудить_голос(СЛЫШУ); try{ ЗАПИСЬ.rec.stop(); }catch(e){} return; }
+  разбудить_голос();
   начать_запись();
 };
 
 /* ОТВЕТ ГОЛОСОМ (Женя 26.09: «как быстро он мне может ответить голосом, если я скину голосовое» →
-   «да, и в телефоне»). Мак распознаёт запись, сочиняет ответ голосом Гилфойла и кладёт его рядом
-   с мыслью: reply_text и reply_audio (путь в том же хранилище gili) — это делает облако.py Дома.
+   «да, и в телефоне»). Мак распознаёт запись, сочиняет ответ голосом Гилфойла и кладёт ФАЙЛАМИ
+   рядом с записью (облако.py Дома, схему базы не трогаем): <папка>/reply-<id мысли>.mp3 и
+   <папка>/reply-<id мысли>.json = {текст, звук: путь или null}. JSON ложится последним —
+   его появление и есть «ответ готов».
    Айфон играет звук только в миг касания, а ответ приедет через секунды. Поэтому один и тот же
    плеер «будим» тишиной на нажатии микрофона — дальше Safari даёт ему играть и без касания,
    пока страница открыта. Ждём ответ три минуты; не дождались или звука нет — остаётся текст. */
 const ГОЛОС_ГИЛИ = new Audio();
+const СЛЫШУ = 'slyshu-sekundu.mp3';       // «Слышу, секунду.» голосом Гилфойла, 0,9 с (синтез Дома 26.09)
+var ОТВЕТЫ_ГИЛИ = (() => { try{ return JSON.parse(localStorage.getItem('гили-ответы') || '{}'); }catch{ return {}; } })();
 var ГИЛИ_ОТВЕТИТ = null;                   // {путь, до} — запись, на которую ждём ответ; var: карточка читает её и до этой строки
-function разбудить_голос(){
+function разбудить_голос(звук){
   try{
-    ГОЛОС_ГИЛИ.src = 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+    ГОЛОС_ГИЛИ.src = звук || 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
     const п = ГОЛОС_ГИЛИ.play(); if(п) п.catch(() => {});
   }catch(e){}
 }
 async function ответ_голосом(){
   const ж = ГИЛИ_ОТВЕТИТ; if(!ж) return;
   if(Date.now() > ж.до){ ГИЛИ_ОТВЕТИТ = null; нарисовать(); return; }
+  if(ж.смотрю) return;                     // прошлый вопрос к хранилищу ещё в пути
   const м = МЫСЛИ.find(x => x.audio === ж.путь);
-  if(!м || !м.reply_text) return;
+  if(!м) return;
+  ж.смотрю = true;
+  let ответ = null;
+  try{
+    const {data: файл} = await sb.storage.from('gili').download(`${ж.путь.split('/')[0]}/reply-${м.id}.json`);
+    if(файл) ответ = JSON.parse(await файл.text());
+  }catch(e){ /* ещё не готов или сеть моргнула — спросим на следующем круге */ }
+  ж.смотрю = false;
+  if(!ответ || !ответ.текст) return;
   ГИЛИ_ОТВЕТИТ = null;
-  if(!м.reply_audio) return;               // звука нет (квота, сбой) — ответ виден текстом
-  const {data} = await sb.storage.from('gili').createSignedUrl(м.reply_audio, 600);
+  ОТВЕТЫ_ГИЛИ[м.id] = ответ.текст;
+  в_память('гили-ответы', Object.fromEntries(Object.entries(ОТВЕТЫ_ГИЛИ).slice(-60)));
+  нарисовать();
+  if(!ответ.звук) return;                  // звука нет (квота, сбой) — ответ виден текстом
+  const {data} = await sb.storage.from('gili').createSignedUrl(ответ.звук, 600);
   if(!data?.signedUrl) return;
   if(ЗВУЧИТ){ ЗВУЧИТ.pause(); ЗВУЧИТ = null; }
   ГОЛОС_ГИЛИ.src = data.signedUrl;

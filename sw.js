@@ -7,9 +7,10 @@
 
    Стратегия: кэш первым, поэтому экран появляется сразу. Сеть обновляет
    сохранённую версию в фоне, а в дороге остаётся последняя виденная. */
-const КЭШ = "гили-v42";     // 26.09: ответ Гили голосом на надиктованную мысль (reply_text/reply_audio от Дома)
+const КЭШ = "гили-v43";     // 26.09: ответ Гили голосом — файлами reply-<id>.json/.mp3 от облака Дома, «Слышу, секунду» на стоп
+// было: "гили-v42";
 // было: "гили-v41";     // 26.09: «В задачу» и «Кому» в меню мысли — просьбой дому в статусе (v38 — карточки без content-visibility)
-const ОСНОВА = ["./", "./index.html", "./supabase.js", "./manifest.json", "./icon-180.png", "./gili-sky-v1.jpg"];
+const ОСНОВА = ["./", "./index.html", "./supabase.js", "./manifest.json", "./icon-180.png", "./gili-sky-v1.jpg", "./slyshu-sekundu.mp3"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(КЭШ).then(c => c.addAll(ОСНОВА)).then(() => self.skipWaiting()));
