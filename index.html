@@ -246,6 +246,11 @@ main > *{flex:none}
    а слова догоняют с мака. Пока их нет — карточка честно говорит, чего ждёт, и даёт
    послушать: человек должен видеть, что мысль спасена, а не гадать. */
 .распознаётся{color:var(--fg-l); animation:дышит 1.8s ease-in-out infinite}
+/* ОТВЕТ ГИЛИ под надиктованной мыслью (Женя 26.09 «да, и в телефоне»): тихо, как подпись, не второй пузырь */
+.ответ-гили{margin-top:7px; padding-top:7px; border-top:1px solid oklch(.5 .02 220 / .08); font-size:13.5px; color:var(--fg-m)}
+.ответ-гили b{font-weight:600; color:var(--accent)}
+.ответ-гили.думает{color:var(--fg-l); animation:дышит 1.8s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){ .ответ-гили.думает{animation:none} }
 .знак{width:14px; height:14px; vertical-align:-2.5px; margin-right:2px}
 .низ .звук{
   font:inherit; font-size:12.5px; padding:0; border:none; background:none;
@@ -913,7 +918,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v41</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v42</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -1212,6 +1217,7 @@ async function загрузить(){
   МЫСЛИ = data.filter(м => !/^убра/.test(м.status || ''));   // «убрать» ждёт дома, но глазу уже не нужна
   в_память(ПАМЯТЬ_ЛЕНТЫ, МЫСЛИ.slice(0, 80));  // с запасом на следующее открытие; убранные не воскресают
   нарисовать();
+  ответ_голосом();
 }
 
 const день_ключ = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -1380,12 +1386,15 @@ function карточка(м){
              : м.звук_ждёт  ? `<span class="распознаётся">${ЗНАК_ГОЛОСА} запись ждёт сети</span>`
              : напоминание_ли(м) ? тело_напоминания(м.body, открыта || !!ИСКОМОЕ)
              : тело_мысли(м.body || '') + что_за_ссылкой(м, открыта);
+  const ответ = правится ? ''
+              : м.reply_text ? `<div class="ответ-гили"><b>Гили:</b> ${экран(м.reply_text)}</div>`
+              : (ГИЛИ_ОТВЕТИТ && м.audio === ГИЛИ_ОТВЕТИТ.путь && !ждёт_слов(м)) ? `<div class="ответ-гили думает">Гили думает над ответом…</div>` : '';
   const послушать = (ждёт_слов(м) && м.audio !== ЖДУ)
     ? `<button class="звук" data-звук="${экран(м.audio)}">${ЗНАК_ГОЛОСА}послушать</button>` : '';
   const сторона = напоминание_ли(м) ? ' чужая'
                 : (!м.author || м.ждёт || (Я && м.author === Я.id)) ? ' своя' : ' чужая';
   return `<div class="мысль стекло${сторона} ${м.ждёт ? 'ждёт' : ''}${обработана(м) ? ' готовая' : ''}` +
-          `${открыта ? ' выбрана' : ''}" data-ид="${м.id}">${тело}${фото}` +
+          `${открыта ? ' выбрана' : ''}" data-ид="${м.id}">${тело}${ответ}${фото}` +
           `<div class="низ"><span>${часы(м.created_at)}</span><span>·</span>` +
           `<b class="${окраска(м.status)}">${м.ждёт ? (НА_МАКЕ ? 'ждёт отправки' : 'в телефоне') : человечно(м.status)}</b>` +
           послушать +
@@ -2232,9 +2241,38 @@ const умеет_слушать = !!(navigator.mediaDevices?.getUserMedia && win
 if(!умеет_слушать) $('микрофон').hidden = true;   // старый браузер или адрес без https
 
 $('микрофон').onclick = () => {
+  разбудить_голос();                       // касание — единственный миг, когда айфон разрешает звук
   if(ЗАПИСЬ){ try{ ЗАПИСЬ.rec.stop(); }catch(e){} return; }
   начать_запись();
 };
+
+/* ОТВЕТ ГОЛОСОМ (Женя 26.09: «как быстро он мне может ответить голосом, если я скину голосовое» →
+   «да, и в телефоне»). Мак распознаёт запись, сочиняет ответ голосом Гилфойла и кладёт его рядом
+   с мыслью: reply_text и reply_audio (путь в том же хранилище gili) — это делает облако.py Дома.
+   Айфон играет звук только в миг касания, а ответ приедет через секунды. Поэтому один и тот же
+   плеер «будим» тишиной на нажатии микрофона — дальше Safari даёт ему играть и без касания,
+   пока страница открыта. Ждём ответ три минуты; не дождались или звука нет — остаётся текст. */
+const ГОЛОС_ГИЛИ = new Audio();
+var ГИЛИ_ОТВЕТИТ = null;                   // {путь, до} — запись, на которую ждём ответ; var: карточка читает её и до этой строки
+function разбудить_голос(){
+  try{
+    ГОЛОС_ГИЛИ.src = 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+    const п = ГОЛОС_ГИЛИ.play(); if(п) п.catch(() => {});
+  }catch(e){}
+}
+async function ответ_голосом(){
+  const ж = ГИЛИ_ОТВЕТИТ; if(!ж) return;
+  if(Date.now() > ж.до){ ГИЛИ_ОТВЕТИТ = null; нарисовать(); return; }
+  const м = МЫСЛИ.find(x => x.audio === ж.путь);
+  if(!м || !м.reply_text) return;
+  ГИЛИ_ОТВЕТИТ = null;
+  if(!м.reply_audio) return;               // звука нет (квота, сбой) — ответ виден текстом
+  const {data} = await sb.storage.from('gili').createSignedUrl(м.reply_audio, 600);
+  if(!data?.signedUrl) return;
+  if(ЗВУЧИТ){ ЗВУЧИТ.pause(); ЗВУЧИТ = null; }
+  ГОЛОС_ГИЛИ.src = data.signedUrl;
+  ГОЛОС_ГИЛИ.play().catch(() => сказать_внизу('Гили ответил — звук телефон не дал, ответ под мыслью', 5000));
+}
 
 async function начать_запись(){
   let поток;
@@ -2293,6 +2331,7 @@ async function отправить_голос(звук){
     const {error} = await sb.from('gili_notes').insert(
       {author: Я.id, flow: ПОТОК, body: '', photos: [], audio: путь, status: 'распознаётся'});
     if(error) throw error;
+    ГИЛИ_ОТВЕТИТ = {путь, до: Date.now() + 3 * 60 * 1000};
     await загрузить();
     догонять_голос();
   }catch(e){
@@ -2325,7 +2364,7 @@ function догонять_голос(){
   догон_до = Date.now() + 5 * 60 * 1000;
   if(догон) return;
   догон = setInterval(() => {
-    if(Date.now() > догон_до || !МЫСЛИ.some(ждёт_слов)){ clearInterval(догон); догон = null; return; }
+    if(Date.now() > догон_до || !(МЫСЛИ.some(ждёт_слов) || ГИЛИ_ОТВЕТИТ)){ clearInterval(догон); догон = null; return; }
     загрузить();
   }, 3000);
 }
