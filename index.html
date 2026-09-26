@@ -919,7 +919,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v44</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v45</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -1205,7 +1205,21 @@ function подпись_потока(){
 const из_памяти = ключ => { try{ return JSON.parse(localStorage.getItem(ключ) || '[]'); }catch{ return []; } };
 const в_память = (ключ, что) => { try{ localStorage.setItem(ключ, JSON.stringify(что)); }catch{} };
 
-async function загрузить(){
+/* ОДИН ЗАБОР ЗА РАЗ И БЕЗ ПУСТОЙ ПЕРЕРИСОВКИ (26.09, Женя 23:29: «телефон очень сильно нагрелся»).
+   Замер: забор — вся лента, 279 мыслей и 127 КБ, и после каждого — перерисовка всей ленты со стеклом.
+   Звали его раз в 3 с все три минуты ожидания ответа и ещё на каждый толчок базы (голосовое
+   за минуту даёт их с десяток: распознано, разобрано, взял). Теперь толчки, пришедшие во время
+   забора, сливаются в один следующий, а если лента та же — экран не трогаем. */
+let ГРУЖУ = null, ЕЩЁ_ЗАБОР = false, СЛЕПОК_ЛЕНТЫ = '';
+function загрузить(){
+  if(ГРУЖУ){ ЕЩЁ_ЗАБОР = true; return ГРУЖУ; }
+  ГРУЖУ = забрать_ленту().finally(() => {
+    ГРУЖУ = null;
+    if(ЕЩЁ_ЗАБОР){ ЕЩЁ_ЗАБОР = false; загрузить(); }
+  });
+  return ГРУЖУ;
+}
+async function забрать_ленту(){
   // Все поля, а не список: колонку с разбором ссылки (link_summary) Дом добавит в облако
   // сам, и именованный select до её появления уронил бы всю ленту, а «*» просто подхватит.
   // 500, а не 200: с 24.09 в облаке и мысли мака (246 и растёт), старые жили бы только
@@ -1214,10 +1228,15 @@ async function загрузить(){
     .select('*')
     .order('created_at', {ascending:false}).limit(500);
   if(error || !data) return;                 // нет связи — остаёмся на том, что видно
-  for(const м of data) if(!м.сводка && м.link_summary) м.сводка = м.link_summary;
-  МЫСЛИ = data.filter(м => !/^убра/.test(м.status || ''));   // «убрать» ждёт дома, но глазу уже не нужна
-  в_память(ПАМЯТЬ_ЛЕНТЫ, МЫСЛИ.slice(0, 80));  // с запасом на следующее открытие; убранные не воскресают
-  нарисовать();
+  const слепок = JSON.stringify(data);
+  const та_же = слепок === СЛЕПОК_ЛЕНТЫ && !МЫСЛИ.some(м => String(м.id).startsWith(ЖДУ));
+  СЛЕПОК_ЛЕНТЫ = слепок;
+  if(!та_же){
+    for(const м of data) if(!м.сводка && м.link_summary) м.сводка = м.link_summary;
+    МЫСЛИ = data.filter(м => !/^убра/.test(м.status || ''));   // «убрать» ждёт дома, но глазу уже не нужна
+    в_память(ПАМЯТЬ_ЛЕНТЫ, МЫСЛИ.slice(0, 80));  // с запасом на следующее открытие; убранные не воскресают
+    нарисовать();
+  }
   ответ_голосом();
 }
 
@@ -2242,10 +2261,12 @@ const умеет_слушать = !!(navigator.mediaDevices?.getUserMedia && win
 if(!умеет_слушать) $('микрофон').hidden = true;   // старый браузер или адрес без https
 
 $('микрофон').onclick = () => {
-  // касание — единственный миг, когда айфон разрешает звук: на «стоп» сразу «Слышу, секунду»,
-  // на «старт» будим тот же плеер тишиной (стоп может нажать и сторож трёх минут, без касания)
-  if(ЗАПИСЬ){ разбудить_голос(СЛЫШУ); try{ ЗАПИСЬ.rec.stop(); }catch(e){} return; }
-  разбудить_голос();
+  // Касание — единственный миг, когда айфон разрешает звук, поэтому «Слышу, секунду» — на «стоп»,
+  // ПОСЛЕ остановки записи. На «старт» — наоборот, всё звучащее глушим и отпускаем: 26.09 v42–v44 будили
+  // плеер тишиной прямо перед микрофоном, и после ответа голосом запись глохла (Дом замерил: −22 дБ
+  // до, −51 и −36 после). Живой плеер держит сеанс iOS в режиме воспроизведения, и микрофон в нём тихий.
+  if(ЗАПИСЬ){ try{ ЗАПИСЬ.rec.stop(); }catch(e){} разбудить_голос(СЛЫШУ); return; }
+  отпустить_звук();
   начать_запись();
 };
 
@@ -2263,9 +2284,17 @@ var ОТВЕТЫ_ГИЛИ = (() => { try{ return JSON.parse(localStorage.getItem
 // ждём ответ и после перезагрузки: айфон выгружает вкладку, стоит отвлечься; звук тогда не сыграет, а текст встанет
 var ГИЛИ_ОТВЕТИТ = (() => { try{ const ж = JSON.parse(localStorage.getItem('гили-ждёт') || 'null');
                               return ж && ж.до > Date.now() ? ж : null; }catch{ return null; } })();                   // {путь, до} — запись, на которую ждём ответ; var: карточка читает её и до этой строки
+function отпустить_звук(){
+  for(const п of [ГОЛОС_ГИЛИ, ЗВУЧИТ]){
+    if(!п) continue;
+    try{ п.pause(); п.removeAttribute('src'); п.load(); }catch(e){}
+  }
+  ЗВУЧИТ = null;
+}
+ГОЛОС_ГИЛИ.onended = () => { try{ ГОЛОС_ГИЛИ.removeAttribute('src'); ГОЛОС_ГИЛИ.load(); }catch(e){} };
 function разбудить_голос(звук){
   try{
-    ГОЛОС_ГИЛИ.src = звук || 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+    ГОЛОС_ГИЛИ.src = звук;
     const п = ГОЛОС_ГИЛИ.play(); if(п) п.catch(() => {});
   }catch(e){}
 }
@@ -2383,13 +2412,26 @@ async function залить_звук(blob){
    три секунды, и не дольше пяти минут: мак мог не проснуться, и висеть в опросе сутки
    ради этого незачем. */
 let догон = null, догон_до = 0;
+// Круг догона лёгкий: спрашиваем только ждущие мысли (строка-две вместо всей ленты) и файл
+// ответа; всю ленту берём, лишь когда слова приехали. Вкладка ушла в фон — круг спит,
+// возврат в приложение будит его снова (visibilitychange ниже).
 function догонять_голос(){
   догон_до = Date.now() + 5 * 60 * 1000;
   if(догон) return;
-  догон = setInterval(() => {
-    if(Date.now() > догон_до || !(МЫСЛИ.some(ждёт_слов) || ГИЛИ_ОТВЕТИТ)){ clearInterval(догон); догон = null; return; }
-    загрузить();
-  }, 3000);
+  догон = setInterval(догнать_круг, 3000);
+}
+async function догнать_круг(){
+  const ждут = МЫСЛИ.filter(ждёт_слов);
+  if(Date.now() > догон_до || document.hidden || !(ждут.length || ГИЛИ_ОТВЕТИТ)){
+    clearInterval(догон); догон = null; return;
+  }
+  if(ГИЛИ_ОТВЕТИТ) ответ_голосом();
+  const свои = ждут.map(м => м.id).filter(id => !String(id).startsWith(ЖДУ));
+  if(!свои.length){ if(ждут.length) загрузить(); return; }   // мгновенная ещё без id базы — нужна лента
+  try{
+    const {data} = await sb.from('gili_notes').select('id,body,status').in('id', свои);
+    if(data && data.some(м => (м.body || '').trim() || /^убра/.test(м.status || ''))) загрузить();
+  }catch(e){}
 }
 
 /* ── написать ─────────────────────────────────────────────────────────────────
