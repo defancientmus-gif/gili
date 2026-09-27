@@ -7,7 +7,8 @@
 
    Стратегия: кэш первым, поэтому экран появляется сразу. Сеть обновляет
    сохранённую версию в фоне, а в дороге остаётся последняя виденная. */
-const КЭШ = "гили-v50-1cdb47";     // 28.09: облака шейдера одним слоем — на маке не двоятся
+const КЭШ = "гили-v51-c47363";     // 28.09: видео неба ложится в память телефона — второй запуск без ожидания
+// было: "гили-v50";     // 28.09: облака шейдера одним слоем — на маке не двоятся
 // было: "гили-v49";     // 28.09: старт без чёрного кадра — страница из памяти сразу, новая версия не рвёт запуск
 // было: "гили-v48";     // 27.09: небо резкое (1440/2560) и живое — петля облаков и моря видео
 // было: "гили-v47";     // 27.09: сад — вопросы кодеров плодами, та же страница, что на маке
@@ -17,13 +18,16 @@ const КЭШ = "гили-v50-1cdb47";     // 28.09: облака шейдера 
 // было: "гили-v43";     // 26.09: ответ Гили голосом — файлами reply-<id>.json/.mp3 от облака Дома, «Слышу, секунду» на стоп
 // было: "гили-v42";
 // было: "гили-v41";     // 26.09: «В задачу» и «Кому» в меню мысли — просьбой дому в статусе (v38 — карточки без content-visibility)
+/* Видео неба — в своём ящике, который не чистится со сменой версии: 2,6 МБ не должны качаться заново
+   на каждой выкладке. Новый клип — новое имя файла, прежний из ящика уходит сам (см. небо_из_памяти). */
+const ВИДЕО = "гили-небо-видео";
 const ОСНОВА = ["./", "./index.html", "./supabase.js", "./manifest.json", "./icon-180.png", "./gili-sky-v2.jpg", "./slyshu-sekundu.mp3"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(КЭШ).then(c => c.addAll(ОСНОВА)).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== КЭШ).map(x => caches.delete(x))))
+  e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== КЭШ && x !== ВИДЕО).map(x => caches.delete(x))))
     .then(() => self.clients.claim())
     .then(() => self.clients.matchAll({type: "window"}).then(cs =>
       cs.forEach(c => c.postMessage("новая-версия")))));
@@ -33,8 +37,10 @@ self.addEventListener("fetch", e => {
   if(e.request.method !== "GET") return;
   if(u.hostname.endsWith("supabase.co")) return;      // данные и вход — всегда живьём
   if(u.origin !== location.origin) return;
-  /* видео неба — мимо служки: Safari просит его кусками (Range), а кэш отдал бы целиком, и видео не заиграло бы */
-  if(u.pathname.endsWith(".mp4")) return;
+  /* Видео неба. Safari просит его кусками (Range) и целый ответ из кэша не играет, поэтому куски режем сами
+     из сохранённого файла. Первый раз — из сети, а целиком файл ложится в память фоном: Женя 28.09 «долго
+     прогружается анимация» — каждый запуск тянул 2,6 МБ заново. */
+  if(u.pathname.endsWith(".mp4")){ e.respondWith(небо_из_памяти(e)); return; }
   /* КЭШ ПЕРВЫМ, СЕТЬ ДОГОНЯЕТ. Было наоборот — «сеть первой, кэш запасным», и телефон ждал
      ответа сети даже когда всё своё лежало рядом. Женя 11.09: «на телефоне медленно грузится».
      Теперь из кэша отдаём мгновенно, свежее подтягиваем следом и кладём на следующий раз;
@@ -54,3 +60,29 @@ self.addEventListener("fetch", e => {
     })
   );
 });
+
+async function небо_из_памяти(e){
+  const ящик = await caches.open(ВИДЕО), адрес = e.request.url.split("?")[0];
+  const целое = await ящик.match(адрес);
+  if(!целое){
+    e.waitUntil((async () => {
+      try{
+        const r = await fetch(адрес);
+        if(!r.ok || r.status !== 200) return;
+        for(const к of await ящик.keys()) if(к.url !== адрес) await ящик.delete(к);   // прежний клип больше не нужен
+        await ящик.put(адрес, r);
+      }catch(err){}
+    })());
+    return fetch(e.request);
+  }
+  const диапазон = /bytes=(\d*)-(\d*)/.exec(e.request.headers.get("range") || "");
+  if(!диапазон) return целое;
+  const тело = await целое.blob(), всего = тело.size;
+  let от = диапазон[1] === "" ? всего - +диапазон[2] : +диапазон[1];
+  let до = диапазон[1] !== "" && диапазон[2] !== "" ? +диапазон[2] : всего - 1;
+  от = Math.max(0, от); до = Math.min(до, всего - 1);
+  if(от > до) return new Response(null, {status: 416, headers: {"Content-Range": "bytes */" + всего}});
+  return new Response(тело.slice(от, до + 1), {status: 206, headers: {
+    "Content-Type": "video/mp4", "Content-Range": `bytes ${от}-${до}/${всего}`,
+    "Content-Length": String(до - от + 1), "Accept-Ranges": "bytes"}});
+}
