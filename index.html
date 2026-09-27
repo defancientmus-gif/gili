@@ -47,6 +47,8 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 html,body{height:100%; overscroll-behavior-y:none}
+/* цвет неба у самого корня: айфон рисует его раньше картинки и кода, чёрного кадра на старте нет (28.09) */
+html{background:#dfe7ea}
 body{
   margin:0; font-family:var(--sys); color:var(--fg); font-size:17px; line-height:1.5;
   background:
@@ -964,7 +966,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v48·e22ef8</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v49·c714ae</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -2961,13 +2963,18 @@ else sb.auth.getSession().then(({data:{session}}) => session ? поднять() 
 обновить_состояние();
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(()=>{});
-  /* Служка теперь отдаёт из кэша сразу, а сеть догоняет в фоне — значит первый экран может
-     оказаться вчерашним. Как только новая версия установилась, страница перечитывает себя
-     сама: ровно та боль 25.08 «не обновляется интерфейс, надо перезапускать приложение». */
-  let перезагружаюсь = false;
+  /* Служка отдаёт из кэша сразу, сеть догоняет в фоне — первый экран может оказаться вчерашним,
+     поэтому новая версия страницу перечитывает (боль 25.08 «не обновляется интерфейс»).
+     Но не на глазах: до v49 перечитывали сразу, и после выкладки старт шёл дважды — Женя 28.09
+     «иногда при запуске чёрный экран». Разберёмся лечил то же (rz-v353). Теперь так: страница
+     спрятана — перечитываем сейчас, открыта — когда её свернут. Следующий вход уже свежий. */
+  let перезагружаюсь = false, ждёт_версия = false;
+  const перечитать = () => { if(!перезагружаюсь){ перезагружаюсь = true; location.reload(); } };
   navigator.serviceWorker.addEventListener('message', e => {
-    if(e.data === 'новая-версия' && !перезагружаюсь){ перезагружаюсь = true; location.reload(); }
+    if(e.data !== 'новая-версия') return;
+    if(document.hidden) перечитать(); else ждёт_версия = true;
   });
+  document.addEventListener('visibilitychange', () => { if(document.hidden && ждёт_версия) перечитать(); });
 }
 </script>
 </body>
