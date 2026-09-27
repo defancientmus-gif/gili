@@ -210,7 +210,7 @@ function sky(){
   return {top:mix(t0, t1), hor:mix(g0, g1), night};
 }
 const rgb = a => `rgb(${a[0]},${a[1]},${a[2]})`;
-const НЕБО = new Image(); НЕБО.src = 'gili-sky-v1.jpg'  /* в окне — то же фото, что у ленты */;
+const НЕБО = new Image(); НЕБО.src = 'gili-sky-v2.jpg'  /* в окне — то же фото, что у ленты */;
 const STARS = Array.from({length:70}, (_, i) => { const r = rng(i * 77 + 3); return {x:r(), y:r() * .9, s:r() * 1.3 + .3, p:r() * 6}; });
 const FLIES = Array.from({length:14}, (_, i) => { const r = rng(i * 131 + 9); return {x:r(), y:.2 + r() * .75, p:r() * 6, v:.3 + r() * .5}; });
 

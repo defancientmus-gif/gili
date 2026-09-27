@@ -94,7 +94,7 @@ body{
 /* ── шапка: потоки ────────────────────────────────────────────────────────── */
 #приложение{display:contents}
 #приложение[hidden]{display:none}
-.мобильный-бренд,.поиск-знак,#сцена,#небо,.фото-меню,.старт-слово{display:none}
+.мобильный-бренд,.поиск-знак,#сцена,#небо,#небо-видео,.фото-меню,.старт-слово{display:none}
 header{padding:8px 12px 4px}
 .потоки{display:flex; gap:4px; padding:3px; border-radius:15px;
   background:oklch(1 0 0 / .34); border:1px solid oklch(1 0 0 / .55)}
@@ -358,15 +358,23 @@ textarea:focus{outline:none; border-color:var(--accent)}
   html,body{height:100%; height:100dvh}
   body{
     font-size:16px;
-    background:oklch(.91 .02 218) url('gili-sky-v1.jpg') center/cover no-repeat;
+    background:oklch(.91 .02 218) url('gili-sky-v2.jpg') center/cover no-repeat;
     overflow:hidden;
   }
+  /* 27.09 «4к супер фон»: то же небо, перерисованное резко (Дом, Polza). Было фото 941 px, и в широком
+     окне мака его растягивало втрое. Узкому экрану — стоячий кадр 1440×2560, широкому — панорама
+     той же сцены 2560×1440: горизонт на месте, ничего не режется. */
+  @media (min-aspect-ratio:1/1){ body{background-image:url('gili-sky-wide.jpg')} }
   body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,oklch(1 0 0/.04),oklch(.92 .02 214/.16) 44%,oklch(.78 .06 210/.24));}
   #сцена{display:block;position:fixed;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;opacity:.55}
   /* живое небо: та же картинка, но облака плывут, а море дышит. Проявляется, когда готов
      первый кадр; до того и без WebGL остаётся фото фоном body — разницы глаз не заметит. */
   #небо{display:block;position:fixed;inset:0;z-index:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
   #небо.живо{opacity:1}
+  /* телефон: небо живое по-настоящему — облака плывут, море дышит (петля Дома 10 с). Видео телефон
+     разжимает отдельным чипом, это холоднее шейдера на весь экран. Первый кадр совпадает с фото body. */
+  #небо-видео{display:block;position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
+  #небо-видео.живо{opacity:1}
   #старт,#вход,#приложение{position:relative;z-index:2}
   #старт{display:flex;flex-direction:column;align-items:center;gap:12px;color:oklch(.25 .05 215);opacity:1}
   #старт[hidden]{display:none}
@@ -925,6 +933,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
 </head>
 <body>
 <canvas id="небо" aria-hidden="true"></canvas>
+<video id="небо-видео" aria-hidden="true" muted playsinline loop preload="none" disablepictureinpicture></video>
 <canvas id="сцена" aria-hidden="true"></canvas>
 
 <div id="старт">
@@ -955,7 +964,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v47·8bdbdb</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v48·e22ef8</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -2734,7 +2743,7 @@ precision highp float;
 precision mediump float;
 #endif
 uniform sampler2D img; uniform vec2 res, isz; uniform float t;
-const float H = .619;          /* horizon: share of image height from top */
+uniform float H;               /* horizon: share of image height from top */
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);
   return mix(mix(hash(i),hash(i+vec2(1,0)),u.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),u.x),u.y);}
@@ -2761,7 +2770,37 @@ void main(){
   }
   gl_FragColor=vec4(col,1.);
 }`;
+/* Какое небо: узкий экран — стоячий кадр, широкий — панорама. H — где горизонт (доля высоты сверху),
+   по нему шейдер делит облака и воду; мерено по кадрам 27.09. */
+const НЕБО = matchMedia('(min-aspect-ratio:1/1)').matches
+  ? {фото: 'gili-sky-wide.jpg', H: .632, широкое: true}
+  : {фото: 'gili-sky-v2.jpg', H: .62, широкое: false};
+
+/* Видео — только на телефоне в узком виде. Мак открыт весь день и без видео (как без волн сцены);
+   и его сервер отдаёт файлы целиком, без кусков, а WebKit такое видео не играет.
+   Не заиграло (режим энергосбережения айфона запрещает автозапуск, нет сети) — остаётся шейдер. */
+function небо_видео(){
+  const в = $('небо-видео');
+  if(!в || НА_МАКЕ || НЕБО.широкое || getComputedStyle(в).display === 'none'
+     || matchMedia('(prefers-reduced-motion:reduce)').matches) return Promise.reject();
+  в.muted = true;                                          // атрибута мало: iOS смотрит на свойство
+  в.src = 'gili-sky-live.mp4';
+  return в.play().then(() => {
+    в.classList.add('живо');
+    document.addEventListener('visibilitychange', () => { if(!document.hidden) в.play().catch(() => {}); });
+  });
+}
+
 function оживить_небо(){
+  // открыли в фоне — браузер не даст видео стартовать (и шейдер без толку рисовал бы): ждём, пока покажут
+  if(document.hidden){
+    document.addEventListener('visibilitychange', оживить_небо, {once: true});
+    return;
+  }
+  небо_видео().catch(() => { $('небо-видео')?.removeAttribute('src'); небо_шейдером(); });
+}
+
+function небо_шейдером(){
   const c = $('небо');
   if(!c || getComputedStyle(c).display === 'none' || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
   let gl = null;
@@ -2785,11 +2824,12 @@ function оживить_небо(){
   const а = gl.getAttribLocation(п, 'p');
   gl.enableVertexAttribArray(а); gl.vertexAttribPointer(а, 2, gl.FLOAT, false, 0, 0);
   const у = {res: gl.getUniformLocation(п, 'res'), isz: gl.getUniformLocation(п, 'isz'), t: gl.getUniformLocation(п, 't')};
+  gl.uniform1f(gl.getUniformLocation(п, 'H'), НЕБО.H);
 
   let кадр = 0, прошлый = 0, готово = false, жив = !document.hidden;
   const t0 = performance.now();
   const размер = () => {
-    const к = Math.min(devicePixelRatio || 1, 1.25);      // фото 941 px в ширину: выше — только расход
+    const к = Math.min(devicePixelRatio || 1, 1.25);      // шейдер на весь экран: выше — греет; резкость держит фото body под ним
     const w = Math.round(innerWidth*к), h = Math.round(innerHeight*к);
     if(c.width !== w || c.height !== h){ c.width = w; c.height = h; }
     gl.viewport(0, 0, w, h); gl.uniform2f(у.res, w, h);
@@ -2816,7 +2856,7 @@ function оживить_небо(){
     gl.uniform2f(у.isz, фото.naturalWidth, фото.naturalHeight);
     готово = true; размер(); пуск();
   };
-  фото.src = 'gili-sky-v1.jpg';
+  фото.src = НЕБО.фото;
   addEventListener('resize', () => { if(готово){ размер(); пуск(); } }, {passive:true});
   document.addEventListener('visibilitychange', () => { жив = !document.hidden; пуск(); });
   c.addEventListener('webglcontextlost', e => { e.preventDefault(); жив = false; c.classList.remove('живо'); });
