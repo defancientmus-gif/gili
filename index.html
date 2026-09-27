@@ -966,14 +966,14 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v52·4a1ada</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v53·bf4148</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
   <div class="подшапка">
     <span class="поиск-знак" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg></span>
     <input id="поиск" placeholder="искать во всех мыслях…" autocomplete="off">
-    <button class="вид сад-кнопка" id="сад-кнопка" title="вопросы кодеров: сорви плод и ответь" hidden>Ждёт тебя</button>
+    <button class="вид сад-кнопка" id="сад-кнопка" title="город: задачи, платежи и письма ждут тебя" hidden>Ждёт тебя</button>
     <button class="вид" id="вид" title="показать обработанные">ждёт</button>
     <span class="кто" id="кто"></span>
   </div>
@@ -2212,12 +2212,17 @@ async function сад_снимок(){
   if(error || !data) return null;
   try{ return JSON.parse(await data.text()); }catch{ return null; }
 }
+/* ГОРОД вместо сада (28.09): та же кнопка, счёт — все квесты города (вопросы, платежи, дела), почта отдельно
+   внутри. На маке город ходит в свой сервер (/api/gorod), на телефоне — в снимок sad.json (поле «город»). */
+function город_квестов(г){ return (г && г.здания || []).reduce((n, з) => n + (з.квесты || []).length, 0); }
 async function сад_кнопка(){
-  if(НА_МАКЕ || !Я || Date.now() - САД_ПРОВЕРЕН < 60e3) return;
+  if(!Я || Date.now() - САД_ПРОВЕРЕН < 60e3) return;
   САД_ПРОВЕРЕН = Date.now();
-  const снимок = await сад_снимок();
+  let снимок = null;
+  if(НА_МАКЕ){ try{ снимок = {город: await (await fetch('/api/gorod', {cache:'no-store'})).json()}; }catch{} }
+  else снимок = await сад_снимок();
   if(снимок) САД_СНИМОК = снимок;
-  const n = (САД_СНИМОК && САД_СНИМОК.плоды || []).length;
+  const n = САД_СНИМОК && САД_СНИМОК.город ? город_квестов(САД_СНИМОК.город) : (САД_СНИМОК && САД_СНИМОК.плоды || []).length;
   const к = $('сад-кнопка');
   к.hidden = !n;
   к.textContent = `Ждёт тебя · ${n}`;
@@ -2231,6 +2236,9 @@ if(!НА_МАКЕ) window.САД_СВЯЗЬ = {
     САД_СНИМОК = снимок;
     return снимок;
   },
+  умеет: ['вопрос'],     // дела и письма с телефона — когда облако Дома научится их принимать (→ штабу в NEXT)
+  сделать: тело => тело.вид === 'вопрос' ? САД_СВЯЗЬ.ответить({organ: тело.орган, key: тело.ключ, choice: тело.вариант})
+                                         : Promise.resolve({ok:false, error:'С телефона пока только вопросы — это нажми в Гили на маке'}),
   ответить: async ({organ, key, choice}) => {
     if(!navigator.onLine) return {ok:false, error:'Нет сети — плод остался на дереве'};
     const {data, error} = await sb.from('gili_notes').insert({author: Я.id, flow: 'кодинг', status: 'сад',
@@ -2249,7 +2257,7 @@ if(!НА_МАКЕ) window.САД_СВЯЗЬ = {
 };
 function сад_открыть(){
   const окно = $('сад-окно');
-  окно.innerHTML = '<iframe src="sad.html" title="Сад штата"></iframe>';
+  окно.innerHTML = `<iframe src="${НА_МАКЕ ? '/sad' : 'sad.html'}" title="Город"></iframe>`;
   окно.hidden = false;
   requestAnimationFrame(() => окно.classList.add('открыт'));
 }

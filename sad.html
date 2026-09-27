@@ -34,6 +34,7 @@ button{font:inherit;color:inherit}
 .значок{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);min-width:30px;height:30px;padding:0 8px;box-sizing:border-box;
   border-radius:15px;background:var(--coin);color:#fff;font:700 15px/30px var(--sys);text-align:center;font-variant-numeric:tabular-nums;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 8px -2px rgba(120,60,0,.35);pointer-events:none}
+.касса .значок{top:14%}   /* у дома над крышей дым — число садим на крышу, а не на дерево позади */
 .значок.зовёт{animation:зовёт 2.4s ease-in-out infinite}
 .значок.тык{animation:тык .45s ease-out}
 @keyframes зовёт{0%,100%{transform:translate(-50%,-100%) scale(1)}50%{transform:translate(-50%,-100%) scale(1.12)}}
@@ -60,7 +61,7 @@ button{font:inherit;color:inherit}
 #тень.вид{opacity:1;pointer-events:auto}
 #лист{position:fixed;left:0;right:0;bottom:0;max-height:min(78vh,720px);border-radius:28px 28px 0 0;z-index:7;display:flex;flex-direction:column;
   transform:translateY(104%);opacity:.6;transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s;padding-bottom:var(--safe-b);
-  background:linear-gradient(158deg,rgba(255,255,255,.9),rgba(238,246,248,.84));backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2);
+  background:linear-gradient(158deg,rgba(255,255,255,.97),rgba(240,247,249,.95));backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2);
   border:1px solid var(--glass-hi);box-shadow:var(--shadow)}
 #лист.вид{transform:none;opacity:1}
 @media (min-width:760px){
@@ -95,6 +96,7 @@ button{font:inherit;color:inherit}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 6px rgba(120,60,0,.35);transition:transform .7s cubic-bezier(.3,.1,.3,1),opacity .7s}
 
 .туман{position:fixed;inset:0;display:grid;place-items:center;z-index:3;pointer-events:none}
+.туман[hidden]{display:none}
 .туман div{border-radius:20px;padding:14px 18px;max-width:300px;text-align:center}
 
 @media (prefers-reduced-motion:reduce){
@@ -135,7 +137,7 @@ const $ = id => document.getElementById(id);
 const тихо = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[c]));
 const мн = (n, a, b, c) => { const k = n % 10, h = n % 100; return k === 1 && h !== 11 ? a : k >= 2 && k <= 4 && (h < 12 || h > 14) ? b : c; };
-const ₽ = n => Math.round(n).toLocaleString('ru-RU').replace(/\s/g, ' ') + ' ₽';
+const руб = n => Math.round(n).toLocaleString('ru-RU').replace(/\s/g, ' ') + ' ₽';
 
 /* Постоянные места на лугу, в долях картинки (x, y — где здание стоит на земле). Касса — дом Жени в центре.
    Места выбраны по фону: не на тропе справа, не на камнях слева внизу. Новый орган берёт первое свободное. */
@@ -205,7 +207,7 @@ function нарисовать(){
     const глубина = .72 + (y - 40) / 36 * .5;                   // дальние меньше
     const высота = (з.касса ? .23 : ст === 'стройка' ? .1 : .14) * глубина;
     const b = document.createElement('button');
-    b.className = `здание ${ст === 'стройка' ? 'стройка' : ст === 'запущен' ? 'запущен' : ''} ${з.касса ? '' : 'живое'}`;
+    b.className = `здание ${ст === 'стройка' ? 'стройка' : ст === 'запущен' ? 'запущен' : ''} ${з.касса ? 'касса' : 'живое'}`;
     b.dataset.орган = з.орган;
     b.style.left = x + '%'; b.style.top = y + '%';
     b.style.width = (высота * H * (з.касса ? 1.15 : .9)) + 'px';
@@ -254,7 +256,7 @@ function карточка(к){
       <p class="текст">${esc(к.текст)}</p>${к.руками ? '<p class="мета">только твоими руками</p>' : ''}
       <div class="кнопки"><button data-вариант="Сделал"${выкл}>Сделал</button></div>${нет_тут('дело')}</article>`;
   if (к.вид === 'платёж') return `<article class="квест" data-вид="платёж">
-      <p class="текст">${esc(к.текст)}${к.сумма ? ' · ' + ₽(к.сумма) : ''}</p><p class="мета">${срок(к)}${к.срок ? ' · до ' + esc(new Date(к.срок).toLocaleDateString('ru-RU', {day:'numeric', month:'long'})) : ''}</p>
+      <p class="текст">${esc(к.текст)}${к.сумма ? ' · ' + руб(к.сумма) : ''}</p><p class="мета">${срок(к)}${к.срок ? ' · до ' + esc(new Date(к.срок).toLocaleDateString('ru-RU', {day:'numeric', month:'long'})) : ''}</p>
       <div class="кнопки"><a href="${esc(ГОРОД.crm || '#')}" target="_blank" rel="noopener">Открыть CRM</a></div>
       <p class="мета">Гаснет, когда отметишь «Оплачено» в CRM → Деньги.</p></article>`;
   if (к.вид === 'мысль') {
