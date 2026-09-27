@@ -888,6 +888,36 @@ textarea:focus{outline:none; border-color:var(--accent)}
   @keyframes орган-дышит{0%,100%{transform:scale(.76);opacity:.35}50%{transform:scale(1.20);opacity:.82}}
 }
 
+/* РЕЧЬ ДОМА (27.09, Женя: «Уведомления в тему… сделать окошки красивыми, индикаторы гармоничными,
+   объединить в единое целое»). Было три знака на одной карточке: тёплая полоса слева, бирюзовая черта
+   справа, бирюзовое «сказал вслух» — три акцента, и ни один ничего не значил. Стало как в шапке:
+   знак дома слева, что и сколько крупно, а единственный цвет — тёплая точка срока, та же, что у
+   «платежей ждут оплаты». Точка тёплая только когда до срока три дня и меньше или он прошёл. */
+.мысль.дом-речь{
+  cursor:default;
+  background:linear-gradient(140deg,oklch(1 0 0/.40),oklch(.90 .04 80/.14));
+  box-shadow:inset 0 0 0 1px oklch(1 0 0/.55),inset 10px 14px 30px oklch(1 0 0/.10),0 18px 40px -28px oklch(.18 .12 226/.62);
+}
+.мысль.дом-речь::after{display:none}
+.платёж{display:flex; align-items:center; gap:12px}
+.дом-знак{
+  flex:none; width:36px; height:36px; border-radius:50%; display:grid; place-items:center;
+  color:oklch(.36 .07 213);
+  background:linear-gradient(145deg,oklch(1 0 0/.78),oklch(.92 .025 210/.45));
+  box-shadow:inset 0 1px 0 white,inset 0 0 0 1px oklch(1 0 0/.6),0 4px 12px -6px oklch(.3 .06 215/.3);
+}
+.дом-знак svg{width:18px; height:18px}
+.платёж-что{flex:1; min-width:0; display:flex; flex-direction:column; gap:4px}
+.платёж-имя{font-weight:600; line-height:1.3; color:oklch(.22 .03 224)}
+.платёж-деталь{font-weight:500; color:oklch(.45 .02 215); margin-left:6px}
+.платёж-срок{display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:oklch(.34 .03 216/.75)}
+.платёж-срок i{width:7px; height:7px; border-radius:50%; background:oklch(.70 .02 215/.55)}
+.платёж-срок.скоро{color:oklch(.46 .08 62)}
+.платёж-срок.скоро i{background:oklch(.74 .13 70); box-shadow:0 0 0 3px oklch(.80 .12 70/.22)}
+.платёж-сумма{flex:none; font-size:17px; font-weight:650; letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums; color:oklch(.22 .03 224); white-space:nowrap}
+.мысль.дом-речь .низ b{font-weight:500; color:inherit}
+
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important; transition:none !important}
 }
@@ -925,7 +955,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v47·17db66</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v47·f1e34e</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -1399,13 +1429,60 @@ function нарисовать(){
   рисуй(html);
 }
 
+/* «Напоминаю: Аренда (на руки) 30000 ₽ · до 30.09» (Домик/scripts/напомни.py) → что, сколько, до когда.
+   Не разобралось — карточка остаётся текстом, ничего не теряется. */
+const ЗНАК_ДОМА = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9v10h11V9"/><path d="M10.5 19v-5h3v5"/></svg>';
+function напоминание_дома(текст){
+  const м = /^Напоминаю:\s*(.+)$/.exec((текст || '').split('\n')[0].trim());
+  if(!м) return null;
+  const части = м[1].split(/\s+·\s+/);
+  let сумма = null, срок = null, деталь = '';
+  const имя = [];
+  for(const ч of части){
+    const д = /^до\s+(\d{1,2})\.(\d{2})$/.exec(ч);
+    if(д){ срок = [+д[1], +д[2]]; continue; }
+    const р = /^(.*?)\s*(\d[\d\s]*?)\s*₽$/.exec(ч);
+    if(р){
+      // «0412 22621 ₽»: сумма — последнее число, всё до него — часть названия (номер договора)
+      const числа = р[2].trim().split(/\s+/);
+      сумма = +числа.pop();
+      const остаток = (р[1] + ' ' + числа.join(' ')).trim();
+      if(/^[\d\s]+$/.test(остаток)) деталь = остаток; else if(остаток) имя.push(остаток);
+      continue;
+    }
+    имя.push(ч);
+  }
+  if(!имя.length || (сумма === null && !срок)) return null;
+  let дней = null;
+  if(срок){
+    const сегодня = new Date(); сегодня.setHours(0, 0, 0, 0);
+    let д = new Date(сегодня.getFullYear(), срок[1] - 1, срок[0]);
+    if(д - сегодня > 200 * 864e5) д = new Date(сегодня.getFullYear() - 1, срок[1] - 1, срок[0]);
+    дней = Math.round((д - сегодня) / 864e5);
+  }
+  return {имя: имя.join(' · '), деталь, сумма, срок, дней};
+}
+function тело_платежа(н){
+  const когда = н.срок ? `до ${String(н.срок[0]).padStart(2, '0')}.${String(н.срок[1]).padStart(2, '0')}` : '';
+  const осталось = н.дней === null ? '' : н.дней < 0 ? ` · срок прошёл ${-н.дней} дн назад` : н.дней === 0 ? ' · сегодня'
+                 : н.дней === 1 ? ' · завтра' : ` · через ${н.дней} дн`;
+  const скоро = н.дней !== null && н.дней <= 3;
+  return `<div class="платёж"><span class="дом-знак" aria-hidden="true">${ЗНАК_ДОМА}</span>` +
+    `<div class="платёж-что"><span class="платёж-имя">${экран(н.имя)}${н.деталь ? `<span class="платёж-деталь">${экран(н.деталь)}</span>` : ''}</span>` +
+    (когда ? `<span class="платёж-срок${скоро ? ' скоро' : ''}"><i></i>${когда}${осталось}</span>` : '') + `</div>` +
+    (н.сумма !== null ? `<b class="платёж-сумма">${н.сумма.toLocaleString('ru-RU')} ₽</b>` : '') + `</div>`;
+}
+
 function карточка(м){
   ПОКАЗАНО.set(м.id, м);                     // меню берёт мысль отсюда: ждущих в МЫСЛИ нет
   const снимки = (м.photos || []);
   const фото = снимки.length
     ? `<div class="снимки">` + снимки.map(п => `<img loading="lazy" data-путь="${экран(п)}" alt="снимок">`).join('') + `</div>`
     : '';
-  const чей = напоминание_ли(м) ? 'дом напомнил'
+  const дома = м.author === 'дом';                // речь дома — только на маке, её приносит mac-sb.js
+  const платёж = дома ? напоминание_дома(м.body) : null;
+  const чей = дома ? ''
+            : напоминание_ли(м) ? 'дом напомнил'
             : (м.author && Я && м.author !== Я.id) ? (м.автор_имя || имя_автора(м.author)) : '';
   const открыта = ОТКРЫТА === м.id;
   // сказанное вслух: пока слов нет, карточка говорит, чего ждёт, и даёт послушать
@@ -1413,6 +1490,7 @@ function карточка(м){
   const тело = правится ? редактор(м)
              : ждёт_слов(м) ? `<span class="распознаётся">${ЗНАК_ГОЛОСА} распознаю…</span>`
              : м.звук_ждёт  ? `<span class="распознаётся">${ЗНАК_ГОЛОСА} запись ждёт сети</span>`
+             : платёж ? тело_платежа(платёж)
              : напоминание_ли(м) ? тело_напоминания(м.body, открыта || !!ИСКОМОЕ)
              : тело_мысли(м.body || '') + что_за_ссылкой(м, открыта);
   const ответ = правится ? ''
@@ -1422,10 +1500,13 @@ function карточка(м){
     ? `<button class="звук" data-звук="${экран(м.audio)}">${ЗНАК_ГОЛОСА}послушать</button>` : '';
   const сторона = напоминание_ли(м) ? ' чужая'
                 : (!м.author || м.ждёт || (Я && м.author === Я.id)) ? ' своя' : ' чужая';
-  return `<div class="мысль стекло${сторона} ${м.ждёт ? 'ждёт' : ''}${обработана(м) ? ' готовая' : ''}` +
+  const судьба = м.ждёт ? (НА_МАКЕ ? 'ждёт отправки' : 'в телефоне')
+               : дома ? (платёж ? 'Дом напомнил вслух' : 'Дом · ' + (человечно(м.status) || 'сказал вслух'))
+               : человечно(м.status);
+  return `<div class="мысль стекло${сторона}${дома ? ' дом-речь' : ''} ${м.ждёт ? 'ждёт' : ''}${обработана(м) ? ' готовая' : ''}` +
           `${открыта ? ' выбрана' : ''}" data-ид="${м.id}">${тело}${ответ}${фото}` +
           `<div class="низ"><span>${часы(м.created_at)}</span><span>·</span>` +
-          `<b class="${окраска(м.status)}">${м.ждёт ? (НА_МАКЕ ? 'ждёт отправки' : 'в телефоне') : человечно(м.status)}</b>` +
+          `<b class="${дома ? '' : окраска(м.status)}">${судьба}</b>` +
           послушать +
           (ИСКОМОЕ ? `<span>${имя_потока(м.flow)}</span>` : '') +
           (чей ? `<span class="чей">${экран(чей)}</span>` : '') + `</div></div>`;
