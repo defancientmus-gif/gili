@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>Сад штата</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;1,500&family=Manrope:wght@500;600;700&display=swap">
+<style>
+:root{color-scheme:dark;--ground:#072831;--glass:rgba(7,40,49,.66);--glass-hi:rgba(226,239,236,.16);--ink:#E2EFEC;--soft:rgba(226,239,236,.62);--acc:#5BC0B4;--fruit:#F0B64C}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--ground);color:var(--ink);font:14px/1.45 Manrope,system-ui,-apple-system,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:manipulation;cursor:pointer}
+.glass{background:var(--glass);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border:1px solid var(--glass-hi);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 20px -8px rgba(0,20,26,.55)}
+.top{position:fixed;left:16px;right:16px;top:calc(12px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:space-between;pointer-events:none}
+.top>*{pointer-events:auto}
+.title{border-radius:20px;padding:10px 16px 11px;max-width:100%;box-sizing:border-box}
+.title h1{margin:0;font:600 23px/1.1 Lora,Georgia,serif;text-wrap:balance}
+.title div{color:var(--soft);font-size:12.5px;font-variant-numeric:tabular-nums;margin-top:3px}
+.round{border-radius:18px;padding:9px 14px;display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--soft)}
+.dots{display:flex;gap:5px}
+.dots i{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(240,182,76,.55);box-sizing:border-box;transition:background .4s,transform .4s}
+.dots i.on{background:var(--fruit);border-color:var(--fruit);transform:scale(1.1)}
+.hint{position:fixed;left:50%;top:calc(96px + env(safe-area-inset-top,0px));transform:translateX(-50%);border-radius:16px;padding:8px 14px;font-size:13px;color:var(--ink);width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center;pointer-events:none;transition:opacity .6s}
+.bar{position:fixed;left:16px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;gap:10px;pointer-events:none}
+.bar>*{pointer-events:auto}
+button{font:600 13px Manrope,system-ui,sans-serif;color:var(--ink);border-radius:999px;padding:9px 15px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;font-variant-numeric:tabular-nums;background:var(--glass);border:1px solid var(--glass-hi)}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button:hover{border-color:rgba(226,239,236,.34)}
+.basket svg{width:18px;height:18px}
+.basket.bump{animation:bump .5s}
+@keyframes bump{30%{transform:scale(1.14)}60%{transform:scale(.96)}}
+.sheet{position:fixed;left:50%;bottom:0;width:min(620px,100%);transform:translate(-50%,105%);transition:transform .35s cubic-bezier(.2,.9,.3,1);border-radius:28px 28px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom,0px));max-height:72vh;overflow:auto;box-sizing:border-box;background:rgba(7,40,49,.93)}
+.sheet.open{transform:translate(-50%,0)}
+.x{position:absolute;right:14px;top:14px;width:36px;height:36px;padding:0;justify-content:center;font-size:20px;line-height:1}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:0 44px 12px 0}
+.chip{font-size:12px;color:var(--soft);border:1px solid var(--glass-hi);border-radius:999px;padding:3px 10px;font-variant-numeric:tabular-nums}
+.chip.old{color:var(--fruit);border-color:rgba(240,182,76,.45)}
+.chip.who{color:var(--ink);font-weight:700}
+.sheet h3{margin:0 0 8px;font:600 21px/1.28 Lora,Georgia,serif;text-wrap:balance}
+.sheet p{margin:0 0 14px;color:var(--soft);max-width:60ch}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.opts button{padding:11px 16px}
+.opts button.rec{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.opts small{font-weight:500;color:var(--acc);font-size:11.5px}
+.later{background:none;border:none;color:var(--soft);padding:8px 2px;font-weight:500}
+.list{display:flex;flex-direction:column;gap:6px;margin:4px 0 14px}
+.row{justify-content:flex-start;text-align:left;border-radius:16px;padding:10px 14px;width:100%;box-sizing:border-box;font-weight:500;line-height:1.35}
+.row b{flex:none;min-width:5.6em;font-weight:700}
+.row span{color:var(--soft)}
+.done{padding:10px 0;border-bottom:1px solid rgba(226,239,236,.08)}
+.done:last-of-type{border-bottom:none}
+.done div{color:var(--soft);font-size:12.5px}
+.done strong{color:var(--fruit);font-weight:700}
+.note{font-size:12.5px;color:var(--soft);margin:12px 0}
+.toast{position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;border-radius:16px;padding:9px 16px;font-size:13px;transition:opacity .3s,transform .3s;pointer-events:none;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:0 0 14px}
+.stats div{border-radius:16px;padding:10px 12px;border:1px solid var(--glass-hi)}
+.stats b{display:block;font:600 20px/1.2 Lora,Georgia,serif;font-variant-numeric:tabular-nums}
+.stats span{font-size:12px;color:var(--soft)}
+@media (prefers-reduced-motion:reduce){.sheet,.toast,.dots i,.hint{transition:none}.basket.bump{animation:none}}
+.bar .mid{display:flex;gap:10px}
+.err{color:var(--fruit)}
+/* на узком счётчик дня уходит второй строкой шапки — подсказка встаёт под него, а не поверх */
+@media (max-width:560px){.hint{top:calc(128px + env(safe-area-inset-top,0px))}}
+</style>
+</head><body>
+
+<canvas id="c" role="img" aria-label="Сад: каждое дерево — кодер, плоды на нём — его вопросы к тебе"></canvas>
+<div class="top">
+  <div class="title glass"><h1>Сад штата</h1><div id="sub"></div></div>
+  <div class="round glass" aria-live="polite"><span id="rtext">Сегодня</span><span class="dots" id="dots"></span></div>
+</div>
+<div class="hint glass" id="hint">Плоды — вопросы кодеров к тебе. Сорви плод, ответь, и дерево оживёт.</div>
+<div class="bar">
+  <div class="mid"><button id="backBtn" aria-label="Назад в ленту">← Лента</button><button id="listBtn">Все плоды списком</button></div>
+  <button class="basket" id="basketBtn" aria-label="Корзина с ответами">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16l-1.6 8.2a2 2 0 0 1-2 1.8H7.6a2 2 0 0 1-2-1.8z"/><path d="M8 10l3-5M16 10l-3-5"/></svg>
+    <span id="bcount">0</span>
+  </button>
+</div>
+<div class="sheet glass" id="sheet" role="dialog" aria-labelledby="shTitle">
+  <button class="x" id="close" aria-label="Закрыть">×</button>
+  <div id="shBody"></div>
+</div>
+<div class="toast glass" id="toast" role="status"></div>
+
+<script>
+/* САД ГИЛИ (27.09). Проба Дома 26.09 (Домик/сад/пульт.html) на живых данных: плоды — вопросы кодеров
+   из кодеры.вопросы_жене() Дома (та же читалка, что у «Ждёт тебя»), деревья — органы и их git.
+   Сорвал плод — /api/zhdet/answer → ответ.py Дома: строка в NEXT кодера закрыта, ему легла задача.
+   Здесь только рисуем: правда у Дома, в памяти браузера живут корзина и круг дня. */
+const ROUND = 4;
+/* Связь сада с правдой. Страница одна на мак и телефон (Женя 26.09: одной правкой всё), разница только тут.
+   В облаке сад открыт в iframe приложения, и приложение даёт свою связь: снимок sad.json из бакета,
+   ответ — запись в gili_notes, которую забирает облако Дома. На маке — прямо в сервер окна. */
+const СВЯЗЬ = (() => { try { return parent !== window && parent.САД_СВЯЗЬ; } catch (e) { return null; } })() || {
+  грузить: async () => (await fetch('/api/sad', {cache:'no-store'})).json(),
+  ответить: async тело => (await fetch('/api/zhdet/answer', {method:'POST', headers:{'Content-Type':'application/json'},
+                                   body: JSON.stringify(тело)})).json(),
+};
+let TREES = [], FRUITS = [], СЕРДЦЕ = null, МОЖНО = false, ОШИБКА = null, СОБИРАЮ = true;
+const $ = id => document.getElementById(id);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const age = f => f.d;
+const tree = id => TREES.find(t => t.id === id);
+const dayKey = ts => new Date(ts).toDateString();
+
+let state = {answers:{}};
+// корзина: что сорвано отсюда. Сорванный плод с дерева уходит у Дома, поэтому вопрос и дерево храним тут же
+try { const s = JSON.parse(localStorage.getItem('gili-sad-v1') || 'null'); if (s && s.answers) state = s; } catch (e) {}
+function save(){ try { localStorage.setItem('gili-sad-v1', JSON.stringify(state)); } catch (e) {} }
+const ЛЕТИТ = new Set();   // плод сорван, мак ещё пишет ответ — на дереве его уже нет
+const hanging = () => FRUITS.filter(f => !ЛЕТИТ.has(f.id));
+
+// ---------- деревья ----------
+function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+
+function build(t){
+  const r = rng(hash(t.id + 'сад'));
+  const segs = [], tips = [];
+  (function br(x, y, ang, len, w, d){
+    const x2 = x + Math.sin(ang) * len, y2 = y - Math.cos(ang) * len;
+    segs.push({x1:x, y1:y, x2, y2, w});
+    if (d >= 4) { tips.push({x:x2, y:y2}); return; }
+    const n = d === 0 ? 3 : 2;
+    for (let i = 0; i < n; i++) {
+      const spread = n === 3 ? (i - 1) * 0.62 : (i ? 1 : -1) * (0.32 + r() * 0.3);
+      br(x2, y2, ang + spread + (r() - .5) * 0.25, len * (0.66 + r() * 0.12), w * 0.64, d + 1);
+    }
+  })(0, 0, (r() - .5) * 0.1, 0.36, 0.075, 0);
+  let top = 0; for (const s of segs) top = Math.min(top, s.y2);
+  const k = 0.86 / -top;           // вершина кроны — на 0.86 высоты, кроне остаётся запас
+  for (const s of segs) { s.x1 *= k; s.y1 *= k; s.x2 *= k; s.y2 *= k; s.w *= k; }
+  for (const p of tips) { p.x *= k; p.y *= k; }
+  const blobs = tips.map(p => ({x:p.x + (r() - .5) * .05, y:p.y + (r() - .5) * .05, rad:.1 + r() * .06, shade:.78 + r() * .3}));
+  for (let i = 0; i < 8; i++) { const a = tips[Math.floor(r() * tips.length)]; blobs.push({x:a.x * .6, y:a.y * .85 + .04, rad:.12 + r() * .05, shade:.62 + r() * .2}); }
+  blobs.sort((a, b) => a.shade - b.shade);
+  const order = tips.map((p, i) => i).sort((a, b) => tips[a].x - tips[b].x);
+  return {segs, tips, blobs, order, phase:r() * 6.28};
+}
+
+function fruitsOf(t){ return FRUITS.filter(f => f.t === t.id); }
+const висит = f => !ЛЕТИТ.has(f.id);
+function targetHealth(t){
+  const live = fruitsOf(t).filter(висит);
+  if (!live.length) return 1;
+  const oldest = Math.max(...live.map(age));
+  return 1 - Math.min(.85, Math.max(0, (oldest - 4) / 34));
+}
+
+// ---------- раскладка ----------
+const cv = $('c'), cx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, horizon = 0;
+function layout(){
+  DPR = Math.min(2, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  horizon = H * (W < 560 ? .3 : .3);
+  const R = W < 560 ? 4 : 3;
+  const rest = TREES.filter(t => !t.house).sort((a, b) => fruitsOf(b).length - fruitsOf(a).length || b.commits - a.commits);
+  const rows = Array.from({length:R}, () => []);
+  const per = Math.ceil(rest.length / R);
+  let i = 0;
+  for (let r = R - 1; r >= 0; r--) for (let c = 0; c < per && i < rest.length; c++) rows[r].push(rest[i++]);
+  const дом = TREES.find(t => t.house);
+  if (дом) rows[0].splice(Math.floor(rows[0].length / 2), 0, дом);
+  const bottom = H - 104, gh = bottom - horizon;
+  rows.forEach((row, r) => {
+    const n = row.length, colW = (W - 32) / n;
+    // передний ряд — вопросы старших деревьев, между рядами ровно
+    const y = horizon + gh * (.22 + .78 * (r + 1) / R);
+    const depth = .58 + .42 * (r + 1) / R;
+    // в каждом ряду ставим сначала по центру самые плодовые
+    const seq = row.slice(), placed = new Array(n);
+    let L = Math.floor((n - 1) / 2), Rr = L + 1, turn = 0;
+    for (const t of seq) { if (turn++ % 2 === 0 && L >= 0) placed[L--] = t; else if (Rr < n) placed[Rr++] = t; else placed[L--] = t; }
+    placed.forEach((t, c) => {
+      const jit = (rng(hash(t.id))() - .5) * colW * .18;
+      t.X = 16 + colW * (c + .5) + jit + (r % 2 ? colW * .12 : -colW * .06);
+      t.X = Math.max(16 + colW * .45, Math.min(W - 16 - colW * .45, t.X));
+      t.Y = y;
+      const g = t.sleep ? .7 : .78 + .3 * Math.log10(1 + t.commits) / Math.log10(200);
+      t.S = Math.min(gh / R * 1.25, colW * 1.05, 210) * depth * Math.min(1.1, g) * (t.house ? 1.5 : 1);
+      t.row = r;
+    });
+  });
+  TREES.sort((a, b) => a.row - b.row || a.Y - b.Y);
+}
+
+// ---------- небо по часам ----------
+const SKY = [ // час, верх, горизонт
+  [0,  [4,20,26],   [11,63,74]],
+  [5,  [7,40,49],   [40,90,96]],
+  [7,  [22,86,98],  [120,168,160]],
+  [12, [27,100,112],[112,176,170]],
+  [18, [18,72,84],  [150,130,96]],
+  [20, [7,40,49],   [36,82,88]],
+  [22, [4,20,26],   [11,63,74]],
+  [24, [4,20,26],   [11,63,74]]
+];
+function sky(){
+  const d = new Date(), h = d.getHours() + d.getMinutes() / 60;
+  let i = 0; while (SKY[i + 1][0] <= h) i++;
+  const [h0, t0, g0] = SKY[i], [h1, t1, g1] = SKY[i + 1], k = (h - h0) / (h1 - h0);
+  const mix = (a, b) => a.map((v, j) => Math.round(v + (b[j] - v) * k));
+  const night = h < 5 || h >= 21 ? 1 : h >= 20 ? h - 20 : h < 6 ? 6 - h : 0;
+  return {top:mix(t0, t1), hor:mix(g0, g1), night};
+}
+const rgb = a => `rgb(${a[0]},${a[1]},${a[2]})`;
+const STARS = Array.from({length:70}, (_, i) => { const r = rng(i * 77 + 3); return {x:r(), y:r() * .9, s:r() * 1.3 + .3, p:r() * 6}; });
+const FLIES = Array.from({length:14}, (_, i) => { const r = rng(i * 131 + 9); return {x:r(), y:.2 + r() * .75, p:r() * 6, v:.3 + r() * .5}; });
+
+// ---------- цвета ----------
+const LEAF = [63,156,134], DRY = [168,138,72];
+function leaf(h, shade){ return LEAF.map((v, j) => Math.round((DRY[j] + (v - DRY[j]) * h) * shade)); }
+function fruitColor(a){ return a <= 3 ? '#F3D38A' : a <= 14 ? '#F0B64C' : '#DE8A3A'; }
+
+// ---------- кадр ----------
+let labels = [], hits = [], treeHits = [], flights = [], T0 = performance.now();
+function draw(now){
+  const tm = (now - T0) / 1000;
+  const s = sky();
+  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  let g = cx.createLinearGradient(0, 0, 0, horizon);
+  g.addColorStop(0, rgb(s.top)); g.addColorStop(1, rgb(s.hor));
+  cx.fillStyle = g; cx.fillRect(0, 0, W, horizon + 2);
+  if (s.night > 0) {
+    for (const st of STARS) {
+      const a = s.night * (.35 + .35 * Math.sin(st.p + (reduce ? 0 : tm * .8)));
+      cx.fillStyle = `rgba(226,239,236,${a})`;
+      cx.fillRect(st.x * W, st.y * horizon, st.s, st.s);
+    }
+    cx.fillStyle = `rgba(226,239,236,${.8 * s.night})`;
+    cx.beginPath(); cx.arc(W * .82, horizon * .32, 13, 0, 7); cx.fill();
+    cx.fillStyle = rgb(s.top); cx.beginPath(); cx.arc(W * .82 + 6, horizon * .32 - 3, 11, 0, 7); cx.fill();
+  }
+  // холмы и луг
+  const hill = (yy, amp, col, f) => { cx.fillStyle = col; cx.beginPath(); cx.moveTo(0, H);
+    for (let x = 0; x < W + 16; x += 16) cx.lineTo(Math.min(x, W), yy + Math.sin(Math.min(x, W) / W * f + f) * amp); cx.lineTo(W, H); cx.fill(); };
+  hill(horizon - 6, 10, 'rgba(7,40,49,.85)', 5.2);
+  g = cx.createLinearGradient(0, horizon, 0, H);
+  g.addColorStop(0, '#0B3F4A'); g.addColorStop(.5, '#072831'); g.addColorStop(1, '#04141A');
+  cx.fillStyle = g; cx.beginPath(); cx.moveTo(0, H);
+  for (let x = 0; x < W + 16; x += 16) cx.lineTo(Math.min(x, W), horizon + 4 + Math.sin(Math.min(x, W) / W * 3.1) * 6);   // до самого края: шаг 16 не делит ширину, и справа была щель
+  cx.lineTo(W, H); cx.fill();
+
+  hits = []; treeHits = []; labels = [];
+  for (const t of TREES) {
+    t.health += (targetHealth(t) - t.health) * .03;
+    if (t.house) drawHouse(t, tm, s); else drawTree(t, tm);
+  }
+  // подписи вторым проходом: передняя крона не прячет имя заднего дерева. Место выбираем:
+  // под корнем, а если там чужая крона, плод или другая подпись — над своей кроной (приёмка Дома 27.09:
+  // «Монтажёр» и «Дизайнер» лежали на деревьях Школы и Гили и прятали их плоды)
+  const занято = [];
+  for (const [t, sub] of labels.slice().sort((a, b) => b[0].row - a[0].row)) {
+    cx.font = '600 12.5px Manrope, system-ui, sans-serif';
+    const w = Math.max(cx.measureText(t.name).width, 40) + 18;
+    const места = [t.Y + 5, t.Y - t.S * (t.house ? .62 : 1.02) - 38];
+    const мешает = y => {
+      const r = {x1:t.X - w / 2, x2:t.X + w / 2, y1:y, y2:y + 33};
+      const в = (a) => a.x1 < r.x2 && a.x2 > r.x1 && a.y1 < r.y2 && a.y2 > r.y1;
+      if (r.y1 < 64 || r.y2 > H - 60) return true;
+      if (занято.some(в)) return true;
+      if (hits.some(h => в({x1:h.x - h.fr, x2:h.x + h.fr, y1:h.y - h.fr, y2:h.y + h.fr}))) return true;
+      return TREES.some(о => о !== t && о.row > t.row && о.S && в({x1:о.X - о.S * .42, x2:о.X + о.S * .42, y1:о.Y - о.S * .98, y2:о.Y - о.S * .2}));
+    };
+    const y = места.find(y => !мешает(y));
+    const тихо = y === undefined;
+    drawLabel(t, sub, тихо ? места[0] : y, w, тихо);
+    занято.push({x1:t.X - w / 2, x2:t.X + w / 2, y1:тихо ? места[0] : y, y2:(тихо ? места[0] : y) + 33});
+  }
+  // светлячки
+  if (s.night > .2) for (const f of FLIES) {
+    const x = (f.x * W + (reduce ? 0 : Math.sin(tm * f.v + f.p) * 30)), y = horizon + (H - horizon) * f.y + (reduce ? 0 : Math.cos(tm * f.v * 1.3 + f.p) * 14);
+    const a = s.night * (.25 + .35 * Math.max(0, Math.sin(tm * 1.7 + f.p)));
+    cx.fillStyle = `rgba(168,222,214,${a})`; cx.beginPath(); cx.arc(x, y, 1.6, 0, 7); cx.fill();
+  }
+  // полёт сорванных плодов в корзину
+  const b = $('basketBtn').getBoundingClientRect(), bx = b.left + b.width / 2, by = b.top + b.height / 2;
+  flights = flights.filter(fl => {
+    const k = Math.min(1, (now - fl.t0) / (reduce ? 1 : 700)), e = k * k * (3 - 2 * k);
+    const x = fl.x + (bx - fl.x) * e, y = fl.y + (by - fl.y) * e - Math.sin(Math.PI * e) * 120;
+    drawFruit(x, y, fl.r * (1 - .4 * e), fl.c, 0);
+    if (k >= 1) { const btn = $('basketBtn'); btn.classList.remove('bump'); void btn.offsetWidth; btn.classList.add('bump'); return false; }
+    return true;
+  });
+  requestAnimationFrame(draw);
+}
+
+function drawTree(t, tm){
+  const sw = reduce ? 0 : Math.sin(tm * .9 + t.phase) * .035 + Math.sin(tm * 2.1 + t.phase) * .008;
+  const P = (x, y) => { const h = -y; return [t.X + (x + sw * h * h) * t.S, t.Y + y * t.S]; };
+  // тень у корня
+  cx.fillStyle = 'rgba(0,12,16,.35)'; cx.beginPath(); cx.ellipse(t.X, t.Y + 2, t.S * .26, t.S * .045, 0, 0, 7); cx.fill();
+  cx.lineCap = 'round';
+  cx.strokeStyle = t.sleep ? '#6A8A90' : '#2B4448';
+  for (const s of t.segs) {
+    const [a, b] = P(s.x1, s.y1), [c, d] = P(s.x2, s.y2);
+    cx.lineWidth = Math.max(1, s.w * t.S); cx.beginPath(); cx.moveTo(a, b); cx.lineTo(c, d); cx.stroke();
+  }
+  if (!t.sleep) for (const bl of t.blobs) {
+    const [x, y] = P(bl.x, bl.y), c = leaf(t.health, bl.shade);
+    cx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},.88)`; cx.beginPath(); cx.arc(x, y, bl.rad * t.S, 0, 7); cx.fill();
+    cx.fillStyle = 'rgba(226,239,236,.07)'; cx.beginPath(); cx.arc(x - bl.rad * t.S * .3, y - bl.rad * t.S * .35, bl.rad * t.S * .5, 0, 7); cx.fill();
+  }
+  treeHits.push({t, x:t.X, y:t.Y - t.S * .55, r:t.S * .5});
+  // плоды
+  const fr = fruitsOf(t), n = fr.length;
+  fr.forEach((f, i) => {
+    if (!висит(f)) return;
+    const tip = t.tips[t.order[Math.round((i + .5) * t.order.length / n - .5)]];
+    const a = age(f), [x, y] = P(tip.x, tip.y + .07);
+    const r = Math.max(6, Math.min(13, t.S * .05)) * (a > 14 ? 1.18 : a <= 3 ? .85 : 1);
+    const pulse = a > 21 && !reduce ? .5 + .5 * Math.sin(tm * 2.4 + i) : 0;
+    cx.strokeStyle = 'rgba(43,68,72,.9)'; cx.lineWidth = 1.2;
+    cx.beginPath(); cx.moveTo(x, y - r * 1.9); cx.lineTo(x, y - r * .8); cx.stroke();
+    drawFruit(x, y, r, fruitColor(a), pulse);
+    hits.push({f, x, y, r:Math.max(22, r + 10), c:fruitColor(a), fr:r});
+  });
+  // подпись
+  const live = fr.filter(висит).length;
+  label(t, t.sleep ? 'спит' : live ? `${live} ${plural(live, 'плод', 'плода', 'плодов')}` : 'растёт');
+}
+
+function drawHouse(t, tm, s){
+  const w = t.S * .42, h = t.S * .3, x = t.X - w / 2, y = t.Y - h;
+  cx.fillStyle = 'rgba(0,12,16,.35)'; cx.beginPath(); cx.ellipse(t.X, t.Y + 2, w * .75, t.S * .04, 0, 0, 7); cx.fill();
+  cx.fillStyle = '#1C3F45'; cx.fillRect(x, y, w, h);
+  cx.fillStyle = '#14343A'; cx.beginPath(); cx.moveTo(x - w * .12, y + 1); cx.lineTo(t.X, y - h * .72); cx.lineTo(x + w * 1.12, y + 1); cx.fill();
+  const glow = .75 + (reduce ? 0 : .15 * Math.sin(tm * 1.3));
+  cx.save(); cx.shadowColor = 'rgba(240,182,76,.7)'; cx.shadowBlur = 14 * glow;
+  cx.fillStyle = `rgba(240,182,76,${glow})`; cx.fillRect(t.X - w * .12, y + h * .25, w * .24, h * .3); cx.restore();
+  cx.fillStyle = '#0E2A30'; cx.fillRect(t.X + w * .22, y + h * .45, w * .16, h * .55);
+  // дымок: дом жив
+  if (!reduce) for (let i = 0; i < 4; i++) {
+    const k = ((tm * .25 + i / 4) % 1);
+    cx.fillStyle = `rgba(226,239,236,${.14 * (1 - k)})`;
+    cx.beginPath(); cx.arc(x + w * .78 + Math.sin(k * 5 + i) * 5, y - h * .5 - k * 34, 3 + k * 6, 0, 7); cx.fill();
+  }
+  cx.fillStyle = '#14343A'; cx.fillRect(x + w * .72, y - h * .55, w * .12, h * .4);
+  treeHits.push({t, x:t.X, y:t.Y - h * .6, r:Math.max(w * .75, 30)});
+  label(t, 'держит память');
+}
+
+function drawFruit(x, y, r, col, pulse){
+  cx.save();
+  cx.shadowColor = 'rgba(240,182,76,.55)'; cx.shadowBlur = 6 + pulse * 12;
+  cx.fillStyle = col; cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.fill();
+  cx.restore();
+  cx.fillStyle = 'rgba(255,255,255,.35)'; cx.beginPath(); cx.arc(x - r * .35, y - r * .35, r * .32, 0, 7); cx.fill();
+}
+
+function label(t, sub){ labels.push([t, sub]); }
+function drawLabel(t, sub, y, w, тихо){
+  // места нигде нет — подпись остаётся под корнем, но полупрозрачной: плод под ней виден
+  cx.globalAlpha = тихо ? .45 : 1;
+  cx.textAlign = 'center';
+  cx.font = '600 12.5px Manrope, system-ui, sans-serif';
+  cx.fillStyle = 'rgba(4,20,26,.55)'; cx.beginPath(); cx.roundRect ? cx.roundRect(t.X - w / 2, y, w, 33, 12) : cx.rect(t.X - w / 2, y, w, 33); cx.fill();
+  cx.fillStyle = 'rgba(226,239,236,.92)';
+  cx.fillText(t.name, t.X, y + 14);
+  cx.font = '500 11px Manrope, system-ui, sans-serif'; cx.fillStyle = 'rgba(226,239,236,.55)';
+  cx.fillText(sub, t.X, y + 27);
+  cx.globalAlpha = 1;
+}
+function plural(n, a, b, c){ const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c; }
+
+// ---------- шапка, круг дня, корзина ----------
+function hud(){
+  const live = hanging(), oldest = live.length ? Math.max(...live.map(age)) : 0;
+  $('sub').textContent = live.length
+    ? `${live.length} ${plural(live.length, 'вопрос ждёт', 'вопроса ждут', 'вопросов ждут')} тебя · старший висит ${oldest} дн`
+    : 'Все плоды собраны. Сад ждёт новых вопросов.';
+  if (СОБИРАЮ) $('sub').textContent = 'Собираю сад…';
+  if (ОШИБКА) $('sub').innerHTML = `<span class="err">${esc(ОШИБКА)}</span>`;
+  const today = Object.values(state.answers).filter(a => dayKey(a.at) === dayKey(Date.now())).length;
+  $('dots').innerHTML = Array.from({length:ROUND}, (_, i) => `<i class="${i < today ? 'on' : ''}"></i>`).join('');
+  $('rtext').textContent = today >= ROUND ? `Сегодня ${today} — хватит` : `Сегодня ${today} из ${ROUND}`;
+  $('bcount').textContent = Object.keys(state.answers).length;
+  $('hint').style.opacity = Object.keys(state.answers).length || !FRUITS.length ? 0 : 1;
+}
+
+// ---------- звук ----------
+let ac = null;
+function note(freq, at, len, vol){
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + at;
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + len);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + len + .05);
+  } catch (e) {}
+}
+const pluck = () => { note(660, 0, .45, .06); note(990, .06, .5, .035); };
+const chime = () => { [523, 659, 784, 1047].forEach((f, i) => note(f, i * .12, .9, .04)); };
+
+// ---------- листы ----------
+const sheet = $('sheet'), body = $('shBody');
+let lastFocus = null;
+function open(html){ lastFocus = document.activeElement; body.innerHTML = html; sheet.classList.add('open'); setTimeout(() => (body.querySelector('button') || $('close')).focus({preventScroll:true}), 60); }
+function close(){ sheet.classList.remove('open'); if (lastFocus && lastFocus.focus) lastFocus.focus({preventScroll:true}); }
+$('close').onclick = close;
+addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function openFruit(f){
+  const t = tree(f.t), a = age(f);
+  open(`<div class="meta"><span class="chip who">${esc(t.name)}</span><span class="chip ${a > 14 ? 'old' : ''}">висит ${a} дн</span><span class="chip">${f.k === 'руки' ? 'сделай и отметь' : 'ответ кнопкой'}</span></div>
+    <h3 id="shTitle">${esc(f.q)}</h3><p>${esc(f.w)}</p>
+    <div class="opts">${f.o.map((o, i) => `<button data-i="${i}" class="${f.rec === i ? 'rec' : ''}">${esc(o)}${f.rec === i ? ' <small>совет кодера</small>' : ''}</button>`).join('')}</div>
+    ${МОЖНО ? '' : '<p class="note err">Отвечать отсюда пока нельзя: у Дома нет приёма ответов.</p>'}
+    <button class="later" id="later">Не сейчас</button>`);
+  if (!МОЖНО) body.querySelectorAll('.opts button').forEach(b => b.disabled = true);
+  body.querySelectorAll('.opts button').forEach(b => b.onclick = () => pick(f, +b.dataset.i));
+  $('later').onclick = close;
+}
+
+async function pick(f, i){
+  const h = hits.find(x => x.f.id === f.id);
+  const t = tree(f.t);
+  const from = h || {x:t.X, y:t.Y - t.S * .6, fr:10, c:fruitColor(age(f))};
+  flights.push({x:from.x, y:from.y, r:from.fr, c:from.c, t0:performance.now()});
+  const before = Object.values(state.answers).filter(a => dayKey(a.at) === dayKey(Date.now())).length;
+  ЛЕТИТ.add(f.id); close(); pluck(); hud();
+  let d = null;
+  try { d = await СВЯЗЬ.ответить({organ: f.орган, key: f.ключ, choice: f.o[i]}); } catch (e) {}
+  if (d && d.впути) {
+    // ответ записан в облако, мак спит — ответ.py его заберёт, когда проснётся; плод не возвращаем, чтобы не ответить дважды
+    state.answers[f.id] = {o:f.o[i], at:Date.now(), q:f.q, дерево:t.name}; save(); hud();
+    return toast('Ответ записан. Мак сейчас спит — кодер получит его, как только мак проснётся');
+  }
+  if (!(d && d.ok)) {
+    // не записалось — плод возвращается на ветку, а не делает вид, что ответ ушёл
+    if (!(d && d.error === 'вопрос уже закрыт')) ЛЕТИТ.delete(f.id);
+    hud(); toast((d && d.error) || 'Мак не ответил — плод остался на дереве');
+    if (d && d.плоды) принять({плоды: d.плоды});
+    return;
+  }
+  state.answers[f.id] = {o:f.o[i], at:Date.now(), q:f.q, дерево:t.name};
+  save(); hud();
+  if (before + 1 === ROUND) { setTimeout(chime, 500); toast('Четыре на сегодня. Можно дальше, можно отдыхать.'); }
+  else toast(`${t.name}: «${f.o[i]}» — ответ у кодера`);
+  if (d.плоды) принять({плоды: d.плоды});
+}
+
+function openTree(t){
+  if (t.house) return open(`<h3 id="shTitle">Дом</h3><p>Держит память, доставку мыслей и сердце нервов. Последняя правка ${esc(t.last)}. Его вопросы висят на деревьях кодеров.</p>
+    <div class="stats"><div><b>${t.commits}</b><span>${plural(t.commits, 'правка', 'правки', 'правок')} за неделю</span></div>${СЕРДЦЕ ? `<div><b>${СЕРДЦЕ.бьются}</b><span>нервов бьются</span></div>${СЕРДЦЕ.отстают ? `<div><b>${СЕРДЦЕ.отстают}</b><span>отстают</span></div>` : ''}${СЕРДЦЕ.молчат ? `<div><b>${СЕРДЦЕ.молчат}</b><span>ещё ни разу не бились</span></div>` : ''}` : ''}</div>`);
+  const fr = fruitsOf(t).filter(висит);
+  open(`<h3 id="shTitle">${esc(t.name)}</h3>
+    <p>${t.sleep ? `Спит: последняя правка ${esc(t.last)}. Разбудить можно словом в Гили.` : `Последняя правка ${esc(t.last)}.`}</p>
+    <div class="stats"><div><b>${t.commits}</b><span>правок за неделю</span></div><div><b>${t.open}</b><span>задач открыто</span></div><div><b>${fr.length}</b><span>ждут тебя</span></div></div>
+    ${fr.length ? `<div class="list">${fr.sort((a, b) => age(b) - age(a)).map(f => `<button class="row" data-f="${f.id}"><b>${age(f)} дн</b><span>${esc(f.q)}</span></button>`).join('')}</div>` : ''}`);
+  body.querySelectorAll('[data-f]').forEach(b => b.onclick = () => openFruit(FRUITS.find(f => f.id === b.dataset.f)));
+}
+
+$('listBtn').onclick = () => {
+  const live = hanging().sort((a, b) => age(b) - age(a));
+  if (!live.length) return open('<h3 id="shTitle">Все плоды собраны</h3><p>Новые вопросы кодеров появятся на деревьях сами.</p>');
+  open(`<h3 id="shTitle">Все плоды, старые первыми</h3>
+    <div class="list">${live.map(f => `<button class="row" data-f="${f.id}"><b>${esc(tree(f.t).name)}</b><span>${age(f)} дн · ${esc(f.q)}</span></button>`).join('')}</div>`);
+  body.querySelectorAll('[data-f]').forEach(b => b.onclick = () => openFruit(FRUITS.find(f => f.id === b.dataset.f)));
+};
+
+$('basketBtn').onclick = () => {
+  const list = Object.entries(state.answers).sort((a, b) => b[1].at - a[1].at);
+  if (!list.length) return open('<h3 id="shTitle">Корзина пуста</h3><p>Сорви плод на любом дереве: ответ ляжет сюда.</p>');
+  open(`<h3 id="shTitle">Корзина · ${list.length}</h3>
+    ${list.slice(0, 40).map(([id, a]) => `<div class="done"><div>${esc(a.дерево || '')} · ${new Date(a.at).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})}</div>${esc(a.q || '')} → <strong>${esc(a.o)}</strong></div>`).join('')}
+    <p class="note">Каждый ответ уже у кодера: строка в его NEXT закрыта, задача легла.</p>`);
+};
+
+let tt = 0;
+function toast(s){ const el = $('toast'); el.textContent = s; el.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('show'), 2600); }
+
+// Какой плод под пальцем. Сначала тот, что нарисован сверху и лежит прямо под курсором (передний ряд
+// рисуется позже), потом ближайший в запасном радиусе. Раньше брался ближайший из всех — и задний плод,
+// спрятанный под передней кроной, перехватывал клик у видимого (приёмка Дома 27.09: два промаха).
+function плодПод(x, y){
+  for (let i = hits.length - 1; i >= 0; i--) { const h = hits[i]; if (Math.hypot(h.x - x, h.y - y) < h.fr + 6) return h; }
+  let best = null, bd = 1e9;
+  for (const h of hits) { const d = Math.hypot(h.x - x, h.y - y); if (d < h.r && d < bd) { best = h; bd = d; } }
+  return best;
+}
+cv.addEventListener('mousemove', e => {
+  const x = e.clientX, y = e.clientY;
+  cv.style.cursor = плодПод(x, y) || treeHits.some(h => Math.hypot(h.x - x, h.y - y) < h.r) ? 'pointer' : '';
+});
+cv.addEventListener('click', e => {
+  const x = e.clientX, y = e.clientY;
+  const best = плодПод(x, y);
+  if (best) return openFruit(best.f);
+  for (let i = treeHits.length - 1; i >= 0; i--) { const h = treeHits[i]; if (Math.hypot(h.x - x, h.y - y) < h.r) return openTree(h.t); }
+  close();
+});
+
+// назад в ленту: внутри окна Гили сад открыт поверх ленты — просим окно закрыть его
+$('backBtn').onclick = () => { if (parent !== window) parent.postMessage('сад:закрыть', '*'); else location.href = './'; };
+
+const назад = с => { if (!с) return 'давно'; const ч = (Date.now() / 1000 - с) / 3600;
+  return ч < 1 ? 'только что' : ч < 24 ? `${Math.round(ч)} ч назад` : ч < 24 * 14 ? `${Math.round(ч / 24)} дн назад` : `${Math.round(ч / 24 / 7)} нед назад`; };
+function принять(d){
+  if (d.деревья) {
+    const было = new Map(TREES.map(t => [t.id, t]));
+    TREES = d.деревья.map(т => {
+      const t = было.get(т.орган) || {id: т.орган};
+      Object.assign(t, {name: т.имя, commits: т.правок, open: т.открыто, last: назад(т.когда), house: т.дом,
+                        sleep: !т.дом && (!т.когда || Date.now() / 1000 - т.когда > 21 * 864e2)});
+      if (!t.segs) Object.assign(t, build(t), {health: 1});
+      return t;
+    });
+    // дерево без записи в карте не пропадает с плодами: у Дома может быть вопрос от нового органа
+    СЕРДЦЕ = d.сердце || null;
+  }
+  if (d.плоды) {
+    FRUITS = d.плоды.map(п => ({id: п.id, t: п.папка, d: п.дней, k: п.кнопкой ? 'выбор' : 'руки',
+                                q: п.вопрос, w: п.почему, o: п.варианты, орган: п.орган, ключ: п.ключ}));
+    for (const f of FRUITS) if (!tree(f.t)) { const t = {id: f.t, name: f.орган, commits: 0, open: 0, last: 'давно'}; Object.assign(t, build(t), {health: 1}); TREES.push(t); }
+    for (const id of [...ЛЕТИТ]) if (!FRUITS.some(f => f.id === id)) ЛЕТИТ.delete(id);
+  }
+  if ('можно_ответить' in d) МОЖНО = !!d.можно_ответить;
+  if ('ошибка' in d) ОШИБКА = d.ошибка || null;
+  СОБИРАЮ = false;
+  for (const t of TREES) if (t.health === undefined) t.health = targetHealth(t);
+  layout(); hud();
+}
+async function грузи(){
+  try { принять(await СВЯЗЬ.грузить()); }
+  catch (e) { СОБИРАЮ = false; ОШИБКА = СВЯЗЬ.молчит || 'Мак не ответил — попробую ещё раз через пару минут'; hud(); }
+}
+addEventListener('resize', () => TREES.length && layout());
+setInterval(() => { if (!document.hidden) грузи(); }, 120000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) грузи(); });
+// небо рисуется сразу, деревья вырастают, как только мак ответит (первый сбор ~1 с)
+layout(); hud(); requestAnimationFrame(draw); грузи();
+</script>
+
+</body></html>

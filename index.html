@@ -127,6 +127,12 @@ header{padding:8px 12px 4px}
   transition:color .18s, transform .14s var(--пружина);
 }
 .вид:active{transform:scale(.95)}
+/* Сад: вопросы кодеров Жене. Та же страница, что в окне мака (окно/сад.html → sad.html при выкладке) */
+.сад-кнопка{color:var(--accent); font-weight:600}
+#сад-окно{position:fixed; inset:0; z-index:60; background:#072831; opacity:0; transition:opacity .22s}
+#сад-окно.открыт{opacity:1}
+#сад-окно iframe{width:100%; height:100%; border:0; display:block}
+@media (prefers-reduced-motion: reduce){ #сад-окно{transition:none} }
 .вид.всё{color:var(--accent); font-weight:600}
 .вид b{font-weight:700}
 .мысль.готовая{opacity:.62}
@@ -919,17 +925,19 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v46</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v47</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
   <div class="подшапка">
     <span class="поиск-знак" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg></span>
     <input id="поиск" placeholder="искать во всех мыслях…" autocomplete="off">
+    <button class="вид сад-кнопка" id="сад-кнопка" hidden>Ждёт тебя</button>
     <button class="вид" id="вид" title="показать обработанные">ждёт</button>
     <span class="кто" id="кто"></span>
   </div>
   <main id="лента"></main>
+  <div id="сад-окно" hidden></div>
   <footer>
     <button class="к-свежим" id="к-свежим" aria-label="к свежим мыслям">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
@@ -1123,7 +1131,7 @@ async function поднять(){
   if(запомнен){                       // ← экран появляется здесь, до всякой сети
     Я = запомнен;
     $('кто').textContent = запомнен.имя;
-    показать('приложение');
+    показать('приложение'); сад_кнопка();
     открыть_ленту();
     загрузить().then(() => { if(МЫСЛИ.some(ждёт_слов) || ГИЛИ_ОТВЕТИТ) догонять_голос(); });
   }
@@ -1159,7 +1167,7 @@ async function поднять(){
   Я = {id: user.id, имя: свой.name, потоки: общие_у(свой)};
   try{ localStorage.setItem(ПАМЯТЬ_КТО, JSON.stringify(Я)); }catch{}   // следующий раз откроется сразу
   $('кто').textContent = свой.name;
-  показать('приложение');
+  показать('приложение'); сад_кнопка();
   // быстрый старт нарисовал вкладки из памяти; база сказала другое (Олега добавили в «Работу») — перерисовать
   if(запомнен && потоки_были !== JSON.stringify(Я.потоки)){ нарисовать_потоки(); нарисовать(); }
 
@@ -1233,7 +1241,8 @@ async function забрать_ленту(){
   СЛЕПОК_ЛЕНТЫ = слепок;
   if(!та_же){
     for(const м of data) if(!м.сводка && м.link_summary) м.сводка = м.link_summary;
-    МЫСЛИ = data.filter(м => !/^убра/.test(м.status || ''));   // «убрать» ждёт дома, но глазу уже не нужна
+    // «убрать» ждёт дома, но глазу уже не нужна; «сад» — ответ из сада, служебная запись, не мысль
+    МЫСЛИ = data.filter(м => !/^(убра|сад)/.test(м.status || ''));
     в_память(ПАМЯТЬ_ЛЕНТЫ, МЫСЛИ.slice(0, 80));  // с запасом на следующее открытие; убранные не воскресают
     нарисовать();
   }
@@ -2099,6 +2108,69 @@ async function везти_очередь(){
   обновить_состояние();
   await загрузить();
 }
+/* САД НА ТЕЛЕФОНЕ (27.09). Женя: «Где мой интерфейс интерактивный». Сад живёт на маке (/api/sad), а сюда
+   Дом кладёт его снимок: gili/<папка Жени>/sad.json, не чаще раза в минуту и только при перемене. Ответ —
+   запись в gili_notes со status «сад»: облако Дома зовёт ответ.py и ставит «убрано» или «сад ✗».
+   Дом принимает ответ только от Жени и только на плод из последнего снимка — чужую строку так не закрыть.
+   Снимка нет (Саша, или Дом ещё не выложил) — кнопки нет. */
+var САД_СНИМОК = null, САД_ПРОВЕРЕН = 0;   // var: быстрый старт зовёт сад_кнопка() раньше этой строки
+async function сад_снимок(){
+  if(НА_МАКЕ || !Я) return null;
+  const {data, error} = await sb.storage.from('gili').download(`${Я.id}/sad.json`);
+  if(error || !data) return null;
+  try{ return JSON.parse(await data.text()); }catch{ return null; }
+}
+async function сад_кнопка(){
+  if(НА_МАКЕ || !Я || Date.now() - САД_ПРОВЕРЕН < 60e3) return;
+  САД_ПРОВЕРЕН = Date.now();
+  const снимок = await сад_снимок();
+  if(снимок) САД_СНИМОК = снимок;
+  const n = (САД_СНИМОК && САД_СНИМОК.плоды || []).length;
+  const к = $('сад-кнопка');
+  к.hidden = !n;
+  к.textContent = `Ждёт тебя · ${n}`;
+}
+// на маке сад ходит в свой сервер сам (/api/sad) — облачная связь только для телефона
+if(!НА_МАКЕ) window.САД_СВЯЗЬ = {
+  молчит: 'Нет связи с облаком — попробую ещё раз через пару минут',
+  грузить: async () => {
+    const снимок = await сад_снимок();
+    if(!снимок) throw new Error('нет снимка');
+    САД_СНИМОК = снимок;
+    return снимок;
+  },
+  ответить: async ({organ, key, choice}) => {
+    if(!navigator.onLine) return {ok:false, error:'Нет сети — плод остался на дереве'};
+    const {data, error} = await sb.from('gili_notes').insert({author: Я.id, flow: 'кодинг', status: 'сад',
+      body: JSON.stringify({сад: {орган: organ, ключ: key, вариант: choice}})}).select('id').single();
+    if(error || !data) return {ok:false, error:'Не записалось — плод остался на дереве'};
+    // облако Дома щупает раз в 2 с; ждём его вердикт до 40 с
+    for(let i = 0; i < 20; i++){
+      await new Promise(r => setTimeout(r, 2000));
+      const {data: з} = await sb.from('gili_notes').select('status').eq('id', data.id).single();
+      const ст = з && з.status || '';
+      if(ст === 'убрано') return {ok:true};
+      if(ст.startsWith('сад ✗')) return {ok:false, error:'Ответ не дошёл: вопрос у кодера уже поменялся'};
+    }
+    return {впути:true};
+  },
+};
+function сад_открыть(){
+  const окно = $('сад-окно');
+  окно.innerHTML = '<iframe src="sad.html" title="Сад штата"></iframe>';
+  окно.hidden = false;
+  requestAnimationFrame(() => окно.classList.add('открыт'));
+}
+function сад_закрыть(){
+  const окно = $('сад-окно');
+  окно.classList.remove('открыт');
+  setTimeout(() => { окно.hidden = true; окно.innerHTML = ''; $('сад-кнопка').focus({preventScroll:true}); САД_ПРОВЕРЕН = 0; сад_кнопка(); }, 220);
+}
+$('сад-кнопка').onclick = сад_открыть;
+window.addEventListener('message', e => { if(e.origin === location.origin && e.data === 'сад:закрыть') сад_закрыть(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('сад-окно').hidden) сад_закрыть(); });
+document.addEventListener('visibilitychange', () => { if(!document.hidden) сад_кнопка(); });
+
 window.addEventListener('online', везти_очередь);
 document.addEventListener('visibilitychange', () => {
   if(document.hidden) return;
