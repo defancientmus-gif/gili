@@ -3,63 +3,65 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-store">
 <title>Сад штата</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;1,500&family=Manrope:wght@500;600;700&display=swap">
 <style>
-:root{color-scheme:dark;--ground:#072831;--glass:rgba(7,40,49,.66);--glass-hi:rgba(226,239,236,.16);--ink:#E2EFEC;--soft:rgba(226,239,236,.62);--acc:#5BC0B4;--fruit:#F0B64C}
-html,body{height:100%;margin:0;overflow:hidden;background:var(--ground);color:var(--ink);font:14px/1.45 Manrope,system-ui,-apple-system,sans-serif}
+:root{color-scheme:light;--ground:#A9CFE6;--glass:linear-gradient(158deg,rgba(255,255,255,.80),rgba(238,246,248,.70));--glass-hi:rgba(255,255,255,.72);--ink:#10303A;--soft:#4C6770;--acc:#10303A;--fruit:#E8962F;--fruit-ink:#9A560C;--line:rgba(16,48,58,.14);--sys:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--ground);color:var(--ink);font:14px/1.45 var(--sys)}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:manipulation;cursor:pointer}
-.glass{background:var(--glass);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border:1px solid var(--glass-hi);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 20px -8px rgba(0,20,26,.55)}
+.glass{background:var(--glass);backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2);border:1px solid var(--glass-hi);box-shadow:inset 0 1px 0 rgba(255,255,255,.94),0 4px 13px -3px rgba(30,70,90,.16)}
 .top{position:fixed;left:16px;right:16px;top:calc(12px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:space-between;pointer-events:none}
 .top>*{pointer-events:auto}
 .title{border-radius:20px;padding:10px 16px 11px;max-width:100%;box-sizing:border-box}
-.title h1{margin:0;font:600 23px/1.1 Lora,Georgia,serif;text-wrap:balance}
+.title h1{margin:0;font:650 21px/1.15 var(--sys);letter-spacing:-.01em;text-wrap:balance}
 .title div{color:var(--soft);font-size:12.5px;font-variant-numeric:tabular-nums;margin-top:3px}
 .round{border-radius:18px;padding:9px 14px;display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--soft)}
 .dots{display:flex;gap:5px}
-.dots i{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(240,182,76,.55);box-sizing:border-box;transition:background .4s,transform .4s}
+.dots i{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(232,150,47,.65);box-sizing:border-box;transition:background .4s,transform .4s}
 .dots i.on{background:var(--fruit);border-color:var(--fruit);transform:scale(1.1)}
 .hint{position:fixed;left:50%;top:calc(96px + env(safe-area-inset-top,0px));transform:translateX(-50%);border-radius:16px;padding:8px 14px;font-size:13px;color:var(--ink);width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center;pointer-events:none;transition:opacity .6s}
 .bar{position:fixed;left:16px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;gap:10px;pointer-events:none}
 .bar>*{pointer-events:auto}
-button{font:600 13px Manrope,system-ui,sans-serif;color:var(--ink);border-radius:999px;padding:9px 15px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;font-variant-numeric:tabular-nums;background:var(--glass);border:1px solid var(--glass-hi)}
+button{font:600 13px var(--sys);color:var(--ink);border-radius:999px;padding:9px 15px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;font-variant-numeric:tabular-nums;background:var(--glass);border:1px solid var(--glass-hi);min-height:44px;box-sizing:border-box}
 button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-button:hover{border-color:rgba(226,239,236,.34)}
+button:hover{border-color:rgba(16,48,58,.22)}
 .basket svg{width:18px;height:18px}
 .basket.bump{animation:bump .5s}
 @keyframes bump{30%{transform:scale(1.14)}60%{transform:scale(.96)}}
-.sheet{position:fixed;left:50%;bottom:0;width:min(620px,100%);transform:translate(-50%,105%);transition:transform .35s cubic-bezier(.2,.9,.3,1);border-radius:28px 28px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom,0px));max-height:72vh;overflow:auto;box-sizing:border-box;background:rgba(7,40,49,.93)}
+.sheet{position:fixed;left:50%;bottom:0;width:min(620px,100%);transform:translate(-50%,105%);transition:transform .35s cubic-bezier(.2,.9,.3,1);border-radius:28px 28px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom,0px));max-height:72vh;overflow:auto;box-sizing:border-box;background:rgba(248,251,252,.95)}
+.sheet button:not(.later){border-color:var(--line)}
+.sheet h3:focus{outline:none}
 .sheet.open{transform:translate(-50%,0)}
-.x{position:absolute;right:14px;top:14px;width:36px;height:36px;padding:0;justify-content:center;font-size:20px;line-height:1}
+.x{position:absolute;right:10px;top:10px;width:44px;height:44px;padding:0;justify-content:center;font-size:20px;line-height:1}
 .meta{display:flex;flex-wrap:wrap;gap:6px;margin:0 44px 12px 0}
-.chip{font-size:12px;color:var(--soft);border:1px solid var(--glass-hi);border-radius:999px;padding:3px 10px;font-variant-numeric:tabular-nums}
-.chip.old{color:var(--fruit);border-color:rgba(240,182,76,.45)}
+.chip{font-size:12px;color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-variant-numeric:tabular-nums}
+.chip.old{color:var(--fruit-ink);border-color:rgba(232,150,47,.55)}
 .chip.who{color:var(--ink);font-weight:700}
-.sheet h3{margin:0 0 8px;font:600 21px/1.28 Lora,Georgia,serif;text-wrap:balance}
+.sheet h3{margin:0 0 8px;font:600 17px/1.42 var(--sys);text-wrap:pretty}
 .sheet p{margin:0 0 14px;color:var(--soft);max-width:60ch}
 .opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
 .opts button{padding:11px 16px}
-.opts button.rec{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
-.opts small{font-weight:500;color:var(--acc);font-size:11.5px}
+.opts button.rec{border-color:var(--fruit);box-shadow:inset 0 0 0 1px var(--fruit)}
+.opts small{font-weight:500;color:var(--fruit-ink);font-size:11.5px}
 .later{background:none;border:none;color:var(--soft);padding:8px 2px;font-weight:500}
 .list{display:flex;flex-direction:column;gap:6px;margin:4px 0 14px}
-.row{justify-content:flex-start;text-align:left;border-radius:16px;padding:10px 14px;width:100%;box-sizing:border-box;font-weight:500;line-height:1.35}
+.row{justify-content:flex-start;align-items:flex-start;text-align:left;border-radius:16px;padding:10px 14px;width:100%;box-sizing:border-box;font-weight:500;line-height:1.35}
 .row b{flex:none;min-width:5.6em;font-weight:700}
 .row span{color:var(--soft)}
-.done{padding:10px 0;border-bottom:1px solid rgba(226,239,236,.08)}
+.done{padding:10px 0;border-bottom:1px solid var(--line)}
 .done:last-of-type{border-bottom:none}
 .done div{color:var(--soft);font-size:12.5px}
-.done strong{color:var(--fruit);font-weight:700}
+.done strong{color:var(--fruit-ink);font-weight:700}
 .note{font-size:12.5px;color:var(--soft);margin:12px 0}
 .toast{position:fixed;left:50%;bottom:calc(72px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;border-radius:16px;padding:9px 16px;font-size:13px;transition:opacity .3s,transform .3s;pointer-events:none;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:0 0 14px}
-.stats div{border-radius:16px;padding:10px 12px;border:1px solid var(--glass-hi)}
-.stats b{display:block;font:600 20px/1.2 Lora,Georgia,serif;font-variant-numeric:tabular-nums}
+.stats div{border-radius:16px;padding:10px 12px;border:1px solid var(--line)}
+.stats b{display:block;font:600 20px/1.2 var(--sys);font-variant-numeric:tabular-nums}
 .stats span{font-size:12px;color:var(--soft)}
 @media (prefers-reduced-motion:reduce){.sheet,.toast,.dots i,.hint{transition:none}.basket.bump{animation:none}}
 .bar .mid{display:flex;gap:10px}
-.err{color:var(--fruit)}
+.err{color:#B4541A}
+/* лист открыт — подсказка под ним не видна, а не висит поверх (разбор Дизайнера 27.09) */
+body:has(.sheet.open) .hint{opacity:0!important}
 /* на узком счётчик дня уходит второй строкой шапки — подсказка встаёт под него, а не поверх */
 @media (max-width:560px){.hint{top:calc(128px + env(safe-area-inset-top,0px))}}
 </style>
@@ -182,7 +184,7 @@ function layout(){
       t.Y = y;
       const g = t.sleep ? .7 : .78 + .3 * Math.log10(1 + t.commits) / Math.log10(200);
       t.S = Math.min(gh / R * 1.25, colW * 1.05, 210) * depth * Math.min(1.1, g) * (t.house ? 1.5 : 1);
-      t.row = r;
+      t.row = r; t.haze = R > 1 ? .42 * (1 - r / (R - 1)) : 0;
     });
   });
   TREES.sort((a, b) => a.row - b.row || a.Y - b.Y);
@@ -208,13 +210,16 @@ function sky(){
   return {top:mix(t0, t1), hor:mix(g0, g1), night};
 }
 const rgb = a => `rgb(${a[0]},${a[1]},${a[2]})`;
+const НЕБО = new Image(); НЕБО.src = 'gili-sky-v1.jpg'  /* в окне — то же фото, что у ленты */;
 const STARS = Array.from({length:70}, (_, i) => { const r = rng(i * 77 + 3); return {x:r(), y:r() * .9, s:r() * 1.3 + .3, p:r() * 6}; });
 const FLIES = Array.from({length:14}, (_, i) => { const r = rng(i * 131 + 9); return {x:r(), y:.2 + r() * .75, p:r() * 6, v:.3 + r() * .5}; });
 
 // ---------- цвета ----------
-const LEAF = [63,156,134], DRY = [168,138,72];
+const LEAF = [40,128,104], DRY = [186,182,164];
+const HAZE = [206,226,214];
+const haze = (c, k) => { k = k || 0; const m = c.map((v, j) => Math.round(v + (HAZE[j] - v) * k)); return m; };
 function leaf(h, shade){ return LEAF.map((v, j) => Math.round((DRY[j] + (v - DRY[j]) * h) * shade)); }
-function fruitColor(a){ return a <= 3 ? '#F3D38A' : a <= 14 ? '#F0B64C' : '#DE8A3A'; }
+function fruitColor(a){ return a <= 3 ? '#F4C95E' : a <= 14 ? '#EDA23A' : '#E07B2A'; }
 
 // ---------- кадр ----------
 let labels = [], hits = [], treeHits = [], flights = [], T0 = performance.now();
@@ -222,9 +227,13 @@ function draw(now){
   const tm = (now - T0) / 1000;
   const s = sky();
   cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  let g = cx.createLinearGradient(0, 0, 0, horizon);
-  g.addColorStop(0, rgb(s.top)); g.addColorStop(1, rgb(s.hor));
-  cx.fillStyle = g; cx.fillRect(0, 0, W, horizon + 2);
+  let g;
+  cx.clearRect(0, 0, W, H);
+  if (НЕБО.complete && НЕБО.naturalWidth) {
+    const iw = НЕБО.naturalWidth, ih = НЕБО.naturalHeight, k = Math.max(W / iw, (horizon + 40) / (.62 * ih));
+    cx.drawImage(НЕБО, (W - iw * k) / 2, horizon - 10 - .62 * ih * k, iw * k, ih * k);
+  } else { cx.fillStyle = '#A9CFE6'; cx.fillRect(0, 0, W, horizon + 2); }
+  if (s.night > 0) { cx.fillStyle = `rgba(8,30,44,${.62 * s.night})`; cx.fillRect(0, 0, W, horizon + 2); }
   if (s.night > 0) {
     for (const st of STARS) {
       const a = s.night * (.35 + .35 * Math.sin(st.p + (reduce ? 0 : tm * .8)));
@@ -238,9 +247,8 @@ function draw(now){
   // холмы и луг
   const hill = (yy, amp, col, f) => { cx.fillStyle = col; cx.beginPath(); cx.moveTo(0, H);
     for (let x = 0; x < W + 16; x += 16) cx.lineTo(Math.min(x, W), yy + Math.sin(Math.min(x, W) / W * f + f) * amp); cx.lineTo(W, H); cx.fill(); };
-  hill(horizon - 6, 10, 'rgba(7,40,49,.85)', 5.2);
   g = cx.createLinearGradient(0, horizon, 0, H);
-  g.addColorStop(0, '#0B3F4A'); g.addColorStop(.5, '#072831'); g.addColorStop(1, '#04141A');
+  g.addColorStop(0, '#C6DFCD'); g.addColorStop(.45, '#A6CDB2'); g.addColorStop(1, '#84B597');
   cx.fillStyle = g; cx.beginPath(); cx.moveTo(0, H);
   for (let x = 0; x < W + 16; x += 16) cx.lineTo(Math.min(x, W), horizon + 4 + Math.sin(Math.min(x, W) / W * 3.1) * 6);   // до самого края: шаг 16 не делит ширину, и справа была щель
   cx.lineTo(W, H); cx.fill();
@@ -255,8 +263,10 @@ function draw(now){
   // «Монтажёр» и «Дизайнер» лежали на деревьях Школы и Гили и прятали их плоды)
   const занято = [];
   for (const [t, sub] of labels.slice().sort((a, b) => b[0].row - a[0].row)) {
-    cx.font = '600 12.5px Manrope, system-ui, sans-serif';
-    const w = Math.max(cx.measureText(t.name).width, 40) + 18;
+    if (W < 560 && !t.house && !fruitsOf(t).some(висит)) continue;
+    cx.font = '500 11px -apple-system, BlinkMacSystemFont, system-ui, sans-serif'; const ws = cx.measureText(sub).width;
+    cx.font = '600 12.5px -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
+    const w = Math.max(cx.measureText(t.name).width, ws, 40) + 18;
     const места = [t.Y + 5, t.Y - t.S * (t.house ? .62 : 1.02) - 38];
     const мешает = y => {
       const r = {x1:t.X - w / 2, x2:t.X + w / 2, y1:y, y2:y + 33};
@@ -267,9 +277,9 @@ function draw(now){
       return TREES.some(о => о !== t && о.row > t.row && о.S && в({x1:о.X - о.S * .42, x2:о.X + о.S * .42, y1:о.Y - о.S * .98, y2:о.Y - о.S * .2}));
     };
     const y = места.find(y => !мешает(y));
-    const тихо = y === undefined;
-    drawLabel(t, sub, тихо ? места[0] : y, w, тихо);
-    занято.push({x1:t.X - w / 2, x2:t.X + w / 2, y1:тихо ? места[0] : y, y2:(тихо ? места[0] : y) + 33});
+    if (y === undefined) continue;
+    drawLabel(t, sub, y, w);
+    занято.push({x1:t.X - w / 2, x2:t.X + w / 2, y1:y, y2:y + 33});
   }
   // светлячки
   if (s.night > .2) for (const f of FLIES) {
@@ -293,17 +303,17 @@ function drawTree(t, tm){
   const sw = reduce ? 0 : Math.sin(tm * .9 + t.phase) * .035 + Math.sin(tm * 2.1 + t.phase) * .008;
   const P = (x, y) => { const h = -y; return [t.X + (x + sw * h * h) * t.S, t.Y + y * t.S]; };
   // тень у корня
-  cx.fillStyle = 'rgba(0,12,16,.35)'; cx.beginPath(); cx.ellipse(t.X, t.Y + 2, t.S * .26, t.S * .045, 0, 0, 7); cx.fill();
+  cx.fillStyle = 'rgba(30,70,60,.18)'; cx.beginPath(); cx.ellipse(t.X, t.Y + 2, t.S * .26, t.S * .045, 0, 0, 7); cx.fill();
   cx.lineCap = 'round';
-  cx.strokeStyle = t.sleep ? '#6A8A90' : '#2B4448';
+  cx.strokeStyle = t.sleep ? '#A3B3AE' : rgb(haze([74,91,87], t.haze));
   for (const s of t.segs) {
     const [a, b] = P(s.x1, s.y1), [c, d] = P(s.x2, s.y2);
     cx.lineWidth = Math.max(1, s.w * t.S); cx.beginPath(); cx.moveTo(a, b); cx.lineTo(c, d); cx.stroke();
   }
   if (!t.sleep) for (const bl of t.blobs) {
-    const [x, y] = P(bl.x, bl.y), c = leaf(t.health, bl.shade);
-    cx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},.88)`; cx.beginPath(); cx.arc(x, y, bl.rad * t.S, 0, 7); cx.fill();
-    cx.fillStyle = 'rgba(226,239,236,.07)'; cx.beginPath(); cx.arc(x - bl.rad * t.S * .3, y - bl.rad * t.S * .35, bl.rad * t.S * .5, 0, 7); cx.fill();
+    const [x, y] = P(bl.x, bl.y), c = haze(leaf(t.health, bl.shade), t.haze);
+    cx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},.94)`; cx.beginPath(); cx.arc(x, y, bl.rad * t.S, 0, 7); cx.fill();
+    cx.fillStyle = 'rgba(255,255,255,.12)'; cx.beginPath(); cx.arc(x - bl.rad * t.S * .3, y - bl.rad * t.S * .35, bl.rad * t.S * .5, 0, 7); cx.fill();
   }
   treeHits.push({t, x:t.X, y:t.Y - t.S * .55, r:t.S * .5});
   // плоды
@@ -314,7 +324,7 @@ function drawTree(t, tm){
     const a = age(f), [x, y] = P(tip.x, tip.y + .07);
     const r = Math.max(6, Math.min(13, t.S * .05)) * (a > 14 ? 1.18 : a <= 3 ? .85 : 1);
     const pulse = a > 21 && !reduce ? .5 + .5 * Math.sin(tm * 2.4 + i) : 0;
-    cx.strokeStyle = 'rgba(43,68,72,.9)'; cx.lineWidth = 1.2;
+    cx.strokeStyle = 'rgba(58,80,74,.75)'; cx.lineWidth = 1.2;
     cx.beginPath(); cx.moveTo(x, y - r * 1.9); cx.lineTo(x, y - r * .8); cx.stroke();
     drawFruit(x, y, r, fruitColor(a), pulse);
     hits.push({f, x, y, r:Math.max(22, r + 10), c:fruitColor(a), fr:r});
@@ -326,44 +336,43 @@ function drawTree(t, tm){
 
 function drawHouse(t, tm, s){
   const w = t.S * .42, h = t.S * .3, x = t.X - w / 2, y = t.Y - h;
-  cx.fillStyle = 'rgba(0,12,16,.35)'; cx.beginPath(); cx.ellipse(t.X, t.Y + 2, w * .75, t.S * .04, 0, 0, 7); cx.fill();
-  cx.fillStyle = '#1C3F45'; cx.fillRect(x, y, w, h);
-  cx.fillStyle = '#14343A'; cx.beginPath(); cx.moveTo(x - w * .12, y + 1); cx.lineTo(t.X, y - h * .72); cx.lineTo(x + w * 1.12, y + 1); cx.fill();
+  cx.fillStyle = 'rgba(30,70,60,.18)'; cx.beginPath(); cx.ellipse(t.X, t.Y + 2, w * .75, t.S * .04, 0, 0, 7); cx.fill();
+  cx.fillStyle = '#EEF2EE'; cx.fillRect(x, y, w, h);
+  cx.fillStyle = '#3F6166'; cx.beginPath(); cx.moveTo(x - w * .12, y + 1); cx.lineTo(t.X, y - h * .72); cx.lineTo(x + w * 1.12, y + 1); cx.fill();
   const glow = .75 + (reduce ? 0 : .15 * Math.sin(tm * 1.3));
-  cx.save(); cx.shadowColor = 'rgba(240,182,76,.7)'; cx.shadowBlur = 14 * glow;
-  cx.fillStyle = `rgba(240,182,76,${glow})`; cx.fillRect(t.X - w * .12, y + h * .25, w * .24, h * .3); cx.restore();
-  cx.fillStyle = '#0E2A30'; cx.fillRect(t.X + w * .22, y + h * .45, w * .16, h * .55);
+  cx.save(); cx.shadowColor = 'rgba(255,190,90,.5)'; cx.shadowBlur = 8 * glow;
+  cx.fillStyle = `rgba(255,214,140,${glow})`; cx.fillRect(t.X - w * .12, y + h * .25, w * .24, h * .3); cx.restore();
+  cx.fillStyle = '#5B7673'; cx.fillRect(t.X + w * .22, y + h * .45, w * .16, h * .55);
   // дымок: дом жив
   if (!reduce) for (let i = 0; i < 4; i++) {
     const k = ((tm * .25 + i / 4) % 1);
-    cx.fillStyle = `rgba(226,239,236,${.14 * (1 - k)})`;
+    cx.fillStyle = `rgba(255,255,255,${.55 * (1 - k)})`;
     cx.beginPath(); cx.arc(x + w * .78 + Math.sin(k * 5 + i) * 5, y - h * .5 - k * 34, 3 + k * 6, 0, 7); cx.fill();
   }
-  cx.fillStyle = '#14343A'; cx.fillRect(x + w * .72, y - h * .55, w * .12, h * .4);
+  cx.fillStyle = '#3F6166'; cx.fillRect(x + w * .72, y - h * .55, w * .12, h * .4);
   treeHits.push({t, x:t.X, y:t.Y - h * .6, r:Math.max(w * .75, 30)});
   label(t, 'держит память');
 }
 
 function drawFruit(x, y, r, col, pulse){
   cx.save();
-  cx.shadowColor = 'rgba(240,182,76,.55)'; cx.shadowBlur = 6 + pulse * 12;
+  cx.shadowColor = 'rgba(224,123,42,.35)'; cx.shadowBlur = 3 + pulse * 12;
   cx.fillStyle = col; cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.fill();
   cx.restore();
-  cx.fillStyle = 'rgba(255,255,255,.35)'; cx.beginPath(); cx.arc(x - r * .35, y - r * .35, r * .32, 0, 7); cx.fill();
+  cx.strokeStyle = 'rgba(122,64,12,.3)'; cx.lineWidth = 1; cx.stroke();
+  cx.fillStyle = 'rgba(255,255,255,.5)'; cx.beginPath(); cx.arc(x - r * .35, y - r * .35, r * .32, 0, 7); cx.fill();
 }
 
 function label(t, sub){ labels.push([t, sub]); }
-function drawLabel(t, sub, y, w, тихо){
-  // места нигде нет — подпись остаётся под корнем, но полупрозрачной: плод под ней виден
-  cx.globalAlpha = тихо ? .45 : 1;
+function drawLabel(t, sub, y, w){
+  // места нет — подписи нет вовсе (27.09): полупрозрачный призрак на чужой кроне не читался, имя есть в листе плода
   cx.textAlign = 'center';
-  cx.font = '600 12.5px Manrope, system-ui, sans-serif';
-  cx.fillStyle = 'rgba(4,20,26,.55)'; cx.beginPath(); cx.roundRect ? cx.roundRect(t.X - w / 2, y, w, 33, 12) : cx.rect(t.X - w / 2, y, w, 33); cx.fill();
-  cx.fillStyle = 'rgba(226,239,236,.92)';
+  cx.font = '600 12.5px -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
+  cx.fillStyle = 'rgba(255,255,255,.86)'; cx.beginPath(); cx.roundRect ? cx.roundRect(t.X - w / 2, y, w, 33, 12) : cx.rect(t.X - w / 2, y, w, 33); cx.fill();
+  cx.fillStyle = '#10303A';
   cx.fillText(t.name, t.X, y + 14);
-  cx.font = '500 11px Manrope, system-ui, sans-serif'; cx.fillStyle = 'rgba(226,239,236,.55)';
+  cx.font = '500 11px -apple-system, BlinkMacSystemFont, system-ui, sans-serif'; cx.fillStyle = '#4C6770';
   cx.fillText(sub, t.X, y + 27);
-  cx.globalAlpha = 1;
 }
 function plural(n, a, b, c){ const m = n % 10, h = n % 100; return m === 1 && h !== 11 ? a : m >= 2 && m <= 4 && (h < 12 || h > 14) ? b : c; }
 
@@ -377,7 +386,7 @@ function hud(){
   if (ОШИБКА) $('sub').innerHTML = `<span class="err">${esc(ОШИБКА)}</span>`;
   const today = Object.values(state.answers).filter(a => dayKey(a.at) === dayKey(Date.now())).length;
   $('dots').innerHTML = Array.from({length:ROUND}, (_, i) => `<i class="${i < today ? 'on' : ''}"></i>`).join('');
-  $('rtext').textContent = today >= ROUND ? `Сегодня ${today} — хватит` : `Сегодня ${today} из ${ROUND}`;
+  $('rtext').textContent = today >= ROUND ? `Сегодня ${today} — хватит` : `Сорвано сегодня ${today} из ${ROUND}`;
   $('bcount').textContent = Object.keys(state.answers).length;
   $('hint').style.opacity = Object.keys(state.answers).length || !FRUITS.length ? 0 : 1;
 }
@@ -399,16 +408,17 @@ const chime = () => { [523, 659, 784, 1047].forEach((f, i) => note(f, i * .12, .
 // ---------- листы ----------
 const sheet = $('sheet'), body = $('shBody');
 let lastFocus = null;
-function open(html){ lastFocus = document.activeElement; body.innerHTML = html; sheet.classList.add('open'); setTimeout(() => (body.querySelector('button') || $('close')).focus({preventScroll:true}), 60); }
+function open(html){ lastFocus = document.activeElement; body.innerHTML = html; sheet.classList.add('open'); setTimeout(() => (body.querySelector('h3') || $('close')).focus({preventScroll:true}), 60); }
 function close(){ sheet.classList.remove('open'); if (lastFocus && lastFocus.focus) lastFocus.focus({preventScroll:true}); }
 $('close').onclick = close;
 addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+const нбсп = s => String(s).replace(/(\d) (?=\d{3}\b)/g, '$1\u00A0').replace(/№ /g, '№\u00A0');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function openFruit(f){
   const t = tree(f.t), a = age(f);
   open(`<div class="meta"><span class="chip who">${esc(t.name)}</span><span class="chip ${a > 14 ? 'old' : ''}">висит ${a} дн</span><span class="chip">${f.k === 'руки' ? 'сделай и отметь' : 'ответ кнопкой'}</span></div>
-    <h3 id="shTitle">${esc(f.q)}</h3><p>${esc(f.w)}</p>
+    <h3 id="shTitle" tabindex="-1">${esc(нбсп(f.q))}</h3><p>${esc(f.w)}</p>
     <div class="opts">${f.o.map((o, i) => `<button data-i="${i}" class="${f.rec === i ? 'rec' : ''}">${esc(o)}${f.rec === i ? ' <small>совет кодера</small>' : ''}</button>`).join('')}</div>
     ${МОЖНО ? '' : '<p class="note err">Отвечать отсюда пока нельзя: у Дома нет приёма ответов.</p>'}
     <button class="later" id="later">Не сейчас</button>`);
