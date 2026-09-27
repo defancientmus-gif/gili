@@ -966,7 +966,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v51·c47363</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v52·30766c</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -2789,7 +2789,7 @@ function небо_видео(){
   if(!в || НА_МАКЕ || НЕБО.широкое || getComputedStyle(в).display === 'none'
      || matchMedia('(prefers-reduced-motion:reduce)').matches) return Promise.reject();
   в.muted = true;                                          // атрибута мало: iOS смотрит на свойство
-  в.src = 'gili-sky-live.mp4';
+  в.src = 'gili-sky-live-2.mp4';               // 28.09: клип Дома, где облака плывут (пинг-понг 10 с)
   return в.play().then(() => {
     в.classList.add('живо');
     document.addEventListener('visibilitychange', () => { if(!document.hidden) в.play().catch(() => {}); });
