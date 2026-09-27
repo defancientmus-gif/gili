@@ -966,7 +966,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v53·bf4148</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v54·a281da</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -1283,7 +1283,7 @@ async function забрать_ленту(){
   if(!та_же){
     for(const м of data) if(!м.сводка && м.link_summary) м.сводка = м.link_summary;
     // «убрать» ждёт дома, но глазу уже не нужна; «сад» — ответ из сада, служебная запись, не мысль
-    МЫСЛИ = data.filter(м => !/^(убра|сад)/.test(м.status || ''));
+    МЫСЛИ = data.filter(м => !/^(убра|сад|город)/.test(м.status || ''));
     в_память(ПАМЯТЬ_ЛЕНТЫ, МЫСЛИ.slice(0, 80));  // с запасом на следующее открытие; убранные не воскресают
     нарисовать();
   }
@@ -2236,9 +2236,25 @@ if(!НА_МАКЕ) window.САД_СВЯЗЬ = {
     САД_СНИМОК = снимок;
     return снимок;
   },
-  умеет: ['вопрос'],     // дела и письма с телефона — когда облако Дома научится их принимать (→ штабу в NEXT)
-  сделать: тело => тело.вид === 'вопрос' ? САД_СВЯЗЬ.ответить({organ: тело.орган, key: тело.ключ, choice: тело.вариант})
-                                         : Promise.resolve({ok:false, error:'С телефона пока только вопросы — это нажми в Гили на маке'}),
+  /* Город (Дом 28.09 22e05b6d): запись status «город», body {"город":{вид, ключ, куда, орган}}; «куда» — вариант
+     ответа или квартал письма. Облако Дома берёт только от Жени и только квест из последнего sad.json,
+     итог — status «убрано» или «город ✗». Все три вида с телефона, счёт у Дома один. */
+  сделать: async тело => {
+    if(!navigator.onLine) return {ok:false, error:'Нет сети — задача осталась на месте'};
+    const г = {вид: тело.вид, ключ: тело.ключ, куда: тело.вид === 'вопрос' ? тело.вариант : тело.куда};
+    if(тело.орган) г.орган = тело.орган;
+    const {data, error} = await sb.from('gili_notes').insert({author: Я.id, flow: 'кодинг', status: 'город',
+      body: JSON.stringify({город: г})}).select('id').single();
+    if(error || !data) return {ok:false, error:'Не записалось — задача осталась на месте'};
+    for(let i = 0; i < 20; i++){
+      await new Promise(r => setTimeout(r, 2000));
+      const {data: з} = await sb.from('gili_notes').select('status').eq('id', data.id).single();
+      const ст = з && з.status || '';
+      if(ст === 'убрано') return {ok:true};
+      if(ст.startsWith('город ✗')) return {ok:false, error:'Не дошло: у Дома эта задача уже поменялась'};
+    }
+    return {впути:true};
+  },
   ответить: async ({organ, key, choice}) => {
     if(!navigator.onLine) return {ok:false, error:'Нет сети — плод остался на дереве'};
     const {data, error} = await sb.from('gili_notes').insert({author: Я.id, flow: 'кодинг', status: 'сад',

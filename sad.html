@@ -24,17 +24,18 @@ button{font:inherit;color:inherit}
 .здание{position:absolute;padding:0;border:0;background:none;cursor:pointer;transform:translate(-50%,-100%);touch-action:manipulation}
 .здание img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none;
   transform-origin:50% 100%;filter:drop-shadow(0 6px 6px rgba(30,60,40,.22))}
-.здание.живое img{animation:качает var(--т,6s) ease-in-out var(--з,0s) infinite alternate}
-.здание.стройка img{opacity:.88}
-.здание.запущен img{opacity:.78}
-.здание::after{content:"";position:absolute;left:18%;right:18%;bottom:-2%;height:7%;border-radius:50%;background:rgba(30,70,50,.2);z-index:-1}
+.здание .дерево{position:absolute;bottom:4%;width:34%;animation:качает var(--т,6s) ease-in-out var(--з,0s) infinite alternate;z-index:1}
+.здание .дерево.л{left:-16%}
+.здание .дерево.п{right:-14%;width:28%;animation-delay:calc(var(--з,0s) - 2s)}
+.здание .дом{position:relative;z-index:0}
+.здание.запущен .дом{opacity:.8;filter:grayscale(.75) brightness(.95) drop-shadow(0 6px 6px rgba(30,60,40,.22))}
 .здание:active img{transform:scale(.97)}
 @keyframes качает{from{transform:rotate(-1.1deg)}to{transform:rotate(1.1deg)}}
 
-.значок{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);min-width:30px;height:30px;padding:0 8px;box-sizing:border-box;
-  border-radius:15px;background:var(--coin);color:#fff;font:700 15px/30px var(--sys);text-align:center;font-variant-numeric:tabular-nums;
+.значок{position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);min-width:34px;height:34px;padding:0 9px;box-sizing:border-box;z-index:2;
+  border-radius:17px;background:var(--coin);color:#fff;font:700 16px/34px var(--sys);border:2px solid #fff;text-align:center;font-variant-numeric:tabular-nums;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 8px -2px rgba(120,60,0,.35);pointer-events:none}
-.касса .значок{top:14%}   /* у дома над крышей дым — число садим на крышу, а не на дерево позади */
+.касса .значок{top:12%}   /* у дома над крышей дым — число садим на крышу, а не на дерево позади */
 .значок.зовёт{animation:зовёт 2.4s ease-in-out infinite}
 .значок.тык{animation:тык .45s ease-out}
 @keyframes зовёт{0%,100%{transform:translate(-50%,-100%) scale(1)}50%{transform:translate(-50%,-100%) scale(1.12)}}
@@ -100,7 +101,7 @@ button{font:inherit;color:inherit}
 .туман div{border-radius:20px;padding:14px 18px;max-width:300px;text-align:center}
 
 @media (prefers-reduced-motion:reduce){
-  .здание.живое img,.значок.зовёт,.значок.тык,.счёт.тык{animation:none}
+  .здание .дерево,.значок.зовёт,.значок.тык,.счёт.тык{animation:none}
   #лист,#тень,.квест,.монета,.подсказка{transition:none}
 }
 </style></head>
@@ -146,7 +147,12 @@ const МЕСТА = {'Касса':[47,58], 'Космос Сервис':[33,63], '
   'Разберемся':[12,45], 'БУ.шка':[81,45], 'Flighter':[24,42], 'Юр.маркет':[69,40.5]};
 const ЗАПАС = [[82,60], [40,39.5], [53,39.5], [66,72], [9,55]];
 const ПОЧТА_МЕСТО = [55.5, 61];
-const АРТ = {дом:'city-home.webp', расцвет:'city-tree-mature.webp', растёт:'city-tree-young.webp', запущен:'city-tree-tired.webp'};
+/* Здания — арт Дома (log/польза/город, 28.09); стадии кодом, как он просил: стройка — пустой участок в лесах,
+   растёт — здание поменьше, расцвет — здание и деревья вокруг, запущен — приглушено и обесцвечено.
+   Органа без своего арта ещё нет на карте как здания — стоит стройкой, пока Дом не нарисует. */
+const ЗДАНИЯ = {'Бухгалтер':'buhgalter', 'Flighter':'flighter', 'Гили':'gili', 'Космос Сервис':'kosmos', '3D Принтер':'printer3d',
+  'Сервисный':'servisnyi', 'Школа':'shkola', 'Закупатор':'zakupator'};
+const арт = з => з.касса ? 'city-home.webp' : ЗДАНИЯ[з.орган] && стадия(з) !== 'стройка' ? `city-b-${ЗДАНИЯ[з.орган]}.webp` : 'city-b-stroyka.webp';
 const ЗАПУЩЕН_ДНЕЙ = 14;
 
 let ГОРОД = null, ОТКРЫТ = null, ЗАНЯТО = false;
@@ -163,8 +169,9 @@ function серия(){
   while (счёт.дни[день(d)]) { n++; d.setDate(d.getDate() - 1); }
   return n;
 }
+let СЧЁТ_ДОМА = null;          // {сегодня, подряд} из журнала Дома: одно число на мак и телефон
 function счёт_показать(тык){
-  const n = счёт.дни[день()] || 0, с = серия();
+  const n = СЧЁТ_ДОМА ? СЧЁТ_ДОМА.сегодня : счёт.дни[день()] || 0, с = СЧЁТ_ДОМА ? СЧЁТ_ДОМА.подряд : серия();
   $('сегодня').textContent = `Сегодня разобрано ${n}`;
   $('серия').textContent = с ? `${с} ${мн(с, 'день', 'дня', 'дней')} подряд` : 'начни серию';
   if (тык && !тихо) { const e = $('счёт'); e.classList.remove('тык'); void e.offsetWidth; e.classList.add('тык'); }
@@ -205,18 +212,19 @@ function нарисовать(){
     const м = где[з.орган]; if (!м) continue;
     const [x, y] = м, ст = стадия(з);
     const глубина = .72 + (y - 40) / 36 * .5;                   // дальние меньше
-    const высота = (з.касса ? .23 : ст === 'стройка' ? .1 : .14) * глубина;
+    const ширина = (з.касса ? .26 : ст === 'растёт' ? .13 : .16) * глубина;
     const b = document.createElement('button');
-    b.className = `здание ${ст === 'стройка' ? 'стройка' : ст === 'запущен' ? 'запущен' : ''} ${з.касса ? 'касса' : 'живое'}`;
+    b.className = `здание ${ст} ${з.касса ? 'касса' : ''}`;
     b.dataset.орган = з.орган;
     b.style.left = x + '%'; b.style.top = y + '%';
-    b.style.width = (высота * H * (з.касса ? 1.15 : .9)) + 'px';
+    b.style.width = (ширина * H) + 'px';
     b.style.zIndex = Math.round(y * 10);
     const r = (з.орган.length * 37) % 100 / 100;
     b.style.setProperty('--т', (5 + r * 3).toFixed(1) + 's'); b.style.setProperty('--з', (-r * 6).toFixed(1) + 's');
     const n = живые(з);
     b.setAttribute('aria-label', `${з.имя}: ${n ? n + ' ' + мн(n, 'задача', 'задачи', 'задач') : 'задач нет'}`);
-    b.innerHTML = `<img src="${АРТ[ст === 'стройка' ? 'растёт' : ст]}" alt="">` + (n ? `<span class="значок${зовёт(з) ? ' зовёт' : ''}">${n}</span>` : '');
+    const сад = ст === 'расцвет' ? `<img class="дерево л" src="city-tree-mature.webp" alt=""><img class="дерево п" src="city-tree-young.webp" alt="">` : '';
+    b.innerHTML = `<img class="дом" src="${арт(з)}" alt="">${сад}` + (n ? `<span class="значок${зовёт(з) ? ' зовёт' : ''}">${n}</span>` : '');
     b.onclick = () => открыть(з.орган);
     мир.appendChild(b);
   }
@@ -337,12 +345,13 @@ $('список').addEventListener('click', async e => {
   const где = вид === 'мысль' ? document.querySelector('.почта') : document.querySelector(`.здание[data-орган="${CSS.escape(вид === 'дело' ? 'Касса' : тело.орган)}"]`);
   монета(b, где);
   счёт.дни[день()] = (счёт.дни[день()] || 0) + 1; сохранить();
+  if (СЧЁТ_ДОМА) { if (!СЧЁТ_ДОМА.сегодня) СЧЁТ_ДОМА.подряд = (СЧЁТ_ДОМА.подряд || 0) + 1; СЧЁТ_ДОМА.сегодня++; }
   карта.classList.add('ушёл');
   // модель меняем сразу; свежий снимок с мака придёт следом и ничего не вернёт назад
   if (вид === 'мысль') ГОРОД.почта = ГОРОД.почта.filter(п => п.ключ !== тело.ключ);
   else for (const з of ГОРОД.здания) з.квесты = з.квесты.filter(к => !(к.вид === вид && к.ключ === тело.ключ && (вид !== 'вопрос' || к.орган === тело.орган)));
   setTimeout(() => {
-    if (итог.город && итог.город.здания) ГОРОД = итог.город;
+    if (итог.город && итог.город.здания) { ГОРОД = итог.город; if (ГОРОД.счёт) СЧЁТ_ДОМА = ГОРОД.счёт; }
     нарисовать(); if (ОТКРЫТ) лист_заполнить();
     const з = где && document.querySelector(вид === 'мысль' ? '.почта .значок' : `.здание[data-орган="${CSS.escape(где.dataset.орган || '')}"] .значок`);
     if (з && !тихо) з.classList.add('тык');
@@ -375,6 +384,7 @@ async function загрузить(первый){
   }
   туман('');
   ГОРОД = г;
+  if (г.счёт) { СЧЁТ_ДОМА = г.счёт; счёт_показать(); }
   if (!ЗАНЯТО) { нарисовать(); if (ОТКРЫТ && !$('список').querySelector('.квест button:disabled')) лист_заполнить(); }
   if (первый) {
     const д = $('даль'), к = МЕСТА['Касса'][0] / 100 * W;
