@@ -360,13 +360,13 @@ textarea:focus{outline:none; border-color:var(--accent)}
   html,body{height:100%; height:100dvh}
   body{
     font-size:16px;
-    background:oklch(.91 .02 218) url('gili-sky-v2.jpg') center/cover no-repeat;
+    background:oklch(.91 .02 218) url('gili-sky-poster.jpg') center/cover no-repeat;   /* 36 КБ; резкое фото — после ленты, см. небо_пора */
     overflow:hidden;
   }
   /* 27.09 «4к супер фон»: то же небо, перерисованное резко (Дом, Polza). Было фото 941 px, и в широком
      окне мака его растягивало втрое. Узкому экрану — стоячий кадр 1440×2560, широкому — панорама
      той же сцены 2560×1440: горизонт на месте, ничего не режется. */
-  @media (min-aspect-ratio:1/1){ body{background-image:url('gili-sky-wide.jpg')} }
+  @media (min-aspect-ratio:1/1){ body{background-image:url('gili-sky-wide-poster.jpg')} }
   body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,oklch(1 0 0/.04),oklch(.92 .02 214/.16) 44%,oklch(.78 .06 210/.24));}
   #сцена{display:block;position:fixed;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;opacity:.55}
   /* живое небо: та же картинка, но облака плывут, а море дышит. Проявляется, когда готов
@@ -966,7 +966,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v56·290843</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v57·195994</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -1288,6 +1288,7 @@ async function забрать_ленту(){
     нарисовать();
   }
   ответ_голосом();
+  небо_пора();
 }
 
 const день_ключ = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -2982,7 +2983,22 @@ function позвать_органы(){
 }
 setTimeout(позвать_органы,1800);
 таймер_зова=setInterval(позвать_органы,14000);
-оживить_небо();
+/* ТЯЖЁЛОЕ НЕБО — ПОСЛЕ ЛЕНТЫ. Женя 28.09: «гили долго грузится» без VPN. Pages без VPN отдаёт 23–230 КБ/с,
+   а первый экран тянул фото неба 470 КБ и сразу клип 2,9 МБ — они делили трубу с лентой. Теперь сначала
+   постер 36 КБ (то же небо, мягче), лента, и только потом резкое фото и живое небо. Дом решил 28.09 не
+   переезжать на сервер, а облегчить: цель — лента за 3 с. */
+let небо_ждёт = true;
+function небо_пора(){
+  if(!небо_ждёт) return;
+  небо_ждёт = false;
+  const фото = new Image();
+  фото.onload = () => {
+    if(matchMedia('(max-width:720px)').matches) document.body.style.backgroundImage = `url('${НЕБО.фото}')`;
+    оживить_небо();
+  };
+  фото.src = НЕБО.фото;                          // не пришло — остаёмся на постере, это то же небо
+}
+addEventListener('load', () => setTimeout(небо_пора, 4000));   // ленты нет (экран входа, сеть молчит) — небо всё равно дорисуется
 оживить_сцену();
 
 if(кто_в_памяти()) поднять();        // помним человека — открываемся сразу, проверка внутри
