@@ -18,24 +18,32 @@ button{font:inherit;color:inherit}
 #даль{position:fixed;inset:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;overscroll-behavior:contain;cursor:grab}
 #даль::-webkit-scrollbar{display:none}
 #даль.тяну{cursor:grabbing}
-#мир{position:relative;background:url(city-bg-s.jpg) center/100% 100% no-repeat}
+#мир{position:relative;background:url(city2-map-s.jpg) center/100% 100% no-repeat}
 #мир>img.фон{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none;pointer-events:none}
 
-.здание{position:absolute;padding:0;border:0;background:none;cursor:pointer;transform:translate(-50%,-100%);touch-action:manipulation}
+/* здание стоит серединой низа на своём участке карты; спрайт опущен на 8% своей высоты (так сверял Дом) */
+.здание{position:absolute;padding:0;border:0;background:none;cursor:pointer;transform:translate(-50%,-92%);touch-action:manipulation}
+.здание.декор{cursor:default}
 .здание img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none;
-  transform-origin:50% 100%;filter:drop-shadow(0 6px 6px rgba(30,60,40,.22))}
-.здание .дерево{position:absolute;bottom:4%;width:34%;animation:качает var(--т,6s) ease-in-out var(--з,0s) infinite alternate;z-index:1}
-.здание .дерево.л{left:-16%}
-.здание .дерево.п{right:-14%;width:28%;animation-delay:calc(var(--з,0s) - 2s)}
-.здание .дом{position:relative;z-index:0}
-.здание.запущен .дом{opacity:.8;filter:grayscale(.75) brightness(.95) drop-shadow(0 6px 6px rgba(30,60,40,.22))}
-.здание:active img{transform:scale(.97)}
-@keyframes качает{from{transform:rotate(-1.1deg)}to{transform:rotate(1.1deg)}}
+  transform-origin:50% 100%;filter:drop-shadow(0 5px 5px rgba(30,60,40,.2))}
+.здание.стройка img{opacity:.55;filter:saturate(.35) drop-shadow(0 5px 5px rgba(30,60,40,.2))}
+.здание.расцвет img{filter:drop-shadow(0 0 10px rgba(255,196,110,.75)) drop-shadow(0 5px 5px rgba(30,60,40,.2))}
+.здание.запущен img{opacity:.8;filter:grayscale(.75) brightness(.95) drop-shadow(0 5px 5px rgba(30,60,40,.2))}
+.здание:not(.декор):active img{transform:scale(.97)}
+/* подпись под зданием: чей это дом, чтобы не угадывать по картинке */
+.имя{position:absolute;left:50%;top:calc(100% - 4px);transform:translateX(-50%);white-space:nowrap;pointer-events:none;
+  padding:2px 9px 3px;border-radius:12px;font:600 11.5px/1.3 var(--sys);color:var(--ink);
+  background:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.9);box-shadow:0 2px 6px -2px rgba(30,60,40,.3)}
+/* места без здания на карте: руины Flighter, ворота Щита; органы без участка — плашкой на пляже */
+.зона{position:absolute;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;border-radius:50%;touch-action:manipulation}
+.зона .имя{top:50%;transform:translate(-50%,-50%)}
+.зона .значок{top:calc(50% - 14px)}
+.плашка{position:absolute;transform:translate(-50%,-100%);border-radius:16px;padding:8px 12px;cursor:pointer;font:600 12.5px/1.2 var(--sys);white-space:nowrap}
+.плашка .значок{top:-6px}
 
 .значок{position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);min-width:34px;height:34px;padding:0 9px;box-sizing:border-box;z-index:2;
   border-radius:17px;background:var(--coin);color:#fff;font:700 16px/34px var(--sys);border:2px solid #fff;text-align:center;font-variant-numeric:tabular-nums;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 8px -2px rgba(120,60,0,.35);pointer-events:none}
-.касса .значок{top:12%}   /* у дома над крышей дым — число садим на крышу, а не на дерево позади */
 .значок.зовёт{animation:зовёт 2.4s ease-in-out infinite}
 .значок.тык{animation:тык .45s ease-out}
 @keyframes зовёт{0%,100%{transform:translate(-50%,-100%) scale(1)}50%{transform:translate(-50%,-100%) scale(1.12)}}
@@ -101,12 +109,12 @@ button{font:inherit;color:inherit}
 .туман div{border-radius:20px;padding:14px 18px;max-width:300px;text-align:center}
 
 @media (prefers-reduced-motion:reduce){
-  .здание .дерево,.значок.зовёт,.значок.тык,.счёт.тык{animation:none}
+  .значок.зовёт,.значок.тык,.счёт.тык{animation:none}
   #лист,#тень,.квест,.монета,.подсказка{transition:none}
 }
 </style></head>
 <body>
-<div id="даль"><div id="мир"><img class="фон" src="city-bg.jpg" alt=""></div></div>
+<div id="даль"><div id="мир"><img class="фон" src="city2-map.webp" alt=""></div></div>
 
 <div class="верх">
   <div class="счёт glass" id="счёт" aria-live="polite"><b id="сегодня">Сегодня разобрано 0</b><span id="серия">начни серию</span></div>
@@ -126,7 +134,7 @@ button{font:inherit;color:inherit}
 /* ГОРОД ГИЛИ (28.09) вместо сада. Женя 00:48: «прям игрой, только где я буду задачи разбирать… развивать
    свой город, сервис». Данные — одна дверь Дома (scripts/город.py) через окно: здания — органы, квесты —
    вопросы кодеров, платежи и дела Кассы; почта — мысли без адреса. Нажал — настоящее закрытие у Дома,
-   очки только из них. Арт — заглушки Дома (дерево = квартал, дом = Касса), здания по стадиям он дорисует.
+   очки только из них. Карта и здания — арт Дома (город v2), стадии рисуются кодом.
    Страница одна на мак и телефон (окно/сад.html → sad.html при выкладке); разница только в СВЯЗИ. */
 const СВЯЗЬ = (() => { try { return parent !== window && parent.САД_СВЯЗЬ; } catch (e) { return null; } })() || {
   грузить: async () => (await fetch('/api/gorod', {cache:'no-store'})).json(),
@@ -140,19 +148,31 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt
 const мн = (n, a, b, c) => { const k = n % 10, h = n % 100; return k === 1 && h !== 11 ? a : k >= 2 && k <= 4 && (h < 12 || h > 14) ? b : c; };
 const руб = n => Math.round(n).toLocaleString('ru-RU').replace(/\s/g, ' ') + ' ₽';
 
-/* Постоянные места на лугу, в долях картинки (x, y — где здание стоит на земле). Касса — дом Жени в центре.
-   Места выбраны по фону: не на тропе справа, не на камнях слева внизу. Новый орган берёт первое свободное. */
-const МЕСТА = {'Касса':[47,58], 'Космос Сервис':[33,63], 'Гили':[61,63], 'Домик':[47,43.5], 'Сервисный':[22,53],
-  'Школа':[72,52], 'Бухгалтер':[35,47.5], 'Закупатор':[59,47.5], '3D Принтер':[41,75], 'Дизайнер':[55,76],
-  'Разберемся':[12,45], 'БУ.шка':[81,45], 'Flighter':[24,42], 'Юр.маркет':[69,40.5]};
-const ЗАПАС = [[82,60], [40,39.5], [53,39.5], [66,72], [9,55]];
-const ПОЧТА_МЕСТО = [55.5, 61];
-/* Здания — арт Дома (log/польза/город, 28.09); стадии кодом, как он просил: стройка — пустой участок в лесах,
-   растёт — здание поменьше, расцвет — здание и деревья вокруг, запущен — приглушено и обесцвечено.
-   Органа без своего арта ещё нет на карте как здания — стоит стройкой, пока Дом не нарисует. */
-const ЗДАНИЯ = {'Бухгалтер':'buhgalter', 'Flighter':'flighter', 'Гили':'gili', 'Космос Сервис':'kosmos', '3D Принтер':'printer3d',
-  'Сервисный':'servisnyi', 'Школа':'shkola', 'Закупатор':'zakupator'};
-const арт = з => з.касса ? 'city-home.webp' : ЗДАНИЯ[з.орган] && стадия(з) !== 'стройка' ? `city-b-${ЗДАНИЯ[з.орган]}.webp` : 'city-b-stroyka.webp';
+/* Город v2 (Дом, log/польза/город2, 28.09): карта с районами — холм знаний, площадь, переулок мастерских,
+   торговая улица к пристани. x, y — середина низа участка в долях кадра, w — ширина участка; к — высота спрайта
+   к его ширине (держим место заранее, чтобы город не прыгал, пока грузятся картинки). */
+const РАСКЛАДКА = {
+  'Школа':        {x:.1667, y:.2083, w:.0885, к:1.002, арт:'shkola'},
+  'Разберемся':   {x:.2891, y:.1991, w:.0885, к:.964,  арт:'razberemsya'},
+  'Домик':        {x:.4,    y:.3565, w:.0781, к:1.036, арт:'domik'},
+  'Касса':        {x:.3203, y:.6713, w:.0938, к:.693,  арт:'kassa'},
+  'Гили':         {x:.4792, y:.6667, w:.0938, к:.916,  арт:'gili'},
+  'Склейка':      {x:.0833, y:.463,  w:.0781, к:.841,  арт:'skleyka'},
+  'Дизайнер':     {x:.1573, y:.5,    w:.0755, к:.977,  арт:'dizainer'},
+  '3D Принтер':   {x:.2302, y:.537,  w:.0755, к:.882,  арт:'printer3d'},
+  'Космос Сервис':{x:.5156, y:.4833, w:.0625, к:1.039, арт:'kosmos'},
+  'Сервисный':    {x:.5901, y:.4833, w:.0599, к:.65,   арт:'servisnyi'},
+  'БУ.шка':       {x:.6625, y:.4852, w:.0599, к:.85,   арт:'bushka'},
+  'Бухгалтер':    {x:.7349, y:.488,  w:.0599, к:.925,  арт:'buhgalter'},
+  'Юр.маркет':    {x:.8078, y:.4926, w:.0599, к:.809,  арт:'yurmarket'},
+  'Закупатор':    {x:.8812, y:.5019, w:.0651, к:.889,  арт:'zakupator'},
+};
+/* На карте нарисованы, но без спрайта: руины — Flighter, ворота — Щит. r — радиус кнопки в долях ширины. */
+const ЗОНЫ = {'Flighter':{x:.74, y:.14, r:.12}, 'Щит':{x:.4, y:.84, r:.07}};
+/* Орган, которому Дом ещё не отвёл участок, встаёт плашкой на пляже — его задачи не должны пропасть. */
+const ЗАПАС = [[.64, .66], [.7, .615], [.585, .72], [.75, .57]];
+const ПОЧТА_МЕСТО = [.525, .655];
+const ЦЕНТР_X = .42;                     // площадь: сюда смотрит первый кадр на узком экране
 const ЗАПУЩЕН_ДНЕЙ = 14;
 
 let ГОРОД = null, ОТКРЫТ = null, ЗАНЯТО = false;
@@ -183,7 +203,7 @@ function мир_размер(){
   W = Math.max(vw, vh * 16 / 9); H = W * 9 / 16;
   const мир = $('мир');
   мир.style.width = W + 'px'; мир.style.height = H + 'px';
-  мир.style.marginTop = Math.min(0, vh - H) + 'px';            // широкий экран: небо срезаем сверху, луг целиком
+  мир.style.marginTop = Math.min(0, (vh - H) / 2) + 'px';      // широкий экран: срезаем поровну сверху и снизу — площадь в середине кадра
 }
 function стадия(з){
   if (з.касса) return 'дом';
@@ -191,46 +211,60 @@ function стадия(з){
   const р = з.рост_7дн || 0;
   return р >= 30 ? 'расцвет' : р > 0 ? 'растёт' : 'стройка';
 }
+/* Кто где стоит: у органа свой участок, у Flighter и Щита — зона на карте, остальным — плашка на пляже. */
 function места(){
-  const занято = new Set(), где = {};
-  for (const з of ГОРОД.здания) if (МЕСТА[з.орган]) { где[з.орган] = МЕСТА[з.орган]; занято.add(МЕСТА[з.орган].join()); }
-  let i = 0;
-  for (const з of ГОРОД.здания) if (!где[з.орган]) {
-    while (i < ЗАПАС.length && занято.has(ЗАПАС[i].join())) i++;
-    if (i < ЗАПАС.length) { где[з.орган] = ЗАПАС[i]; занято.add(ЗАПАС[i++].join()); }
+  const где = {}; let i = 0;
+  for (const з of ГОРОД.здания) {
+    if (РАСКЛАДКА[з.орган]) где[з.орган] = {вид:'здание', ...РАСКЛАДКА[з.орган]};
+    else if (ЗОНЫ[з.орган]) где[з.орган] = {вид:'зона', ...ЗОНЫ[з.орган]};
+    else if (i < ЗАПАС.length) { const [x, y] = ЗАПАС[i++]; где[з.орган] = {вид:'плашка', x, y}; }
   }
   return где;
 }
 const живые = з => з.квесты.length;
 function зовёт(з){ return з.квесты.some(к => к.красное || (к.дней || 0) > 21); }
 
+function значок(з){ const n = живые(з); return n ? `<span class="значок${зовёт(з) ? ' зовёт' : ''}">${n}</span>` : ''; }
 function нарисовать(){
   const мир = $('мир');
-  мир.querySelectorAll('.здание,.почта').forEach(e => e.remove());
+  мир.querySelectorAll('.здание,.зона,.плашка,.почта').forEach(e => e.remove());
   const где = места();
   for (const з of ГОРОД.здания) {
     const м = где[з.орган]; if (!м) continue;
-    const [x, y] = м, ст = стадия(з);
-    const глубина = .72 + (y - 40) / 36 * .5;                   // дальние меньше
-    const ширина = (з.касса ? .26 : ст === 'растёт' ? .13 : .16) * глубина;
+    const ст = стадия(з), n = живые(з);
     const b = document.createElement('button');
-    b.className = `здание ${ст} ${з.касса ? 'касса' : ''}`;
     b.dataset.орган = з.орган;
-    b.style.left = x + '%'; b.style.top = y + '%';
-    b.style.width = (ширина * H) + 'px';
-    b.style.zIndex = Math.round(y * 10);
-    const r = (з.орган.length * 37) % 100 / 100;
-    b.style.setProperty('--т', (5 + r * 3).toFixed(1) + 's'); b.style.setProperty('--з', (-r * 6).toFixed(1) + 's');
-    const n = живые(з);
+    b.style.left = м.x * 100 + '%'; b.style.top = м.y * 100 + '%';
+    b.style.zIndex = Math.round(м.y * 1000);
     b.setAttribute('aria-label', `${з.имя}: ${n ? n + ' ' + мн(n, 'задача', 'задачи', 'задач') : 'задач нет'}`);
-    const сад = ст === 'расцвет' ? `<img class="дерево л" src="city-tree-mature.webp" alt=""><img class="дерево п" src="city-tree-young.webp" alt="">` : '';
-    b.innerHTML = `<img class="дом" src="${арт(з)}" alt="">${сад}` + (n ? `<span class="значок${зовёт(з) ? ' зовёт' : ''}">${n}</span>` : '');
+    if (м.вид === 'здание') {
+      const ш = м.w * 1.1 * W * (ст === 'растёт' ? .9 : 1);
+      b.className = `здание ${ст}`;
+      b.style.width = ш + 'px';
+      b.innerHTML = `<img src="city2-${м.арт}.webp" alt="" width="${Math.round(ш)}" height="${Math.round(ш * м.к)}">`
+                  + значок(з) + `<span class="имя">${esc(з.имя)}</span>`;
+    } else if (м.вид === 'зона') {
+      b.className = 'зона';
+      b.style.width = b.style.height = м.r * 2 * W + 'px';
+      b.innerHTML = значок(з) + `<span class="имя">${esc(з.имя)}</span>`;
+    } else {
+      b.className = 'плашка glass';
+      b.innerHTML = esc(з.имя) + значок(з);
+    }
     b.onclick = () => открыть(з.орган);
     мир.appendChild(b);
   }
+  // Склейки в данных Дома нет, а на карте её дом стоит: рисуем как часть города, без нажатия
+  for (const [орган, м] of Object.entries(РАСКЛАДКА)) if (!где[орган]) {
+    const d = document.createElement('div'), ш = м.w * 1.1 * W;
+    d.className = 'здание декор'; d.setAttribute('aria-hidden', 'true');
+    d.style.cssText = `left:${м.x * 100}%;top:${м.y * 100}%;width:${ш}px;z-index:${Math.round(м.y * 1000)}`;
+    d.innerHTML = `<img src="city2-${м.арт}.webp" alt="" width="${Math.round(ш)}" height="${Math.round(ш * м.к)}"><span class="имя">${esc(орган)}</span>`;
+    мир.appendChild(d);
+  }
   const п = document.createElement('button');
   п.className = 'почта glass';
-  п.style.left = ПОЧТА_МЕСТО[0] + '%'; п.style.top = ПОЧТА_МЕСТО[1] + '%'; п.style.zIndex = Math.round(ПОЧТА_МЕСТО[1] * 10) + 1;
+  п.style.left = ПОЧТА_МЕСТО[0] * 100 + '%'; п.style.top = ПОЧТА_МЕСТО[1] * 100 + '%'; п.style.zIndex = Math.round(ПОЧТА_МЕСТО[1] * 1000) + 1;
   const np = ГОРОД.почта.length;
   п.setAttribute('aria-label', `Почта: ${np} ${мн(np, 'письмо', 'письма', 'писем')}`);
   п.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#10303A" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M4 8l8 6 8-6"/></svg>`
@@ -387,7 +421,7 @@ async function загрузить(первый){
   if (г.счёт) { СЧЁТ_ДОМА = г.счёт; счёт_показать(); }
   if (!ЗАНЯТО) { нарисовать(); if (ОТКРЫТ && !$('список').querySelector('.квест button:disabled')) лист_заполнить(); }
   if (первый) {
-    const д = $('даль'), к = МЕСТА['Касса'][0] / 100 * W;
+    const д = $('даль'), к = ЦЕНТР_X * W;
     д.scrollLeft = Math.max(0, к - innerWidth / 2);
   }
 }
