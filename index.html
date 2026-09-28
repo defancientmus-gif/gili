@@ -406,6 +406,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
   .живая-связь{margin-left:auto; display:flex; align-items:center; gap:6px; color:var(--fg-l); font-size:11.5px}
   .живая-связь i{width:7px;height:7px;border-radius:50%;background:oklch(.58 .13 158);box-shadow:0 0 0 4px oklch(.75 .08 158/.18)}
   .живая-связь.нет i{background:oklch(.62 .04 215);box-shadow:0 0 0 4px oklch(.75 .03 215/.16)}
+  .живая-связь.тесно i{background:oklch(.62 .17 28);box-shadow:0 0 0 4px oklch(.72 .12 28/.2)}   /* память мака: страницы на диск */
   .живая-связь .верс{font-weight:600;font-size:10px;opacity:.4;letter-spacing:.3px}
 
   .потоки{
@@ -966,7 +967,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v57·195994</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v58·4ca79a</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -2964,12 +2965,24 @@ function оживить_сцену(){
     });
   },{passive:true});
 }
+let память_мака = null;              // срез памяти мака, см. спросить_память ниже
 function обновить_связь(){
   const связь = $('связь'); if(!связь) return;
   const есть = navigator.onLine;
   связь.classList.toggle('нет', !есть);
-  связь.querySelector('span').textContent = есть ? 'на связи' : 'без сети';
+  связь.querySelector('span').textContent = !есть ? 'без сети' : память_мака ? `память ${память_мака.свободно}%` : 'на связи';
+  связь.classList.toggle('тесно', !!(есть && память_мака && память_мака.беда));
+  связь.title = есть && память_мака ? `${память_мака.строка} · снято ${память_мака.снято.slice(11)}` : '';
 }
+// Память мака (Женя 20.09: «как мне видеть забитость свопа?» — «в окне Гилфойла»). Срез кладёт
+// сторож Мастера раз в 2 мин, сервер мака отдаёт его /api/mem. Красная точка — мак уже тормозит;
+// полный своп сам по себе не беда. На телефоне этого нет: мак там не виден.
+async function спросить_память(){
+  try{ const д = await (await fetch('/api/mem', {cache:'no-store'})).json(); память_мака = д.есть ? д : null; }
+  catch{ память_мака = null; }
+  обновить_связь();
+}
+if(НА_МАКЕ){ спросить_память(); setInterval(спросить_память, 60000); }
 addEventListener('online', обновить_связь);
 addEventListener('offline', обновить_связь);
 обновить_связь();
