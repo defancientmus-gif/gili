@@ -96,7 +96,7 @@ body{
 /* ── шапка: потоки ────────────────────────────────────────────────────────── */
 #приложение{display:contents}
 #приложение[hidden]{display:none}
-.мобильный-бренд,.поиск-знак,#сцена,#небо,#небо-видео,.фото-меню,.старт-слово{display:none}
+.мобильный-бренд,.поиск-знак,#небо,#небо-видео,.фото-меню,.старт-слово{display:none}
 header{padding:8px 12px 4px}
 .потоки{display:flex; gap:4px; padding:3px; border-radius:15px;
   background:oklch(1 0 0 / .34); border:1px solid oklch(1 0 0 / .55)}
@@ -368,7 +368,6 @@ textarea:focus{outline:none; border-color:var(--accent)}
      той же сцены 2560×1440: горизонт на месте, ничего не режется. */
   @media (min-aspect-ratio:1/1){ body{background-image:url('gili-sky-wide-poster.jpg')} }
   body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,oklch(1 0 0/.04),oklch(.92 .02 214/.16) 44%,oklch(.78 .06 210/.24));}
-  #сцена{display:block;position:fixed;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;opacity:.55}
   /* живое небо: та же картинка, но облака плывут, а море дышит. Проявляется, когда готов
      первый кадр; до того и без WebGL остаётся фото фоном body — разницы глаз не заметит. */
   #небо{display:block;position:fixed;inset:0;z-index:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 1.2s ease}
@@ -445,7 +444,6 @@ textarea:focus{outline:none; border-color:var(--accent)}
   .мысль{
     width:94%; padding:13px 15px 11px; margin-bottom:9px; border-radius:20px;
     font-size:15.5px; line-height:1.46;
-    translate:0 var(--gravity,0);
     background:linear-gradient(155deg,oklch(1 0 0/.82),oklch(.96 .015 214/.68));
     border-color:oklch(1 0 0/.74);
     box-shadow:inset 0 1px 0 oklch(1 0 0/.94),0 8px 22px -15px oklch(.30 .07 218/.32);
@@ -646,7 +644,6 @@ textarea:focus{outline:none; border-color:var(--accent)}
   .мысль{
     position:relative;isolation:isolate;overflow:hidden;
     padding:15px 16px 11px;border-radius:23px;
-    scale:var(--focus,1);
     background:
       radial-gradient(100% 100% at 0 0,oklch(1 0 0/.94),transparent 48%),
       linear-gradient(145deg,oklch(.99 .008 206/.79),oklch(.83 .075 211/.55));
@@ -734,19 +731,10 @@ textarea:focus{outline:none; border-color:var(--accent)}
     --ion-cyan:oklch(.78 .17 194);
     --ion-blue:oklch(.59 .20 239);
     --ion-mint:oklch(.80 .14 164);
-    --touch-x:50vw;--touch-y:50dvh;
   }
-  body::before{
-    width:68vw;height:68vw;left:0;top:0;
-    background:radial-gradient(circle,
-      oklch(.83 .18 190/.30) 0%,
-      oklch(.70 .17 230/.12) 35%,
-      transparent 68%);
-    opacity:.82;animation:none;mix-blend-mode:screen;
-    transform:translate3d(calc(var(--touch-x) - 34vw),calc(var(--touch-y) - 34vw),0);
-    transition:transform .7s cubic-bezier(.16,1,.3,1);
-    will-change:transform;
-  }
+  /* 29.09: пятно света за пальцем и белые линии волн поверх клипа убраны — Женя: «вода не такая
+     натуральная, как в Космосе, на 13 Pro Max тяжеловато». В Космосе вода — только клип. */
+  body::before{display:none}
 
   header{
     overflow:visible;padding:8px 14px 5px;
@@ -829,9 +817,6 @@ textarea:focus{outline:none; border-color:var(--accent)}
   .день::after{transform:scaleX(-1)}
   .мысль{
     width:92%;padding:16px 17px 12px;border:0;border-radius:30px 30px 30px 11px;
-    translate:0 var(--gravity,0);scale:var(--focus,1);
-    transform:perspective(900px) rotateX(var(--tilt,0deg));
-    transition:transform .16s linear,scale .16s linear;
     color:oklch(.17 .025 224);
     background:linear-gradient(140deg,oklch(1 0 0/.34),oklch(.78 .12 198/.13));
     box-shadow:inset 0 0 0 1px oklch(1 0 0/.53),
@@ -937,7 +922,6 @@ textarea:focus{outline:none; border-color:var(--accent)}
 <body>
 <canvas id="небо" aria-hidden="true"></canvas>
 <video id="небо-видео" aria-hidden="true" muted playsinline loop preload="none" disablepictureinpicture></video>
-<canvas id="сцена" aria-hidden="true"></canvas>
 
 <div id="старт">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" class="крутится">
@@ -967,7 +951,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v58·4ca79a</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v59·ba4ce2</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -1650,8 +1634,8 @@ function открыть_меню(ид, карточка){
   МЕНЮ = {ид, шаг: 'главное'};
   if(!пункты_меню(м).length){ МЕНЮ = null; return; }
   $('меню-мысли')?.remove();
-  // Размер берём без наклона ленты (--tilt, --focus): рамка повёрнутой карточки на пару пикселей
-  // уже настоящей, и в копии текст переносился по-другому (замер: 4 строки из 40).
+  // Размер без преобразований карточки: до v59 лента наклоняла их при прокрутке, рамка повёрнутой
+  // выходила на пару пикселей уже, и в копии текст переносился по-другому (замер: 4 строки из 40).
   const о = карточка.getBoundingClientRect(), ш = карточка.offsetWidth, в = карточка.offsetHeight;
   const r = {left: о.left + (о.width - ш) / 2, top: о.top + (о.height - в) / 2, width: ш, height: в};
   r.right = r.left + ш;
@@ -2895,76 +2879,6 @@ function небо_шейдером(){
 }
 
 /* ── старт ────────────────────────────────────────────────────────────────── */
-function оживить_сцену(){
-  if(!matchMedia('(max-width:720px)').matches || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-  const c = $('сцена'), ctx = c.getContext('2d', {alpha:true});
-  let w=0,h=0,dpr=1,кадр=0,жив=true,рябь=[];
-  const размер = () => {
-    dpr = Math.min(devicePixelRatio || 1, 1.6); w = innerWidth; h = innerHeight;
-    c.width = Math.round(w*dpr); c.height = Math.round(h*dpr); c.style.width=w+'px'; c.style.height=h+'px';
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-  };
-  const рисовать = t => {
-    if(!жив) return;
-    ctx.clearRect(0,0,w,h);
-    const верх = h*.62, шаг = Math.max(13,h*.019);
-    ctx.lineWidth=.7;
-    for(let i=0;i<12;i++){
-      const y=верх+i*шаг, a=.045+i*.006;
-      ctx.beginPath();
-      for(let x=-12;x<=w+12;x+=9){
-        const yy=y+Math.sin(x*.021+t*.0012+i*.72)*2.3+Math.sin(x*.008-t*.0007+i)*1.4;
-        x===-12?ctx.moveTo(x,yy):ctx.lineTo(x,yy);
-      }
-      ctx.strokeStyle=`rgba(255,255,255,${a})`;ctx.stroke();
-    }
-    рябь = рябь.filter(к => {
-      const возраст=t-к.t;
-      if(возраст>1050) return false;
-      const ход=возраст/1050, радиус=12+ход*105, альфа=(1-ход)*.34;
-      ctx.beginPath();ctx.arc(к.x,к.y,радиус,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(128,245,255,${альфа})`;ctx.lineWidth=1.15;ctx.stroke();
-      ctx.beginPath();ctx.arc(к.x,к.y,радиус*.58,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(255,255,255,${альфа*.72})`;ctx.lineWidth=.65;ctx.stroke();
-      return true;
-    });
-    кадр=requestAnimationFrame(рисовать);
-  };
-  let движение=0;
-  const след = e => {
-    if(движение) return;
-    const x=e.clientX,y=e.clientY;
-    движение=requestAnimationFrame(()=>{
-      движение=0;
-      document.documentElement.style.setProperty('--touch-x',x+'px');
-      document.documentElement.style.setProperty('--touch-y',y+'px');
-    });
-  };
-  addEventListener('pointermove',след,{passive:true});
-  addEventListener('pointerdown',e=>{
-    след(e);рябь.push({x:e.clientX,y:e.clientY,t:performance.now()});
-  },{passive:true});
-  addEventListener('resize', размер,{passive:true});
-  document.addEventListener('visibilitychange',()=>{
-    жив=!document.hidden;
-    if(жив){cancelAnimationFrame(кадр);кадр=requestAnimationFrame(рисовать)}
-  });
-  размер(); кадр=requestAnimationFrame(рисовать);
-
-  const л=$('лента'); let ждём=false;
-  л.addEventListener('scroll',()=>{
-    if(ждём) return; ждём=true;
-    requestAnimationFrame(()=>{
-      ждём=false; const середина=л.getBoundingClientRect().top+л.clientHeight/2;
-      л.querySelectorAll('.мысль').forEach(м=>{
-        const r=м.getBoundingClientRect(), d=Math.max(-1,Math.min(1,(r.top+r.height/2-середина)/л.clientHeight));
-        м.style.setProperty('--gravity',(d*3.5).toFixed(2)+'px');
-        м.style.setProperty('--focus',(1-Math.abs(d)*.018).toFixed(3));
-        м.style.setProperty('--tilt',(d*-1.7).toFixed(2)+'deg');
-      });
-    });
-  },{passive:true});
-}
 let память_мака = null;              // срез памяти мака, см. спросить_память ниже
 function обновить_связь(){
   const связь = $('связь'); if(!связь) return;
@@ -3012,7 +2926,6 @@ function небо_пора(){
   фото.src = НЕБО.фото;                          // не пришло — остаёмся на постере, это то же небо
 }
 addEventListener('load', () => setTimeout(небо_пора, 4000));   // ленты нет (экран входа, сеть молчит) — небо всё равно дорисуется
-оживить_сцену();
 
 if(кто_в_памяти()) поднять();        // помним человека — открываемся сразу, проверка внутри
 else sb.auth.getSession().then(({data:{session}}) => session ? поднять() : показать('вход'))
