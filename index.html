@@ -914,6 +914,60 @@ textarea:focus{outline:none; border-color:var(--accent)}
   font-variant-numeric:tabular-nums; color:oklch(.22 .03 224); white-space:nowrap}
 .мысль.дом-речь .низ b{font-weight:500; color:inherit}
 
+/* 30.09 v60 — верх и низ как в Разберёмся. Женя 29.09 02:18: «верх низ сделать как в Разберёмся…
+   небо кошмар… дёшево смотрится»; 27.09: «полоска неонная синяя непонятная, черточки возле сообщений
+   непонятно зачем». Шапка и поле были плитами с бегущими бликами, а лента обрывалась о них ножом.
+   Теперь как на главной Разберёмся (home-wrap::before/::after): мысли растворяются в тумане под
+   поиском и над полем. Все бесконечные анимации сняты — кольцо у знака, блик по каждой карточке,
+   дыхание кнопок и шапки, линза вкладки: на экране движутся только облака. Блюр в каноне ≤12px,
+   у карточек 8px — их на экране десяток, и каждая размывала небо на 17px. */
+@media (max-width:720px){
+  header::before,header::after,.мобильный-знак::before,.мобильный-знак::after,
+  .потоки button::after,.мысль::before,.мысль::after,.строка::before,.круг::before{display:none;animation:none}
+  .мобильный-знак{box-shadow:inset 0 0 0 1px oklch(1 0 0/.55),0 6px 18px -10px oklch(.25 .08 220/.35)}
+
+  .потоки{background:oklch(1 0 0/.40);backdrop-filter:blur(10px) saturate(1.3);-webkit-backdrop-filter:blur(10px) saturate(1.3)}
+  .потоки button.on::before{animation:none;background:oklch(1 0 0/.58)}
+  .потоки button.on{box-shadow:none;color:oklch(.22 .06 226)}
+
+  .подшапка input{background:oklch(1 0 0/.42);backdrop-filter:blur(10px) saturate(1.3);-webkit-backdrop-filter:blur(10px) saturate(1.3)}
+  /* Шапка, поиск и поле парят над лентой, лента идёт до краёв экрана — обрез ленты у края экрана,
+     а не посреди него. Высоты шапки и низа живые (--верх, --низ): их меряет «парение()» в коде. */
+  header,.подшапка,footer{position:absolute;left:0;right:0;z-index:3}
+  header{top:0}
+  .подшапка{top:var(--шапка,120px)}
+  footer{bottom:0}
+  main{flex:1;padding-top:calc(var(--верх,170px) + 10px);padding-bottom:calc(var(--низ,90px) + 14px);
+       scroll-padding-top:calc(var(--верх,170px) + 10px);scroll-padding-bottom:calc(var(--низ,90px) + 14px)}
+  /* Туман: цвет даёт растворение и без размытия; размытие поверх — там, где телефон его рисует. */
+  #приложение::before,#приложение::after{
+    content:"";position:absolute;left:0;right:0;z-index:2;pointer-events:none;
+    backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  }
+  #приложение::before{
+    top:0;height:calc(var(--верх,170px) + 30px);
+    background:linear-gradient(to bottom,oklch(.95 .02 225/.84),oklch(.95 .02 225/.66) 68%,transparent);
+    -webkit-mask-image:linear-gradient(to bottom,#000 70%,transparent);mask-image:linear-gradient(to bottom,#000 70%,transparent);
+  }
+  #приложение::after{
+    bottom:0;height:calc(var(--низ,90px) + 60px);
+    background:linear-gradient(to top,oklch(.95 .02 215/.78),oklch(.95 .02 215/.52) 50%,transparent);
+    -webkit-mask-image:linear-gradient(to top,#000 45%,transparent);mask-image:linear-gradient(to top,#000 45%,transparent);
+  }
+  footer,.подшапка{background:none}
+
+  .мысль{backdrop-filter:blur(8px) saturate(1.3);-webkit-backdrop-filter:blur(8px) saturate(1.3)}
+
+  .строка{
+    background:oklch(1 0 0/.72);
+    box-shadow:inset 0 0 0 1px oklch(1 0 0/.80),0 10px 30px -18px oklch(.22 .10 225/.50);
+    backdrop-filter:blur(12px) saturate(1.3);-webkit-backdrop-filter:blur(12px) saturate(1.3);
+  }
+  .круг svg{filter:none}
+  #послать,#микрофон.пишет{box-shadow:inset 0 0 0 1px oklch(1 0 0/.38),0 6px 16px -8px oklch(.40 .18 230/.55);will-change:auto}
+  .фото-лист{backdrop-filter:blur(12px) saturate(1.3);-webkit-backdrop-filter:blur(12px) saturate(1.3)}
+}
+
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important; transition:none !important}
 }
@@ -951,7 +1005,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v59·ba4ce2</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v60·04557d</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -2926,6 +2980,24 @@ function небо_пора(){
   фото.src = НЕБО.фото;                          // не пришло — остаёмся на постере, это то же небо
 }
 addEventListener('load', () => setTimeout(небо_пора, 4000));   // ленты нет (экран входа, сеть молчит) — небо всё равно дорисуется
+
+/* 30.09 v60: на телефоне шапка, поиск и поле парят над лентой (как в Разберёмся). Лента держит под ними
+   место отступами, а их высота живая: поле растёт с текстом, фишки фото появляются и уходят. */
+function парение(){
+  const ш = document.querySelector('#приложение > header'), п = document.querySelector('.подшапка'),
+        н = document.querySelector('#приложение > footer'), к = document.documentElement.style;
+  if(!ш || !п || !н || typeof ResizeObserver !== 'function') return;
+  const мерить = () => {
+    const вш = ш.offsetHeight, вп = п.offsetHeight;
+    к.setProperty('--шапка', вш + 'px');
+    к.setProperty('--верх', (вш + вп) + 'px');
+    к.setProperty('--низ', н.offsetHeight + 'px');
+  };
+  const р = new ResizeObserver(мерить);
+  [ш, п, н].forEach(э => р.observe(э));
+  мерить();
+}
+парение();
 
 if(кто_в_памяти()) поднять();        // помним человека — открываемся сразу, проверка внутри
 else sb.auth.getSession().then(({data:{session}}) => session ? поднять() : показать('вход'))
