@@ -385,6 +385,10 @@ textarea:focus{outline:none; border-color:var(--accent)}
   .старт-слово span{font-size:13px;color:oklch(.38 .04 215)}
   #приложение{width:100%; min-height:0; flex:1; display:flex; flex-direction:column; overflow:hidden}
   #приложение[hidden]{display:none}
+  /* 02.10, Женя 02:42 «шапка с разделами не отображается при появлении окна чата»: iOS при клавиатуре
+     сдвигает окно вверх (visualViewport.offsetTop), и шапка уезжала за верх экрана. Как в Разберёмся:
+     пока клавиатура открыта, приложение стоит ровно в видимой части — сверху сдвиг, высота видимого. */
+  .клавиатура #приложение{position:fixed;left:0;right:0;top:var(--вид-верх,0px);height:var(--вид-выс,100%);flex:none}
 
   header{padding:10px 14px 4px; flex:none}
   .мобильный-бренд{height:48px; display:flex; align-items:center; gap:11px; padding:0 3px 7px}
@@ -1005,7 +1009,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v61·27ff3a</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v62·3e01c3</b></div>
     </div>
     <div class="потоки" id="потоки"></div>
   </header>
@@ -2792,6 +2796,10 @@ if(window.visualViewport){
   const подстроиться = () => {
     const скрыто = Math.max(0, window.innerHeight - вид.height - вид.offsetTop);
     document.body.style.height = `calc(100% - ${скрыто}px)`;
+    const к = document.documentElement;
+    к.style.setProperty('--вид-верх', вид.offsetTop + 'px');
+    к.style.setProperty('--вид-выс', вид.height + 'px');
+    к.classList.toggle('клавиатура', скрыто > 80);
     if(document.activeElement === поле) к_низу();
   };
   вид.addEventListener('resize', подстроиться);
