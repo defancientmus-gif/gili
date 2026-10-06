@@ -89,6 +89,9 @@ button{font:inherit;color:inherit}
 .квест.ушёл{transform:translateX(40px) scale(.94);opacity:0}
 .квест .текст{margin:0;font-size:15px;line-height:1.4;overflow-wrap:anywhere}
 .квест .почему{margin:6px 0 0;color:var(--soft);font-size:13px;overflow-wrap:anywhere}
+.квест .снимки{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:10px}
+.квест .снимки img{display:block;width:100%;height:auto;border-radius:14px;
+  background:rgba(255,255,255,.5);box-shadow:inset 0 0 0 1px rgba(16,48,58,.1)}
 .квест .мета{margin:6px 0 0;color:var(--soft);font-size:12.5px;font-variant-numeric:tabular-nums}
 .квест .мета .срок{color:var(--coin-ink);font-weight:600}
 .кнопки{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
@@ -285,13 +288,18 @@ const ИМЯ = орган => (здание(орган) || {}).имя || орга
 const ЧАСТО = ['Космос Сервис', 'Сервисный', 'Гили', 'Школа', 'Бухгалтер'];
 function нет_тут(вид){ return УМЕЕТ.includes(вид) ? '' : '<p class="мета">С телефона это пока не нажать — нажми в Гили на маке.</p>'; }
 
+// картинки к вопросу (07.10): «Не вижу не понимаю. Картинки показывайте» — касание открывает целиком
+function снимки(сп){
+  return (сп || []).length ? `<div class="снимки">${сп.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="" loading="lazy"></a>`).join('')}</div>` : '';
+}
+
 function карточка(к){
   const выкл = УМЕЕТ.includes(к.вид) ? '' : ' disabled';
   const ид = esc(к.ключ);
   if (к.вид === 'вопрос') {
     const почему = к.почему ? `<p class="почему свёрнуто">${esc(к.почему)}</p>${к.почему.length > 160 ? '<button class="ещё">целиком</button>' : ''}` : '';
     return `<article class="квест" data-вид="вопрос" data-орган="${esc(к.орган)}" data-ключ="${ид}">
-      <p class="текст">${esc(к.вопрос || к.текст)}</p>${почему}<p class="мета">${дней(к.дней || 0)}</p>
+      <p class="текст">${esc(к.вопрос || к.текст)}</p>${почему}${снимки(к.снимки)}<p class="мета">${дней(к.дней || 0)}</p>
       <div class="кнопки">${(к.варианты || []).map(в => `<button data-вариант="${esc(в)}"${выкл}>${esc(в)}</button>`).join('')}</div>${нет_тут('вопрос')}</article>`;
   }
   if (к.вид === 'дело') return `<article class="квест" data-вид="дело" data-ключ="${ид}">
