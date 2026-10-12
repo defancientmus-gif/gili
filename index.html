@@ -1009,7 +1009,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·e2708b</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·f2788d</b></div>
     </div>
   </header>
   <div class="подшапка">
@@ -1380,6 +1380,7 @@ function что_за_ссылкой(м, открыта){
   if(р && (р.заголовок || р.кратко))
     return `<div class="внутри">` + (р.заголовок ? `<b>${экран(р.заголовок)}</b>` : '') +
            (р.кратко ? `<span>${экран(р.кратко)}</span>` : '') +
+           (открыта && р.шаг ? `<span>${экран(р.шаг)}</span>` : '') +
            (открыта && р.вердикт ? `<i>${экран(р.вердикт)}</i>` : '') + `</div>`;
   const суть = (м.сводка || '').split(' — ').slice(1).join(' — ').trim();
   if(суть) return `<div class="внутри"><span>${экран(суть)}</span></div>`;
