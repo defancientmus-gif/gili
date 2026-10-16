@@ -152,6 +152,7 @@ header{padding:8px 12px 4px}
 .вид.всё{color:var(--accent); font-weight:600}
 .вид b{font-weight:700}
 .мысль.готовая{opacity:.62}
+.мысль.готовая.выбрана{opacity:1}    /* раскрытый доклад читают — бледным его не оставляем */
 
 /* ── лента ────────────────────────────────────────────────────────────────── */
 main{flex:1; overflow-y:auto; padding:2px 12px 6px; -webkit-overflow-scrolling:touch;
@@ -210,6 +211,9 @@ main > *{flex:none}
 .внутри i{display:block; margin-top:6px; font-style:normal; color:var(--fg)}
 .внутри.ход{background:none; box-shadow:none; padding:2px 0 0; color:var(--fg-l); font-size:12.5px}
 .внутри.подробно span{white-space:pre-wrap; font-size:12.5px; overflow-x:auto}
+.внутри.доклад h4{margin:12px 0 3px; font:600 12px/1.3 var(--sys); color:var(--fg-l)}
+.внутри.доклад p{margin:0; white-space:pre-wrap; font-size:14px; line-height:1.5; color:var(--fg)}
+.внутри .ещё-доклад{display:block; margin-top:6px; font-style:normal; font-size:12px; color:var(--fg-l)}
 /* МЕНЮ МЫСЛИ — как в ТГ (Женя 24.09: «прям 1 в 1 как в тг»). Мысль поднимается над притихшей
    лентой, рядом столбик действий. Ручная сортировка (Женя 11.08) живёт здесь же: «Перенести»
    учит разбор, как и раньше. Стекло то же, что у листа фото; линий нет — держит воздух. */
@@ -501,6 +505,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
     background:linear-gradient(155deg,oklch(.98 .018 188/.84),oklch(.93 .028 196/.70));
   }
   .мысль.готовая{opacity:.56}
+  .мысль.готовая.выбрана{opacity:1}
   .низ{margin-top:7px; gap:5px; font-size:11.5px}
   .снимки img{width:76px;height:76px;border-radius:13px}
   .пусто{margin:auto 0; padding:44px 24px; font-size:15px}
@@ -1053,7 +1058,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·55e90e</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·085acf</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1451,13 +1456,40 @@ function тело_мысли(текст){
   }
   return html + подсветить(текст.slice(i));
 }
+/* МИКРО-ДОКЛАД ПО КАСАНИЮ (Женя 16.10: «хочу прям микро доклад получать… сразу получить результат и
+   ознакомиться глубже»; 12.10 «мне всё надо»). Нерв дома пишет по ссылке доклад из разделов, а карточка
+   показывала первый абзац. Теперь касание раскрывает его целиком: тебе, что внутри, разбор, что говорят
+   люди, что попробовать. Мера для системы («мимо / в карман») сюда не едет — человеку она звучит приговором.
+   На маке доклад приходит с сервера по касанию (лента без него легче на полмегабайта); на телефоне —
+   когда дом положит его в облако полем «доклад», та же отрисовка. */
+const ДОКЛАДЫ = new Map();                    // адрес → [{р, т}] | 'жду' | 'нет'
+function доклад_для(м){
+  if(Array.isArray(м.доклад)) return м.доклад;
+  const url = ((м.body || '').match(АДРЕС) || [''])[0].replace(/[.,;:!?)]+$/, '');
+  if(!url || !НА_МАКЕ || !м.разбор?.доклад) return null;
+  if(!ДОКЛАДЫ.has(url)){
+    ДОКЛАДЫ.set(url, 'жду');
+    fetch('/api/razbor?u=' + encodeURIComponent(url), {cache: 'no-store'}).then(r => r.json())
+      .then(д => { ДОКЛАДЫ.set(url, д.ok ? д.доклад : 'нет'); нарисовать(); })
+      .catch(() => ДОКЛАДЫ.delete(url));     // сеть мигнула — следующее касание спросит снова
+  }
+  return ДОКЛАДЫ.get(url);
+}
 function что_за_ссылкой(м, открыта){
   const р = м.разбор;
+  const есть_доклад = Array.isArray(м.доклад) || (НА_МАКЕ && !!р?.доклад);
+  const д = открыта && есть_доклад ? доклад_для(м) : null;
+  if(р && Array.isArray(д) && д.length)
+    return `<div class="внутри доклад">` + (р.заголовок ? `<b>${экран(р.заголовок)}</b>` : '') +
+           д.map(к => `<h4>${экран(к.р)}</h4><p>${подсветить(к.т)}</p>`).join('') +
+           (р.вердикт ? `<i>${экран(р.вердикт)}</i>` : '') + `</div>`;
   if(р && (р.заголовок || р.кратко))
     return `<div class="внутри">` + (р.заголовок ? `<b>${экран(р.заголовок)}</b>` : '') +
            (р.кратко ? `<span>${экран(р.кратко)}</span>` : '') +
            (открыта && р.шаг ? `<span>${экран(р.шаг)}</span>` : '') +
-           (открыта && р.вердикт ? `<i>${экран(р.вердикт)}</i>` : '') + `</div>`;
+           (открыта && р.вердикт ? `<i>${экран(р.вердикт)}</i>` : '') +
+           (д === 'жду' ? `<em class="ещё-доклад">открываю доклад…</em>`
+            : !открыта && есть_доклад ? `<em class="ещё-доклад">коснись — доклад целиком</em>` : '') + `</div>`;
   const суть = (м.сводка || '').split(' — ').slice(1).join(' — ').trim();
   if(суть) return `<div class="внутри"><span>${экран(суть)}</span></div>`;
   return м.разбор_ход ? `<div class="внутри ход">${экран(м.разбор_ход)}</div>` : '';
@@ -2098,11 +2130,11 @@ document.addEventListener('click', e => {
   }
   const м = e.target.closest('#лента .мысль');
   if(!м) return;
+  if(String(getSelection() || '').trim()) return;     // выделял текст доклада — не сворачиваем и не зовём меню
   if(e.target.closest('.внутри')){           // «ещё» как в ТГ: длинное раскрывается на месте
     ОТКРЫТА = ОТКРЫТА === м.dataset.ид ? null : м.dataset.ид;
     ДЕРЖАТЬ = м.dataset.ид; нарисовать(); return;
   }
-  if(String(getSelection() || '').trim()) return;     // на маке выделял текст мышью — не мешаем
   открыть_меню(м.dataset.ид, м);
 });
 // Долгое нажатие пальцем — как в ТГ. Сдвинул палец больше чем на 8 px — это прокрутка, не меню.
