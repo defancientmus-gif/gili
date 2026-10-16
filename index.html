@@ -1021,6 +1021,45 @@ textarea:focus{outline:none; border-color:var(--accent)}
   .фото-лист{backdrop-filter:blur(12px) saturate(1.3);-webkit-backdrop-filter:blur(12px) saturate(1.3)}
 }
 
+/* 17.10 v64 — ОДНА ОСЬ. Женя 00:41, снимок iPhone Air: «Не нравится окно ввода, все криво, хочется
+   равномерности и нового веянья». Криво было от четырёх слоёв выше, каждый со своей шириной и стеклом:
+   поиск 15px-радиус и рядом «Ждёт тебя · 65» и «всё 479» голым текстом мимо правого края; полосы дней
+   во всю ширину, а мысли сегодня — 92% и прижаты вправо, да ещё бледные (готовая .56), будто выключены;
+   полоса со снимком выше полос без него; поле внизу — радиус 31 при карточках 30/11.
+   Теперь у всего один край (14px от экрана), один радиус, одно стекло и шаг 10px. Свою мысль от Сашиной
+   отличает тон стекла, а не сдвиг. Закрытое не бледнеет: что оно закрыто, говорит зелёная галочка. */
+@media (max-width:720px){
+  :root{
+    --ось:14px; --край:22px; --шаг:10px;
+    --стекло-фон:linear-gradient(155deg,oklch(1 0 0/.66),oklch(.965 .014 212/.50));
+    --стекло-тень:inset 0 1px 0 oklch(1 0 0/.92),inset 0 0 0 1px oklch(1 0 0/.66),0 10px 26px -20px oklch(.24 .09 224/.50);
+  }
+  .подшапка,main,footer{padding-left:var(--ось);padding-right:var(--ось)}
+  .подшапка{gap:8px}
+  .поиск-знак{left:calc(var(--ось) + 14px)}
+  .подшапка input,.вид{height:44px;border:0;border-radius:var(--край);background:var(--стекло-фон);box-shadow:var(--стекло-тень);
+    backdrop-filter:blur(10px) saturate(1.3);-webkit-backdrop-filter:blur(10px) saturate(1.3)}
+  .подшапка input{padding:0 14px 0 40px;font-size:15px}
+  .вид{flex:none;padding:0 14px;font-size:13px;font-weight:620;color:oklch(.30 .06 222)}
+  .вид.всё,.сад-кнопка{color:var(--accent)}
+
+  .день{margin:14px 0 var(--шаг)}
+  .полоса,.мысль,.мысль.своя,.мысль.чужая{width:100%;align-self:stretch;border:0;border-radius:var(--край);box-shadow:var(--стекло-тень)}
+  .полоса,.мысль.своя{background:var(--стекло-фон)}
+  .мысль.чужая{background:linear-gradient(155deg,oklch(.99 .02 186/.68),oklch(.94 .03 192/.52))}
+  .мысль{margin:0 0 var(--шаг);padding:14px 16px 11px}
+  .мысль.готовая{opacity:1}
+  .мысль.готовая .внутри{color:oklch(.30 .03 222)}
+  /* полоса дня — одной высоты со снимком и без: место под миниатюру держит сама строка */
+  .полоса{min-height:64px;margin:0 0 var(--шаг);padding:10px 12px 10px 16px}
+  .полоса .мини img{width:36px;height:36px}
+
+  footer{padding-top:8px}
+  .строка{min-height:56px;padding:5px;border:0;border-radius:var(--край);background:linear-gradient(155deg,oklch(1 0 0/.84),oklch(.965 .014 212/.72));box-shadow:var(--стекло-тень)}
+  .строка textarea{min-height:46px}
+  .круг,#послать,#микрофон.пишет{border-radius:17px}
+}
+
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important; transition:none !important}
 }
@@ -1058,7 +1097,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·6ff34e</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v64·58c952</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
