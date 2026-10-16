@@ -273,7 +273,7 @@ main > *{flex:none}
    послушать: человек должен видеть, что мысль спасена, а не гадать. */
 .распознаётся{color:var(--fg-l); animation:дышит 1.8s ease-in-out infinite}
 /* ОТВЕТ ГИЛИ под надиктованной мыслью (Женя 26.09 «да, и в телефоне»): тихо, как подпись, не второй пузырь */
-.ответ-гили{margin-top:7px; padding-top:7px; border-top:1px solid oklch(.5 .02 220 / .08); font-size:13.5px; color:var(--fg-m)}
+.ответ-гили{white-space:pre-line; margin-top:7px; padding-top:7px; border-top:1px solid oklch(.5 .02 220 / .08); font-size:13.5px; color:var(--fg-m)}
 .ответ-гили b{font-weight:600; color:var(--accent)}
 .ответ-гили.думает{color:var(--fg-l); animation:дышит 1.8s ease-in-out infinite}
 .ответ-гили.думает i{display:inline-block; width:6px; height:6px; margin:0 7px 1px 1px; border-radius:99px; background:var(--accent)}
@@ -1058,7 +1058,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·2e4654</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·6ff34e</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1684,7 +1684,7 @@ function карточка(м){
              : напоминание_ли(м) ? тело_напоминания(м.body, открыта || !!ИСКОМОЕ)
              : тело_мысли(м.body || '') + что_за_ссылкой(м, открыта);
   const ответ = правится ? ''
-              : ОТВЕТЫ_ГИЛИ[м.id] ? `<div class="ответ-гили"><b>Гили:</b> ${экран(ОТВЕТЫ_ГИЛИ[м.id])}</div>`
+              : (ОТВЕТЫ_ГИЛИ[м.id] || знание_о(м)?.answer) ? `<div class="ответ-гили"><b>Гили:</b> ${экран(ОТВЕТЫ_ГИЛИ[м.id] || знание_о(м).answer)}</div>`
               : (ГИЛИ_ОТВЕТИТ && м.audio === ГИЛИ_ОТВЕТИТ.путь && !ждёт_слов(м)) ? `<div class="ответ-гили думает"><i></i>Гили думает над ответом…</div>` : '';
   const послушать = (ждёт_слов(м) && м.audio !== ЖДУ)
     ? `<button class="звук" data-звук="${экран(м.audio)}">${ЗНАК_ГОЛОСА}послушать</button>` : '';
