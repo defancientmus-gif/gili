@@ -432,6 +432,11 @@ textarea:focus{outline:none; border-color:var(--accent)}
   .мобильный-бренд .живая-связь span,.мобильный-бренд .живая-связь .верс{display:none}
   .мобильный-бренд .живая-связь.нет span,.мобильный-бренд .живая-связь.тесно span{display:inline;font-size:12px}
   .мобильный-бренд .живая-связь .верс.верс-сбой{display:inline;font-size:12px;opacity:1}
+  /* 16.10 10:2x вердикт Дизайнера: зелёная точка — второй акцент рядом с жёлтой точкой денег.
+     Когда всё хорошо, точки нет вовсе; приходит только с бедой, вместе со словом. */
+  @media (max-width: 720px){   /* с пробелом нарочно: server.py:4023 делает «(max-width:720px)» вечным на маке, а тут нужна настоящая ширина */
+    .мобильный-бренд .живая-связь:not(.нет):not(.тесно):not(:has(.верс-сбой)) i{display:none}
+  }
   .ещё{position:relative;flex:none;margin-left:8px}
   .ещё > button{width:32px;height:32px;border-radius:99px;border:1px solid oklch(1 0 0/.38);cursor:pointer;
     background:oklch(1 0 0/.24);color:var(--fg-m);font:600 15px/1 var(--sys);letter-spacing:1px;padding:0}
@@ -1048,7 +1053,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·0d09c2</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·0a6256</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
