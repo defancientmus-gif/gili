@@ -92,6 +92,20 @@ body{
 #вход button:disabled{opacity:.45}
 #сказ{font-size:13.5px; color:var(--fg-l); min-height:19px; margin-top:10px}
 #сказ.плохо{color:oklch(0.50 0.15 20)}
+/* вход на широком экране (16.10, аудит Дизайнера: «поле 240 px посреди пустого экрана 1440»).
+   Та же карточка, что на телефоне, только крупнее, стеклом на том же небе с лагуной. */
+@media (min-width:721px){
+  body:has(#вход:not([hidden])){background:oklch(.91 .02 218) url('gili-sky-wide-poster.jpg') center/cover no-repeat}
+  #вход{width:min(460px, 88vw); padding:44px 40px 30px; border-radius:30px;
+    background:linear-gradient(158deg, oklch(1 0 0 / .62), oklch(.965 .012 210 / .44));
+    border:1px solid oklch(1 0 0 / .72);
+    box-shadow:inset 0 1px 0 oklch(1 0 0 / .94), 0 30px 60px -30px oklch(.25 .06 220 / .45);
+    -webkit-backdrop-filter:blur(12px) saturate(1.2); backdrop-filter:blur(12px) saturate(1.2)}
+  #вход h1{font-size:34px; margin-bottom:9px}
+  #вход p{font-size:17px; color:var(--fg-m); margin-bottom:30px}
+  #вход input{font-size:17px; padding:16px 18px}
+  #вход button{font-size:17px; padding:16px}
+}
 
 /* ── шапка: потоки ────────────────────────────────────────────────────────── */
 #приложение{display:contents}
@@ -405,12 +419,35 @@ textarea:focus{outline:none; border-color:var(--accent)}
   .мобильный-знак circle:nth-child(3){animation-delay:-1.8s}
   .мобильный-имя{min-width:0; display:flex; flex-direction:column; line-height:1.1}
   .мобильный-имя strong{font-size:21px; font-weight:710; letter-spacing:0}
-  .мобильный-имя span{margin-top:4px; color:var(--fg-l); font-size:11.5px; font-weight:500}
+  .мобильный-имя span{margin-top:4px; color:var(--fg-l); font-size:12.5px; font-weight:500}
   .живая-связь{margin-left:auto; display:flex; align-items:center; gap:6px; color:var(--fg-l); font-size:11.5px}
   .живая-связь i{width:7px;height:7px;border-radius:50%;background:oklch(.58 .13 158);box-shadow:0 0 0 4px oklch(.75 .08 158/.18)}
   .живая-связь.нет i{background:oklch(.62 .04 215);box-shadow:0 0 0 4px oklch(.75 .03 215/.16)}
   .живая-связь.тесно i{background:oklch(.62 .17 28);box-shadow:0 0 0 4px oklch(.72 .12 28/.2)}   /* память мака: страницы на диск */
   .живая-связь .верс{font-weight:600;font-size:10px;opacity:.4;letter-spacing:.3px}
+  /* 16.10 аудит Дизайнера: служебное не в шапке. Версия, «на связи», память мака — в «⋯».
+     В шапке остаётся точка; слово выходит наружу, только когда беда: нет сети, мак тонет,
+     телефон не получил сборку. Шапка говорит Жене про него, а не про себя. */
+  .мобильный-бренд .живая-связь{margin-left:auto}
+  .мобильный-бренд .живая-связь span,.мобильный-бренд .живая-связь .верс{display:none}
+  .мобильный-бренд .живая-связь.нет span,.мобильный-бренд .живая-связь.тесно span{display:inline;font-size:12px}
+  .мобильный-бренд .живая-связь .верс.верс-сбой{display:inline;font-size:12px;opacity:1}
+  .ещё{position:relative;flex:none;margin-left:8px}
+  .ещё > button{width:32px;height:32px;border-radius:99px;border:1px solid oklch(1 0 0/.38);cursor:pointer;
+    background:oklch(1 0 0/.24);color:var(--fg-m);font:600 15px/1 var(--sys);letter-spacing:1px;padding:0}
+  .ещё > button:hover,.ещё > button:focus-visible{background:oklch(1 0 0/.55);color:var(--accent);outline:none}
+  .ещё .меню{position:absolute;right:0;top:38px;z-index:30;width:min(270px,calc(100vw - 32px));padding:6px;border-radius:16px;
+    background:oklch(.985 .006 210/.92);border:1px solid oklch(1 0 0/.8);
+    box-shadow:inset 0 1px 0 white,0 12px 28px -10px oklch(.3 .04 220/.28);
+    -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:ещё-лист .15s ease-out}
+  @keyframes ещё-лист{from{opacity:0;transform:translateY(-4px)}}
+  .ещё .меню[hidden]{display:none}
+  .ещё .сводка{padding:8px 12px 9px;font:13px/1.45 var(--sys);color:var(--fg-l)}
+  .ещё .сводка b{color:var(--fg);font-weight:600}
+  .ещё .меню a{display:block;padding:9px 12px;border-radius:11px;font:14px var(--sys);color:var(--fg);text-decoration:none}
+  .ещё .меню a:hover,.ещё .меню a:focus-visible{background:oklch(.5 .02 220/.07);outline:none}
+  .ещё .меню a span{display:block;font-size:12px;color:var(--fg-l);margin-top:1px}
+  .ещё .сводка + a{border-top:1px solid oklch(.5 .02 220/.08);border-radius:0 0 11px 11px}
 
   .потоки{
     gap:7px; padding:3px 1px 7px; overflow-x:auto; scrollbar-width:none;
@@ -595,7 +632,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
     background:oklch(.72 .16 191);box-shadow:0 0 12px 3px oklch(.72 .16 191/.42);
   }
   .мобильный-имя strong{font-size:22px;font-weight:760}
-  .мобильный-имя span{color:oklch(.34 .045 218/.72);font-size:11px}
+  .мобильный-имя span{color:oklch(.34 .045 218/.72);font-size:12.5px}
   .живая-связь{
     padding:6px 8px;border-radius:999px;background:oklch(1 0 0/.24);
     border:1px solid oklch(1 0 0/.38);color:oklch(.32 .04 215/.70);
@@ -809,7 +846,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
   .подшапка input:focus{border:0;box-shadow:inset 0 0 0 1px oklch(.80 .16 190/.65),0 0 24px oklch(.70 .18 200/.18)}
   .вид{
     width:auto;height:44px;padding:0 7px;border:0;border-radius:0;
-    background:none;box-shadow:none;color:oklch(.24 .10 220/.78);font-size:11px;
+    background:none;box-shadow:none;color:oklch(.24 .10 220/.78);font-size:12.5px;   /* 16.10: не мельче 12 */
   }
 
   main{padding:8px 14px 15px;perspective:1100px}
@@ -938,7 +975,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
   /* Шапка, поиск и поле парят над лентой, лента идёт до краёв экрана — обрез ленты у края экрана,
      а не посреди него. Высоты шапки и низа живые (--верх, --низ): их меряет «парение()» в коде. */
   header,.подшапка,footer{position:absolute;left:0;right:0;z-index:3}
-  header{top:0}
+  header{top:0;z-index:4}   /* выше поиска: меню «⋯» раскрывается поверх него */
   .подшапка{top:var(--шапка,120px)}
   footer{bottom:0}
   main{flex:1;padding-top:calc(var(--верх,170px) + 10px);padding-bottom:calc(var(--низ,90px) + 14px);
@@ -948,10 +985,12 @@ textarea:focus{outline:none; border-color:var(--accent)}
     content:"";position:absolute;left:0;right:0;z-index:2;pointer-events:none;
     backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
   }
+  /* туман плотный до низа поиска и тает уже под ним (16.10: был «#000 70%» — при высокой шапке
+     поиск стоял в тающей части, и под ним торчал обрезок мысли «01:07 · записано») */
   #приложение::before{
-    top:0;height:calc(var(--верх,170px) + 30px);
-    background:linear-gradient(to bottom,oklch(.95 .02 225/.84),oklch(.95 .02 225/.66) 68%,transparent);
-    -webkit-mask-image:linear-gradient(to bottom,#000 70%,transparent);mask-image:linear-gradient(to bottom,#000 70%,transparent);
+    top:0;height:calc(var(--верх,170px) + 34px);
+    background:linear-gradient(to bottom,oklch(.95 .02 225/.86),oklch(.95 .02 225/.74) calc(100% - 34px),transparent);
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 34px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 34px),transparent);
   }
   #приложение::after{
     bottom:0;height:calc(var(--низ,90px) + 60px);
@@ -1009,7 +1048,11 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·e24f5e</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v63·0d09c2</b></div>
+      <div class="ещё" id="ещё">
+        <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
+        <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
+      </div>
     </div>
   </header>
   <div class="подшапка">
@@ -3039,6 +3082,25 @@ async function спросить_память(){
   обновить_связь();
 }
 if(НА_МАКЕ){ спросить_память(); setInterval(спросить_память, 60000); }
+
+/* «⋯» в шапке (16.10): служебное — связь, память мака, сборка — здесь, а не строкой в шапке.
+   Сводку собираю при открытии из того, что уже знают #связь и #верс. Мак дописывает сюда свои пункты. */
+(function(){
+  const ещё = $('ещё'); if(!ещё) return;
+  const кн = ещё.querySelector('button'), меню = ещё.querySelector('.меню');
+  const показать = да => {
+    меню.hidden = !да; кн.setAttribute('aria-expanded', да ? 'true' : 'false');
+    if(!да) return;
+    const есть = navigator.onLine, в = $('верс');
+    const сбой = в && в.parentNode.querySelector('.верс-сбой, .верс-догоняет');
+    $('сводка').innerHTML = (есть ? '<b>На связи</b>' : '<b>Без сети</b> — мысли уйдут, когда появится')
+      + (память_мака ? `<br>память мака свободна на ${память_мака.свободно}%` + (память_мака.беда ? ' — мак тормозит' : '') : '')
+      + (в ? `<br>сборка ${в.textContent}` + (сбой ? ` · ${сбой.textContent}` : '') : '');
+  };
+  кн.onclick = e => { e.stopPropagation(); показать(меню.hidden); };
+  document.addEventListener('click', e => { if(!ещё.contains(e.target)) показать(false); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') показать(false); });
+})();
 addEventListener('online', обновить_связь);
 addEventListener('offline', обновить_связь);
 обновить_связь();
