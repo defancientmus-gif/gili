@@ -180,6 +180,34 @@ main > *{flex:none}
 .полоса.раскрыта{margin-top:6px}
 .полоса.раскрыта .суть{color:var(--fg-m)}
 @media (prefers-reduced-motion:reduce){.полоса{transition:none}}
+/* КАЛЕНДАРЬ ДНЕЙ (Женя 17.10 09:22: «непонятно, что где открывать, чтоб старые дни заметок посмотреть. Надо
+   с Разберёмся по логике… но оставить такой же простой стиль»). Логика Разберёмся: месяц сеткой, у дня
+   с мыслями точка, касание — этот день раскрыт в ленте целиком. */
+.подшапка{position:relative}
+.кал-кнопка{display:inline-flex; align-items:center; justify-content:center; padding:0 10px; min-width:40px}
+.кал-кнопка svg{width:18px; height:18px}
+.кал-кнопка[aria-expanded="true"]{color:var(--accent)}
+.календарь{position:absolute; top:calc(100% + 4px); right:12px; z-index:40; width:min(320px, calc(100% - 24px));
+  padding:12px 12px 10px; border-radius:20px; backdrop-filter:blur(12px) saturate(1.3); -webkit-backdrop-filter:blur(12px) saturate(1.3);
+  animation:кал-вход .22s var(--пружина)}
+.календарь[hidden]{display:none}
+@keyframes кал-вход{from{opacity:0; transform:translateY(-6px)} to{opacity:1; transform:none}}
+.кал-шапка{display:flex; align-items:center; justify-content:space-between; margin:0 0 6px; font-size:14.5px; font-weight:650; color:var(--fg)}
+.кал-шапка button{width:36px; height:36px; border:0; border-radius:12px; background:none; font:inherit; font-size:20px; line-height:1; color:var(--fg-m); cursor:pointer}
+.кал-шапка button:disabled{opacity:.22; cursor:default}
+.кал-сетка{display:grid; grid-template-columns:repeat(7, 1fr); gap:2px}
+.кал-сетка i{font-style:normal; text-align:center; font-size:11px; color:var(--fg-l); padding:2px 0 4px}
+.кал-день{position:relative; height:38px; border:0; border-radius:12px; background:none; font:inherit; font-size:14px; color:var(--fg-l); opacity:.55}
+.кал-день.есть{opacity:1; color:var(--fg); font-weight:620; cursor:pointer; transition:transform .14s var(--пружина)}
+.кал-день.есть::after{content:""; position:absolute; left:50%; bottom:5px; width:5px; height:5px; margin-left:-2.5px; border-radius:50%; background:var(--accent); opacity:.8}
+.кал-день.есть:active{transform:scale(.92)}
+.кал-день.сегодня{box-shadow:inset 0 0 0 1.5px oklch(.72 .12 207 / .55)}
+.кал-день.выбран{background:var(--accent); color:white}
+.кал-день.выбран::after{background:white}
+.кал-низ{margin:6px 2px 0; font-size:12px; color:var(--fg-l); text-align:center}
+@media (prefers-reduced-motion:reduce){.календарь{animation:none} .кал-день.есть{transition:none}}
+.календарь.стекло{background:linear-gradient(158deg, oklch(1 0 0 / .93), oklch(0.97 0.012 210 / .88))}   /* сетка читается поверх карточек */
+@media (max-width:720px){ .календарь{left:var(--ось, 14px); right:var(--ось, 14px); width:auto; border-radius:var(--край, 22px)} }
 .мысль{
   border-radius:var(--r); padding:12px 14px; margin-bottom:9px;
   font-size:16px; line-height:1.45; white-space:pre-wrap; word-break:break-word;
@@ -1097,7 +1125,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v64·58c952</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v65·01ad4c</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1108,8 +1136,12 @@ textarea:focus{outline:none; border-color:var(--accent)}
     <span class="поиск-знак" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg></span>
     <input id="поиск" placeholder="искать во всех мыслях…" autocomplete="off">
     <button class="вид сад-кнопка" id="сад-кнопка" title="город: задачи, платежи и письма ждут тебя" hidden>Ждёт тебя</button>
+    <button class="вид кал-кнопка" id="кал-кнопка" type="button" aria-label="старые дни — календарь" aria-expanded="false" title="старые дни">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="3.5"/><path d="M4 10.5h16M9 3.5v4M15 3.5v4"/></svg>
+    </button>
     <button class="вид" id="вид" title="показать обработанные">в работе</button>
     <span class="кто" id="кто"></span>
+    <div class="календарь стекло" id="календарь" role="dialog" aria-label="Дни с мыслями" hidden></div>
   </div>
   <main id="лента"></main>
   <div id="сад-окно" hidden></div>
@@ -1224,6 +1256,7 @@ const ПАМЯТЬ_ЛЕНТЫ = 'гили_лента', ПАМЯТЬ_ОЧЕРЕД
 const ПАМЯТЬ_КТО = 'гили_кто';   // кто вошёл в прошлый раз — чтобы открываться без сети
 
 let Я = null, МЫСЛИ = [], ФОТО = [], ИСКОМОЕ = '';
+let КАЛ = null, К_ДНЮ = null;        // календарь дней (К_ДНЮ — к какому дню ехать после отрисовки): {г, м} открытого месяца; null — закрыт (нарисовать() зовёт раньше, чем дойдёт до календаря)
 /* РАЗДЕЛОВ НЕТ (02.10, Женя ~18:04: «Так я же писал кучу раз, что я не хочу вообще разделы»; 30.09 01:18
    «Работа кодинг и дом превращаются в шкалу»). Лента одна, мысль просто пишется. Поле flow в базе живёт
    дальше: по нему база решает, кто прочтёт (команда.sql), и его читают дом и CRM. Новая мысль ложится
@@ -1588,6 +1621,20 @@ const обработана = м => {
 };
 
 let ПОКАЗЫВАТЬ_ВСЁ = localStorage.getItem('гили_вид') === 'всё';
+$('кал-кнопка').onclick = e => { e.stopPropagation(); календарь(!КАЛ); };
+$('календарь').addEventListener('click', e => {
+  e.stopPropagation();
+  const л = e.target.closest('[data-кал]');
+  if(л){
+    КАЛ.м += +л.getAttribute('data-кал');
+    if(КАЛ.м < 0){ КАЛ.м = 11; КАЛ.г--; } else if(КАЛ.м > 11){ КАЛ.м = 0; КАЛ.г++; }
+    календарь_рисовать(); return;
+  }
+  const д = e.target.closest('[data-кал-день]');
+  if(д) открыть_день(д.getAttribute('data-кал-день'));
+});
+document.addEventListener('click', e => { if(КАЛ && !e.target.closest('#календарь')) календарь(false); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && КАЛ) календарь(false); });
 $('вид').onclick = () => {
   ПОКАЗЫВАТЬ_ВСЁ = !ПОКАЗЫВАТЬ_ВСЁ;
   localStorage.setItem('гили_вид', ПОКАЗЫВАТЬ_ВСЁ ? 'всё' : 'ждёт');
@@ -1617,6 +1664,9 @@ function нарисовать(){
 
   // поиск ищет везде, включая обработанное — иначе «найди ту накладную» не сработает
   const всего = список.length, готовых = список.filter(обработана).length;
+  // все мысли — для полос прошлых дней: день, где всё разобрано, раньше пропадал из ленты в «в работе»,
+  // и старые дни было не найти (Женя 17.10 09:22). Фильтр решает, что видно в живом дне, а не какие дни есть.
+  const весь = ждущие.concat(список).slice(0, 500);
   if(!ПОКАЗЫВАТЬ_ВСЁ && !ИСКОМОЕ) список = список.filter(м => !обработана(м));
   список = ждущие.concat(список).slice(0, 500);   // прошедшие дни всё равно свёрнуты в полосы
 
@@ -1626,35 +1676,40 @@ function нарисовать(){
     : (готовых ? `в работе <b>${всего - готовых}</b>` : 'в работе');
   $('вид').title = ПОКАЗЫВАТЬ_ВСЁ ? 'скрыть обработанные' : `обработано: ${готовых}`;
 
-  if(!список.length){
+  if(!(ИСКОМОЕ ? список : весь).length){
     рисуй(`<div class="пусто">${ИСКОМОЕ ? 'ничего не нашлось'
-      : (ПОКАЗЫВАТЬ_ВСЁ ? 'Здесь пусто.\nНапиши мысль внизу — дом её разберёт.'
-                        : 'Всё разобрано.\nНажми «в работе», чтобы посмотреть обработанное.')}</div>`);
+      : 'Здесь пусто.\nНапиши мысль внизу — дом её разберёт.'}</div>`);
+    if(КАЛ) календарь_рисовать();
     return;
   }
 
   // лента идёт снизу вверх: свежее у поля ввода, как в переписке
-  const дни = [];
-  for(const м of список.slice().reverse()){
+  const дни = [], видно = new Set(список.map(м => м.id));
+  const живой = список.length ? день_ключ(new Date(список[0].created_at)) : null;   // день, что виден целиком
+  for(const м of (ИСКОМОЕ ? список : весь).slice().reverse()){
     const к = день_ключ(new Date(м.created_at));
     if(!дни.length || дни[дни.length - 1].ключ !== к) дни.push({ключ: к, мысли: []});
     дни[дни.length - 1].мысли.push(м);
   }
   let html = '';
   ПОКАЗАНО.clear();
-  дни.forEach((д, i) => {
-    const последний = i === дни.length - 1;
-    // живой разговор (последний день), поиск и день, где что-то открыто, — всегда целиком
-    const целиком = последний || ИСКОМОЕ ||
-      д.мысли.some(м => м.ждёт || м.id === ОТКРЫТА || м.id === ПРАВЛЮ);
-    if(целиком) html += `<div class="день">${день(д.мысли[0].created_at)}</div>`;
+  дни.forEach(д => {
+    // живой разговор (свежий день с тем, что ждёт), поиск и день, где что-то пишется или правится, — целиком;
+    // раскрытый день показывает всё, что в нём было, и разобранное тоже: его открыли, чтобы посмотреть день
+    const раскрыт = РАСКРЫТЫ.has(д.ключ);
+    const целиком = ИСКОМОЕ || д.ключ === живой ||
+      д.мысли.some(м => м.ждёт || (видно.has(м.id) && м.id === ОТКРЫТА) || м.id === ПРАВЛЮ);
+    if(целиком) html += `<div class="день" data-день="${д.ключ}">${день(д.мысли[0].created_at)}</div>`;
     // день, где были только напоминания дома, полосой не встаёт: суть дня — мысли людей,
     // а проверки дома («сверить расход») выдавали себя за неё (Дом 24.09). Найти их — поиском.
-    else if(д.мысли.some(м => !напоминание_ли(м))) html += полоса(д, РАСКРЫТЫ.has(д.ключ));
+    else if(д.мысли.some(м => !напоминание_ли(м))) html += полоса(д, раскрыт);
     else return;
-    if(целиком || РАСКРЫТЫ.has(д.ключ)) html += д.мысли.map(карточка).join('');
+    const показать = раскрыт ? д.мысли : целиком ? д.мысли.filter(м => ИСКОМОЕ || видно.has(м.id)) : [];
+    html += показать.map(карточка).join('');
   });
+  if(!список.length && !ИСКОМОЕ) html += `<div class="день">всё разобрано · прошлые дни — полосами выше и в календаре</div>`;
   рисуй(html);
+  if(КАЛ) календарь_рисовать();
   завести_будильник_сна();
 }
 
@@ -1781,6 +1836,64 @@ function суть_мысли(м){
 }
 const мыслей = n => n + ' ' + ((n % 10 === 1 && n % 100 !== 11) ? 'мысль'
   : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 'мысли' : 'мыслей');
+/* КАЛЕНДАРЬ ДНЕЙ — логика «Разберёмся» (js/app.js calRender): месяц сеткой с понедельника, точка у дня,
+   где были мысли людей, касание — этот день раскрыт в ленте целиком и лента едет к нему. Видно то, что
+   лента уже знает (последние 500 мыслей), — нижняя строка говорит, с какого дня. */
+const МЕСЯЦЫ = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+function дни_с_мыслями(){
+  const есть = new Map();
+  for(const м of МЫСЛИ){
+    if(напоминание_ли(м)) continue;
+    const к = день_ключ(new Date(м.created_at));
+    есть.set(к, (есть.get(к) || 0) + 1);
+  }
+  return есть;
+}
+function календарь_рисовать(){
+  const есть = дни_с_мыслями(), первый = [...есть.keys()].sort()[0], сегодня = день_ключ(new Date());
+  const {г, м} = КАЛ, номер = (год, мес) => год * 12 + мес, сейчас = new Date();
+  const с = первый ? new Date(первый + 'T12:00') : сейчас;
+  const назад = номер(г, м) > номер(с.getFullYear(), с.getMonth());
+  const вперёд = номер(г, м) < номер(сейчас.getFullYear(), сейчас.getMonth());
+  const пусто = (new Date(г, м, 1).getDay() + 6) % 7, в_месяце = new Date(г, м + 1, 0).getDate();
+  let html = `<div class="кал-шапка"><button type="button" data-кал="-1" aria-label="прошлый месяц"${назад ? '' : ' disabled'}>‹</button>` +
+    `<span>${МЕСЯЦЫ[м]} ${г}</span><button type="button" data-кал="1" aria-label="следующий месяц"${вперёд ? '' : ' disabled'}>›</button></div>` +
+    `<div class="кал-сетка">` + ['пн','вт','ср','чт','пт','сб','вс'].map(д => `<i>${д}</i>`).join('') + '<span></span>'.repeat(пусто);
+  for(let ч = 1; ч <= в_месяце; ч++){
+    const к = г + '-' + String(м + 1).padStart(2, '0') + '-' + String(ч).padStart(2, '0'), n = есть.get(к) || 0;
+    html += `<button type="button" class="кал-день${n ? ' есть' : ''}${к === сегодня ? ' сегодня' : ''}${n && РАСКРЫТЫ.has(к) ? ' выбран' : ''}"` +
+      (n ? ` data-кал-день="${к}" aria-label="${ч} ${МЕСЯЦЫ[м].toLowerCase()}: ${мыслей(n)}"` : ' disabled') + `>${ч}</button>`;
+  }
+  html += `</div>` + (первый && !назад
+    ? `<div class="кал-низ">лента помнит с ${экран(new Date(первый + 'T12:00').toLocaleDateString('ru-RU', {day:'numeric', month:'long'}))}</div>`
+    : `<div class="кал-низ">точка — в этот день были мысли</div>`);
+  $('календарь').innerHTML = html;
+}
+function календарь(открыть){
+  if(открыть){ const d = new Date(); КАЛ = {г: d.getFullYear(), м: d.getMonth()}; календарь_рисовать(); }
+  else КАЛ = null;
+  $('календарь').hidden = !открыть;
+  $('кал-кнопка').setAttribute('aria-expanded', String(!!открыть));
+}
+function открыть_день(к){
+  календарь(false);
+  if(ИСКОМОЕ){ ИСКОМОЕ = ''; $('поиск').value = ''; }
+  РАСКРЫТЫ.add(к);
+  К_ДНЮ = к;
+  нарисовать();
+  if(К_ДНЮ) к_дню();                  // день уже был раскрыт — лента не менялась, едем сами
+}
+/* лента едет к выбранному дню и держит его несколько кадров: высоты карточек досчитываются
+   (content-visibility), а «к низу» иначе утащил бы ленту обратно к свежему */
+function к_дню(){
+  const л = $('лента'), к = К_ДНЮ;
+  К_ДНЮ = null;
+  // на телефоне лента идёт под стеклянной шапкой — день встаёт под её нижний край, а не за него
+  const под_шапкой = () => Math.max(0, document.querySelector('.подшапка').getBoundingClientRect().bottom - л.getBoundingClientRect().top);
+  const встать = () => { const э = л.querySelector(`[data-день="${к}"]`); if(э) л.scrollTop = э.offsetTop - под_шапкой() - 8; };
+  let n = 0; const ещё = () => { встать(); if(++n < 12) requestAnimationFrame(ещё); }; ещё();
+}
+
 function полоса(д, раскрыта){
   const люди = д.мысли.filter(м => !напоминание_ли(м));   // «дом напомнил» — не суть дня
   const сути = [...new Set(люди.map(суть_мысли).filter(Boolean))];
@@ -2078,7 +2191,9 @@ function рисуй(html){
   л.dataset.было = html;
   л.innerHTML = html;
 
-  if(внизу && !держать){
+  if(К_ДНЮ){
+    к_дню();                            // выбрали день в календаре — к нему, а не к низу
+  } else if(внизу && !держать){
     к_низу();
   } else if(якоря.length){
     const вернуть = () => {
