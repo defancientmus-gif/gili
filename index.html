@@ -303,6 +303,13 @@ main > *{flex:none}
 /* ОТВЕТ ГИЛИ под надиктованной мыслью (Женя 26.09 «да, и в телефоне»): тихо, как подпись, не второй пузырь */
 .ответ-гили{white-space:pre-line; margin-top:7px; padding-top:7px; border-top:1px solid oklch(.5 .02 220 / .08); font-size:13.5px; color:var(--fg-m)}
 .ответ-гили b{font-weight:600; color:var(--accent)}
+/* ответ на выделенную мысль (17.10): как в ТГ — над текстом черта цвета акцента и кусок того, на что отвечаешь */
+.цитата{display:block; margin:0 0 6px; padding:2px 0 2px 9px; border-left:2px solid var(--accent);
+  font-size:13px; line-height:1.35; color:var(--fg-m); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.фишки .цитата{flex:1 1 100%; margin:0; padding-right:30px; position:relative; animation:явь .24s var(--пружина)}
+.цитата b{font-weight:600; color:var(--accent)}
+.фишки .цитата button{position:absolute; top:50%; right:2px; transform:translateY(-50%); width:22px; height:22px;
+  border-radius:50%; border:none; background:oklch(0.25 0.02 210 / .14); color:var(--fg-m); font-size:14px; line-height:1; padding:0}
 .ответ-гили.думает{color:var(--fg-l); animation:дышит 1.8s ease-in-out infinite}
 .ответ-гили.думает i{display:inline-block; width:6px; height:6px; margin:0 7px 1px 1px; border-radius:99px; background:var(--accent)}
 @media (prefers-reduced-motion: reduce){ .ответ-гили.думает{animation:none} }
@@ -1125,7 +1132,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v65·01ad4c</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v66·e18e94</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1654,6 +1661,7 @@ function нарисовать(){
     .map(з => ({
       id:'ж'+з.когда, flow:з.поток, created_at:new Date(з.когда).toISOString(), ждёт:true,
       звук_ждёт: !!з.звук,
+      reply_to: з.на || null,
       сырое: з.текст,                   // редактору — текст без приписки про фото
       body: з.текст + ((з.фото||[]).length ? `\n${з.фото.length} фото ждёт отправки` : ''),
     }));
@@ -1789,7 +1797,7 @@ function карточка(м){
                : дома ? (платёж ? 'Дом напомнил вслух' : 'Дом · ' + (человечно(м.status) || 'сказал вслух'))
                : человечно(м.status);
   return `<div class="мысль стекло${сторона}${дома ? ' дом-речь' : ''} ${м.ждёт ? 'ждёт' : ''}${обработана(м) ? ' готовая' : ''}` +
-          `${открыта ? ' выбрана' : ''}" data-ид="${м.id}">${тело}${почему_нашлось(м)}${ответ}${фото}` +
+          `${открыта ? ' выбрана' : ''}" data-ид="${м.id}">${правится ? '' : цитата(м)}${тело}${почему_нашлось(м)}${ответ}${фото}` +
           `<div class="низ"><span>${часы(м.created_at)}</span><span>·</span>` +
           `<b class="${дома ? '' : окраска(м.status)}">${судьба}</b>` +
           послушать +
@@ -1937,6 +1945,7 @@ const ЗНАЧКИ = {
   назад: '<path d="M15 5l-7 7 7 7"/>',
   кому: '<circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/>',
   задача: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  ответить: '<path d="M10 7l-5 5 5 5"/><path d="M5 12h9a5 5 0 0 1 5 5v1"/>',
 };
 /* КОМУ (26.09). Женя 13:50: «Проработать функцию работы с заметками. Красивое окно, когда правой
    кнопкой нажимаешь… развиваем это всё, очень лёгкое, понятное». Мысль уехала не тому кодеру или
@@ -1961,6 +1970,7 @@ function пункты_меню(м){
   // чужую мысль (рабочую Олега, семейную Саши) можно только отметить сделанной: перенести
   // или убрать её вправе лишь автор, и база это держит сама (облако/команда.sql)
   return [
+    !м.ждёт && м.author !== 'дом' && ['ответить', 'Ответить', 'ответить'],
     слова && своя && !напоминание_ли(м) && ['править', 'Изменить', 'править'],
     слова && ['копировать', 'Копировать', 'копировать'],
     !м.ждёт && своя && м.author !== 'дом' && ['кому', 'Кому', 'кому'],
@@ -2046,12 +2056,43 @@ function дело_меню(д){
   закрыть_меню();
   if(д === 'править') return править(ид);
   if(д === 'копировать') return скопировать(м);
+  if(д === 'ответить') return ответить_на(м);
   if(д === 'готово') return пометить_готовой(ид);
   if(д === 'задача') return в_задачу(ид);
   if(д === 'убрать') return убрать(ид);
   if(д.startsWith('в:')) return перенести(ид, д.slice(2));
   if(д.startsWith('к:')) return отправить_кому(ид, д.slice(2));
 }
+
+/* ОТВЕТ НА ВЫДЕЛЕННУЮ МЫСЛЬ (штаб 17.10 18:20). Женя кинул рилс, выделил его и написал «Отдал 300.» —
+   лента связи не держала, и разбор записал трату: «А так ты не понимаешь что это ответ на то сообщение
+   которое я выделял?)». Теперь как в ТГ: «Ответить» в меню, над полем плашка с куском той мысли, ответ
+   уезжает с её номером (reply_to), дом читает их вместе, а над ответом видно, к чему он. */
+let ОТВЕЧАЮ = null;                        // {ид, кусок}: на что отвечаем, пока плашка над полем
+const кусок_мысли = м => ' ' + ((знание_о(м)?.short || м.сводка || м.body || 'фото') + '').replace(/\s+/g, ' ').trim().slice(0, 90);
+function ответить_на(м){
+  ОТВЕЧАЮ = {ид: м.home_id || м.id, кусок: кусок_мысли(м)};
+  нарисовать_фишки();
+  поле.focus({preventScroll: true});
+}
+// мысль, на которую ответили: на маке номер ленты, на телефоне — и он (home_id), и номер облака
+const родитель = м => м.reply_to && МЫСЛИ.find(р => р.id === м.reply_to || р.home_id === м.reply_to);
+function цитата(м){
+  if(!м.reply_to) return '';
+  const р = родитель(м);
+  return `<span class="цитата"><b>↩</b>${экран(р ? кусок_мысли(р) : ' ответ на мысль')}</span>`;
+}
+// Облаку нужна колонка reply_to (облако/команда.sql). Пока её нет, номер не шлём: иначе вставка падает
+// и мысль навсегда застрянет в очереди. Ответ тогда ляжет обычной мыслью, как было до 17.10.
+let ЕСТЬ_REPLY = НА_МАКЕ ? true : null;
+async function можно_ответ(){
+  if(ЕСТЬ_REPLY === null){
+    try{ const {error} = await sb.from('gili_notes').select('reply_to').limit(1); ЕСТЬ_REPLY = !error; }
+    catch{ return false; }               // сети нет — спросим в следующий раз
+  }
+  return ЕСТЬ_REPLY;
+}
+const с_ответом = async (запись, на) => на && await можно_ответ() ? Object.assign(запись, {reply_to: на}) : запись;
 
 function скопировать(м){
   const т = ((м && (м.сырое ?? м.body)) || '').trim();
@@ -2608,7 +2649,7 @@ async function везти_очередь(){
       }
       const пути = [];
       for(const ф of (з.фото || [])) пути.push(await залить(избуквы(ф.буква)));
-      const {error} = await sb.from('gili_notes').insert({author: Я.id, flow: з.поток, body: з.текст, photos: пути});
+      const {error} = await sb.from('gili_notes').insert(await с_ответом({author: Я.id, flow: з.поток, body: з.текст, photos: пути}, з.на));
       if(error) throw error;
       из_очереди(з.когда);
     }catch(e){ break; }      // облако молчит — остальное подождёт, порядок сохраняем
@@ -2818,9 +2859,13 @@ document.addEventListener('paste', async e => {
   if(соб === 'drop') await добавить_фото([...(e.dataTransfer?.files || [])]);
 }));
 function нарисовать_фишки(){
-  $('фишки').innerHTML = ФОТО.map((ф,i) =>
+  $('фишки').innerHTML = (ОТВЕЧАЮ ? `<span class="цитата"><b>↩ ответ:</b>${экран(ОТВЕЧАЮ.кусок)}` +
+                           `<button data-отмена aria-label="не отвечать">×</button></span>` : '') +
+    ФОТО.map((ф,i) =>
     `<span class="фишка"><img src="${ф.ссылка}" alt=""><button data-и="${i}">×</button></span>`).join('');
-  $('фишки').querySelectorAll('button').forEach(б => б.onclick = () => {
+  const отмена = $('фишки').querySelector('[data-отмена]');
+  if(отмена) отмена.onclick = () => { ОТВЕЧАЮ = null; нарисовать_фишки(); };
+  $('фишки').querySelectorAll('button[data-и]').forEach(б => б.onclick = () => {
     URL.revokeObjectURL(ФОТО[+б.dataset.и].ссылка);
     ФОТО.splice(+б.dataset.и, 1); нарисовать_фишки(); показать_кнопку();
   });
@@ -3108,13 +3153,14 @@ async function отправить(){
   const текст = поле.value.trim();
   if(!текст && !ФОТО.length) return;
   const фото = ФОТО.slice(); ФОТО = [];
+  const на = ОТВЕЧАЮ?.ид || null; ОТВЕЧАЮ = null;
   поле.value = ''; поле.style.height = 'auto';
   нарисовать_фишки();
   const тело = текст || 'фото';
 
   // мысль видна сразу — человек не ждёт сервер, чтобы поверить, что записалось
   const мгновенная = {id:'…'+Date.now(), flow:ПОТОК, body:тело, photos:[],
-                      created_at:new Date().toISOString(), status:'отправляю…', author:Я.id};
+                      created_at:new Date().toISOString(), status:'отправляю…', author:Я.id, reply_to:на};
   МЫСЛИ = [мгновенная].concat(МЫСЛИ);
   нарисовать();
   к_низу();
@@ -3123,14 +3169,14 @@ async function отправить(){
     if(!navigator.onLine) throw new Error('нет сети');
     const пути = [];
     for(const ф of фото) пути.push(await залить(ф.файл));
-    const {error} = await sb.from('gili_notes').insert({author: Я.id, flow: ПОТОК, body: тело, photos: пути});
+    const {error} = await sb.from('gili_notes').insert(await с_ответом({author: Я.id, flow: ПОТОК, body: тело, photos: пути}, на));
     if(error) throw error;
     await загрузить();
   }catch(e){
     МЫСЛИ = МЫСЛИ.filter(м => м.id !== мгновенная.id);
     const в_буквах = [];
     for(const ф of фото) в_буквах.push({буква: await вбукву(ф.файл)});
-    в_очередь({когда: Date.now(), поток: ПОТОК, текст: тело, фото: в_буквах});
+    в_очередь({когда: Date.now(), поток: ПОТОК, текст: тело, фото: в_буквах, на});
   }
   фото.forEach(ф => URL.revokeObjectURL(ф.ссылка));
 }
