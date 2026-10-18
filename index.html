@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+/* В рамке Космос OS (18.10, Питер, сверка v11 п.6 «программы в рамке»): шапку «Гили ✕» рисует OS,
+   своё имя, знак и точку связи не повторяем (правила — в конце стилей, html.in-os). Признак ставим
+   до стилей, чтобы шапка не мигнула. Рамка с чужого адреса (OS на :5050, лицо на :5055), путь
+   родителя не прочитать — потому top !== self или явный ?os=1, как у CRM (static/index.html:15). */
+try{ if(window.top !== window.self || /[?&]os=1(&|$)/.test(location.search)) document.documentElement.classList.add('in-os'); }catch(e){}
+</script>
 <title>Гилфойл</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1098,6 +1105,18 @@ textarea:focus{outline:none; border-color:var(--accent)}
 @media (prefers-reduced-motion: reduce){
   *{animation:none !important; transition:none !important}
 }
+
+/* ═══ В РАМКЕ КОСМОС OS (18.10, Питер, сверка v11 п.6) ═══
+   Было: две шапки — сверху «Гили ✕» от OS, под ней своя «Гили · 8 платежей ждут оплаты…», имя дважды.
+   Стало: в рамке знак, имя, слоган и точка связи с версией спрятаны. Строка «N платежей ждут оплаты…»
+   (на маке её делает кнопкой слой server.py, класс .мак-фраза) и меню «⋯» остаются строкой над поиском,
+   карточка «Ждёт тебя» и лист платежей — на своих местах. Признак html.in-os ставит скрипт в <head>.
+   Снять: убрать класс in-os (скрипт в <head>) — шапка вернётся. */
+html.in-os .мобильный-знак, html.in-os .мобильный-имя strong, html.in-os .мобильный-бренд .живая-связь,
+html.in-os .мобильный-имя > span:not(.мак-фраза){display:none !important}   /* > : внутри .мак-фраза свои span «длинно/коротко» */
+html.in-os .мобильный-бренд{height:auto; min-height:36px; padding:0 3px 4px}
+html.in-os .мобильный-имя{justify-content:center}
+html.in-os #приложение > header{padding-top:6px}
 </style>
 </head>
 <body>
@@ -1132,7 +1151,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v66·e18e94</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·202698</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
