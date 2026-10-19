@@ -1074,7 +1074,9 @@ textarea:focus{outline:none; border-color:var(--accent)}
   :root{
     --ось:14px; --край:22px; --шаг:10px;
     --стекло-фон:linear-gradient(155deg,oklch(1 0 0/.66),oklch(.965 .014 212/.50));
-    --стекло-тень:inset 0 1px 0 oklch(1 0 0/.92),inset 0 0 0 1px oklch(1 0 0/.66),0 10px 26px -20px oklch(.24 .09 224/.50);
+    /* край завёрнут, а не обведён (Женя 19.10 22:1x выбрал кнопкой для всей Космос OS: «нужны ли эти рамочки вокруг граней…
+       завернуть и слегонца размыть»): кольца 1px нет, свет сверху тонкий, по краям мягко уходит внутрь */
+    --стекло-тень:inset 0 1.5px 1px -.5px oklch(1 0 0/.95),inset 0 0 22px oklch(1 0 0/.34),inset 0 -12px 20px -16px oklch(1 0 0/.5),0 10px 26px -20px oklch(.24 .09 224/.50);
   }
   .подшапка,main,footer{padding-left:var(--ось);padding-right:var(--ось)}
   .подшапка{gap:8px}
@@ -1151,7 +1153,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·cfc68c</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·113c8f</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
