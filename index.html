@@ -7,8 +7,8 @@
 /* В рамке Космос OS (18.10, Питер, сверка v11 п.6 «программы в рамке»): шапку «Гили ✕» рисует OS,
    своё имя, знак и точку связи не повторяем (правила — в конце стилей, html.in-os). Признак ставим
    до стилей, чтобы шапка не мигнула. Рамка с чужого адреса (OS на :5050, лицо на :5055), путь
-   родителя не прочитать — потому top !== self или явный ?os=1, как у CRM (static/index.html:15). */
-try{ if(window.top !== window.self || /[?&]os=1(&|$)/.test(location.search)) document.documentElement.classList.add('in-os'); }catch(e){}
+   родителя не прочитать — потому top !== self или явный ?os=1 / ?embed=os (так зовёт Ричард), как у CRM (static/index.html:15). */
+try{ if(window.top !== window.self || /[?&](os=1|embed=os)(&|$)/.test(location.search)) document.documentElement.classList.add('in-os'); }catch(e){}
 </script>
 <title>Гилфойл</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1151,7 +1151,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·202698</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·cfc68c</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1541,7 +1541,7 @@ function подсветить(текст){
    «ролик с бухгалтерией» и не нашёл, пришлось кинуть его заново. */
 const АДРЕС = /https?:\/\/[^\s<>"«»]+/g;
 function короткий_адрес(url){
-  const [узел, ...путь] = url.replace(/^https?:\/\/(www\.)?/, '').split('/').filter(Boolean);
+  const [узел, ...путь] = url.replace(/^https?:\/\/(www\.)?/, '').replace(/[?#].*$/, '').split('/').filter(Boolean);   // «?igsh=…» не показываем
   return узел + (путь.length ? '/' + путь[0] + (путь.length > 1 ? '/…' : '') : '');
 }
 function тело_мысли(текст){
