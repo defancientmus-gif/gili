@@ -420,7 +420,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
   html,body{height:100%; height:100dvh}
   body{
     font-size:16px;
-    background:oklch(.91 .02 218) url('gili-sky-poster.jpg') center/cover no-repeat;   /* 36 КБ; резкое фото — после ленты, см. небо_пора */
+    background:oklch(.86 .006 230) url('gili-sea-poster.jpg') center/cover no-repeat;   /* 15 КБ; резкий кадр — после ленты, см. небо_пора */
     overflow:hidden;
   }
   /* 27.09 «4к супер фон»: то же небо, перерисованное резко (Дом, Polza). Было фото 941 px, и в широком
@@ -1153,7 +1153,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·113c8f</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·22fb82</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -3288,10 +3288,14 @@ void main(){
   gl_FragColor=vec4(col,1.);
 }`;
 /* Какое небо: узкий экран — стоячий кадр, широкий — панорама. H — где горизонт (доля высоты сверху),
-   по нему шейдер делит облака и воду; мерено по кадрам 27.09. */
+   по нему шейдер делит облака и воду; мерено по кадрам 27.09.
+   20.10 узкий экран — море Жени (Женя 17.10 «Го апскейл и в гили на фон протестим», петля Питера 16,8 с,
+   пережата 10→6,5 МБ без видимой разницы). Шейдер рисует только гавайское небо, поэтому у моря запасной
+   путь — стоячий кадр. Откат: вернуть узкому {фото:'gili-sky-v2.jpg', H:.62, видео:'gili-sky-live-3.mp4'}
+   и постер gili-sky-poster.jpg в css и sw.js. */
 const НЕБО = matchMedia('(min-aspect-ratio:1/1)').matches
   ? {фото: 'gili-sky-wide.jpg', H: .632, широкое: true}
-  : {фото: 'gili-sky-v2.jpg', H: .62, широкое: false};
+  : {фото: 'gili-sea.jpg', видео: 'gili-sea-live.mp4', море: true, широкое: false};
 
 /* Видео — только на телефоне в узком виде. Мак открыт весь день и без видео (как без волн сцены);
    и его сервер отдаёт файлы целиком, без кусков, а WebKit такое видео не играет.
@@ -3301,7 +3305,7 @@ function небо_видео(){
   if(!в || НА_МАКЕ || НЕБО.широкое || getComputedStyle(в).display === 'none'
      || matchMedia('(prefers-reduced-motion:reduce)').matches) return Promise.reject();
   в.muted = true;                                          // атрибута мало: iOS смотрит на свойство
-  в.src = 'gili-sky-live-3.mp4';               // 28.09 v55: небо из клипа Дома (облака плывут), вода из прежнего — в клипе Дома она темнела до глубины
+  в.src = НЕБО.видео;
   return в.play().then(() => {
     в.classList.add('живо');
     document.addEventListener('visibilitychange', () => { if(!document.hidden) в.play().catch(() => {}); });
@@ -3319,7 +3323,7 @@ function оживить_небо(){
 
 function небо_шейдером(){
   const c = $('небо');
-  if(!c || getComputedStyle(c).display === 'none' || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  if(!c || НЕБО.море || getComputedStyle(c).display === 'none' || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
   let gl = null;
   try{ gl = c.getContext('webgl', {alpha:false, antialias:false, depth:false, stencil:false, powerPreference:'low-power'}); }catch(e){}
   if(!gl) return;
