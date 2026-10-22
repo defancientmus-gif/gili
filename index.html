@@ -1051,7 +1051,14 @@ textarea:focus{outline:none; border-color:var(--accent)}
   }
   footer,.подшапка{background:none}
 
-  .мысль{backdrop-filter:blur(8px) saturate(1.3);-webkit-backdrop-filter:blur(8px) saturate(1.3)}
+  /* 22.10 аудит (Женя 22:25: «ВАУ — мягко и плавно, чтоб работало безупречно»). Было: своё размытие у КАЖДОЙ
+     карточки поверх живого моря — при прокрутке телефон пересчитывал стекло под каждой движущейся карточкой
+     (в кадре 13 слоёв размытия, из них 5 едут вместе с лентой). Стало: карточки без своего размытия, белее на ту же глубину;
+     стекло одно — неподвижный слой под всей лентой; море на время прокрутки замирает (небо_видео).
+     Едущих слоёв размытия — ноль, всего в кадре 9. Откат: blur(8px) saturate(1.3) карточке и убрать body::after ниже. */
+  .мысль{backdrop-filter:none;-webkit-backdrop-filter:none;
+    background:linear-gradient(140deg,oklch(1 0 0/.58),oklch(.93 .045 205/.42))}
+  body::after{z-index:1;backdrop-filter:blur(10px) saturate(1.3);-webkit-backdrop-filter:blur(10px) saturate(1.3)}
 
   .строка{
     background:oklch(1 0 0/.72);
@@ -1153,7 +1160,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·44bb51</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·99db5a</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -3326,6 +3333,13 @@ function небо_видео(){
   в.src = НЕБО.видео;
   return в.play().then(() => {
     в.classList.add('живо');
+    // море замирает, пока листают ленту (22.10 аудит): стекло под лентой не пересчитывается на каждом кадре
+    let тихо = 0;
+    $('лента')?.addEventListener('scroll', () => {
+      if(!в.paused) в.pause();
+      clearTimeout(тихо);
+      тихо = setTimeout(() => { if(!document.hidden) в.play().catch(() => {}); }, 300);
+    }, {passive: true});
     document.addEventListener('visibilitychange', () => { if(!document.hidden) в.play().catch(() => {}); });
   });
 }
