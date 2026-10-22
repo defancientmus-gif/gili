@@ -1160,7 +1160,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·99db5a</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·85d4e9</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -2842,7 +2842,7 @@ async function добавить_фото(файлы){
   for(const ф of файлы){
     if(!ф || !ф.type?.startsWith('image/')) continue;
     const у = await ужать(ф); if(!у) continue;
-    ФОТО.push({файл: у, ссылка: URL.createObjectURL(у)});
+    ФОТО.push({файл: у, ссылка: await вбукву(у)});   // data:, не blob: — Сервер Космоса пускает картинки только self и data: (Caddy)
     добавлено++;
   }
   if(добавлено) нарисовать_фишки();
