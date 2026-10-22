@@ -1153,7 +1153,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·ab83f5</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v67·44bb51</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1249,7 +1249,22 @@ html.in-os #приложение > header{padding-top:6px}
 
 const URL_БАЗЫ = 'https://izvwgyudjbxlixzrgpuv.supabase.co';
 const КЛЮЧ = 'sb_publishable_YtwehFnevo4R3UpmOnTTXQ_j4PQY21D';   // публичный по устройству; защита — правила базы
-const sb = supabase.createClient(URL_БАЗЫ, КЛЮЧ, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}});
+/* ПРЕДЕЛ ОЖИДАНИЯ (22.10). Женя 04:50: «И почему ты не принял сообщение )». Две его мысли легли в
+   облако в одну секунду, 04:50:12, — телефон держал их у себя. У запросов к базе не было предела:
+   подвисшая связь оставляла мысль «отправляю…» навсегда, а повисший привоз держал ВЕЗУ и запирал
+   очередь до перезапуска приложения. Теперь 15 с на запрос (заливка снимка и звука — 2 мин), потом
+   ошибка: мысль уходит в очередь, и очередь повторяет сама. Прослойки мака и пульта настроек не берут. */
+function с_пределом(адрес, опц = {}){
+  const к = new AbortController();
+  const т = setTimeout(() => к.abort(), /\/storage\//.test(String(адрес.url || адрес)) ? 120000 : 15000);
+  if(опц.signal){
+    if(опц.signal.aborted) к.abort();
+    else опц.signal.addEventListener('abort', () => к.abort(), {once: true});
+  }
+  return fetch(адрес, Object.assign({}, опц, {signal: к.signal})).finally(() => clearTimeout(т));
+}
+const sb = supabase.createClient(URL_БАЗЫ, КЛЮЧ, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true},
+                                                 global:{fetch: с_пределом}});
 const НА_МАКЕ = !!supabase.мак;   // окно мака подкладывает свою прослойку вместо базы
 
 /* Порядок потоков — Женин (10.08): дом и семья первыми, работа и код дальше.
@@ -2625,7 +2640,10 @@ function обновить_состояние(){
   const о = n % 10, д = n % 100;
   const слово = (о === 1 && д !== 11) ? 'мысль уедет'
               : (о >= 2 && о <= 4 && (д < 12 || д > 14)) ? 'мысли уедут' : 'мыслей уедут';
-  $('состояние').textContent = `${n === 1 ? 'одна' : n} ${слово}, ${НА_МАКЕ ? 'как только мак ответит' : 'когда появится сеть'}`;
+  // сеть есть, а облако молчит — не «нет сети»: человек видит вайфай и не верит строке (22.10)
+  const когда = НА_МАКЕ ? 'как только мак ответит'
+              : navigator.onLine ? 'облако не ответило, повторяю сам' : 'когда появится сеть';
+  $('состояние').textContent = `${n === 1 ? 'одна' : n} ${слово}, ${когда}`;
 }
 
 /* Расклад 3 (сервер УСПЕЛ записать, а ответ не дошёл): insert бросил ошибку → мысль
