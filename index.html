@@ -9,6 +9,10 @@
    до стилей, чтобы шапка не мигнула. Рамка с чужого адреса (OS на :5050, лицо на :5055), путь
    родителя не прочитать — потому top !== self или явный ?os=1 / ?embed=os (так зовёт Ричард), как у CRM (static/index.html:15). */
 try{ if(window.top !== window.self || /[?&](os=1|embed=os)(&|$)/.test(location.search)) document.documentElement.classList.add('in-os'); }catch(e){}
+/* 31.10 ночь у моря (Женя 23.10 «делай»): с 18 до 7 по часам телефона — то же море с луной. Признак до стилей,
+   чтобы дневной постер не мигнул. ?night=1 / ?night=0 — посмотреть днём или ночью вручную. */
+try{ const ч = new Date().getHours(), н = /[?&]night=([01])/.exec(location.search);
+     if(н ? н[1] === '1' : (ч >= 18 || ч < 7)) document.documentElement.classList.add('night'); }catch(e){}
 </script>
 <title>Гилфойл</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -434,6 +438,7 @@ textarea:focus{outline:none; border-color:var(--accent)}
      окне мака его растягивало втрое. Узкому экрану — стоячий кадр 1440×2560, широкому — панорама
      той же сцены 2560×1440: горизонт на месте, ничего не режется. */
   @media (min-aspect-ratio:1/1){ body{background-image:url('gili-sky-wide-poster.jpg')} }
+  @media (max-aspect-ratio:1/1){ html.night body{background-image:url('gili-night-poster.jpg')} }
   body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,oklch(1 0 0/.04),oklch(.92 .02 214/.16) 44%,oklch(.78 .06 210/.24));}
   /* живое небо: та же картинка, но облака плывут, а море дышит. Проявляется, когда готов
      первый кадр; до того и без WebGL остаётся фото фоном body — разницы глаз не заметит. */
@@ -1167,7 +1172,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v68·947495</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v69·65d91c</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -3327,10 +3332,14 @@ void main(){
    и постер gili-sky-poster.jpg в css и sw.js.
    26.10 Женя «День сделай менее облачным»: та же петля его моря, волны живые, небо — ясный кадр (правка его же
    кадра в Syntx), вода перекрашена построчно под него (окно/ночь-моря/den.py). Откат к пасмурному: вернуть
-   gili-sea.jpg / gili-sea-live.mp4 здесь и gili-sea-poster.jpg в css и sw.js. */
+   gili-sea.jpg / gili-sea-live.mp4 здесь и gili-sea-poster.jpg в css и sw.js.
+   31.10 ночь (Женя 23.10 «делай», вариант Б «лунная дорога»): та же петля, небо — вечерний кадр с луной, дорожка
+   мерцает на живых волнах (окно/ночь-моря/noch.py). Признак html.night ставится в самом начале. Откат: убрать ветку. */
 const НЕБО = matchMedia('(min-aspect-ratio:1/1)').matches
   ? {фото: 'gili-sky-wide.jpg', H: .632, широкое: true}
-  : {фото: 'gili-day.jpg', видео: 'gili-day-live.mp4', море: true, широкое: false};
+  : document.documentElement.classList.contains('night')
+    ? {фото: 'gili-night.jpg', видео: 'gili-night-live.mp4', море: true, широкое: false}
+    : {фото: 'gili-day.jpg', видео: 'gili-day-live.mp4', море: true, широкое: false};
 
 /* Видео — только на телефоне в узком виде. Мак открыт весь день и без видео (как без волн сцены);
    и его сервер отдаёт файлы целиком, без кусков, а WebKit такое видео не играет.
