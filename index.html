@@ -103,6 +103,19 @@ body{
 #вход button:disabled{opacity:.45}
 #сказ{font-size:13.5px; color:var(--fg-l); min-height:19px; margin-top:10px}
 #сказ.плохо{color:oklch(0.50 0.15 20)}
+/* ДВЕРЬ КОСМОСА (05.11): облако стоит — кнопка в Гили через Сервер Космоса. Стекло — шапка неподвижная. */
+#дверь{position:fixed; left:12px; right:12px; top:calc(env(safe-area-inset-top,0px) + 8px); z-index:60; max-width:560px; margin:0 auto;
+  display:flex; align-items:center; gap:10px; padding:10px 12px 10px 14px; border-radius:16px;
+  background:linear-gradient(155deg,oklch(1 0 0/.78),oklch(.965 .014 212/.62)); backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px); box-shadow:0 10px 26px -18px oklch(.24 .09 224/.5);
+  font-size:13.5px; color:var(--fg-l); opacity:0; transform:translateY(-6px); transition:opacity .35s, transform .35s}
+#дверь.видно{opacity:1; transform:none}
+/* в ленте — над полем ввода, чтобы не закрывать поиск; на входе — сверху */
+body:has(#приложение:not([hidden])) #дверь{top:auto; bottom:calc(var(--низ,90px) + 10px); transform:translateY(6px)}
+body:has(#приложение:not([hidden])) #дверь.видно{transform:none}
+#дверь span{flex:1; line-height:1.3}
+#дверь a{flex:none; padding:8px 12px; border-radius:12px; background:oklch(.62 .11 230); color:#fff;
+  text-decoration:none; font-weight:600}
 /* вход на широком экране (16.10, аудит Дизайнера: «поле 240 px посреди пустого экрана 1440»).
    Та же карточка, что на телефоне, только крупнее, стеклом на том же небе с лагуной. */
 @media (min-width:721px){
@@ -1172,7 +1185,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v69·0cbb4c</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v70·663d20</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1348,7 +1361,8 @@ async function прислать_код(){
   $('войти').disabled = true; сказать('отправляю…');
   const {error} = await sb.auth.signInWithOtp({email: почта, options:{shouldCreateUser:true}});
   $('войти').disabled = false;
-  if(error){ сказать(по_русски(error), true); return; }
+  if(error){ if(облако_закрыто(error)){ показать_дверь(); сказать('облако стоит — войди через Космос, кнопка сверху', true); return; }
+             сказать(по_русски(error), true); return; }
   ПОЧТА = почта; ЖДЁМ_КОД = true;
   $('код').hidden = false; $('код').focus();
   $('войти').textContent = 'Войти';
@@ -1374,6 +1388,38 @@ function по_русски(e){
   if(t.includes('rate') || t.includes('seconds')) return 'слишком часто — подожди минуту';
   if(t.includes('network') || t.includes('fetch') || t.includes('failed')) return 'нет связи — попробуй позже';
   return e.message || 'не вышло';
+}
+
+/* ДВЕРЬ КОСМОСА. Женя 04.11 10:16 прислал снимок: Гили на телефоне не пускает — облако (Supabase) упёрлось
+   в квоту трафика, отвечает 402 «exceed_egress_quota». Хуже того, лицо принимало этот ответ за «ты не тот»,
+   стирало память и выкидывало ко входу, а вход тоже идёт через облако. Теперь: облако закрыто — не сеть и не
+   чужой, человек остаётся в ленте, мысли копятся в телефоне, а сверху кнопка в тот же Гили на Сервере Космоса
+   (/gili/, вход — кука CRM, лента — витрина мака, облако не нужно). Только на Pages: мак и пульт ходят мимо облака. */
+const ДВЕРЬ_КОСМОСА = 'https://kosmos.92.63.179.72.sslip.io/gili/';
+let ОБЛАКО_ЗАКРЫТО = false, ПРОБА_ОБЛАКА = Promise.resolve();
+function облако_закрыто(e){
+  if(!e) return false;
+  let t = ''; try{ t = (e.message || '') + ' ' + (e.status || '') + ' ' + JSON.stringify(e); }catch{ t = String(e); }
+  return /exceed_\w*quota|project is restricted|payment required|(^|\D)402(\D|$)/i.test(t);
+}
+function показать_дверь(){
+  ОБЛАКО_ЗАКРЫТО = true;
+  обновить_состояние();
+  if(НА_МАКЕ || !/github\.io$/.test(location.hostname) || $('дверь')) return;
+  const д = document.createElement('div'); д.id = 'дверь';
+  д.innerHTML = '<span>Облако Гили сейчас стоит. Мысли ждут в телефоне — или открой Гили через Космос</span>'
+              + `<a href="${ДВЕРЬ_КОСМОСА}">Открыть</a>`;
+  document.body.appendChild(д);
+  requestAnimationFrame(() => д.classList.add('видно'));
+}
+// Проба при старте: один короткий запрос к облаку. 402 — показываем дверь сразу, не дожидаясь ошибки входа.
+async function проверить_облако(){
+  if(НА_МАКЕ || !/github\.io$/.test(location.hostname) || !navigator.onLine) return;
+  try{
+    const ст = new AbortController(); setTimeout(() => ст.abort(), 6000);
+    const r = await fetch(URL_БАЗЫ + '/auth/v1/settings', {headers: {apikey: КЛЮЧ}, cache: 'no-store', signal: ст.signal});
+    if(r.status === 402 || (r.status >= 400 && облако_закрыто({message: await r.text()}))) показать_дверь();
+  }catch{}
 }
 
 function показать(что){
@@ -1420,7 +1466,9 @@ async function поднять(){
   catch(e){ ошибка_входа = e; }
   const сеть_молчит = !navigator.onLine ||
     (ошибка_входа && /fetch|network|timeout|failed|retryable|load/i.test((ошибка_входа.name||'') + ' ' + (ошибка_входа.message||'')));
-  if(сеть_молчит){
+  if(облако_закрыто(ошибка_входа)) показать_дверь();
+  if(!user && !сеть_молчит) await ПРОБА_ОБЛАКА;   // «ты не тот» решаем только после пробы: 402 — не повод стирать память
+  if(сеть_молчит || ОБЛАКО_ЗАКРЫТО){
     if(!запомнен) показать('вход');   // впервые открыли без сети и без памяти — показать нечего
     return;                            // помним человека → он уже в приложении, очередь довезёт
   }
@@ -2661,6 +2709,7 @@ function обновить_состояние(){
               : (о >= 2 && о <= 4 && (д < 12 || д > 14)) ? 'мысли уедут' : 'мыслей уедут';
   // сеть есть, а облако молчит — не «нет сети»: человек видит вайфай и не верит строке (22.10)
   const когда = НА_МАКЕ ? 'как только мак ответит'
+              : ОБЛАКО_ЗАКРЫТО ? 'облако стоит, ждут в телефоне'
               : navigator.onLine ? 'облако не ответило, повторяю сам' : 'когда появится сеть';
   $('состояние').textContent = `${n === 1 ? 'одна' : n} ${слово}, ${когда}`;
 }
@@ -2710,7 +2759,7 @@ async function везти_очередь(){
       const {error} = await sb.from('gili_notes').insert(await с_ответом({author: Я.id, flow: з.поток, body: з.текст, photos: пути}, з.на));
       if(error) throw error;
       из_очереди(з.когда);
-    }catch(e){ break; }      // облако молчит — остальное подождёт, порядок сохраняем
+    }catch(e){ if(облако_закрыто(e)) показать_дверь(); break; }      // облако молчит — остальное подождёт, порядок сохраняем
   }
   ВЕЗУ = false;
   обновить_состояние();
@@ -3521,6 +3570,7 @@ function парение(){
 }
 парение();
 
+ПРОБА_ОБЛАКА = проверить_облако();
 if(кто_в_памяти()) поднять();        // помним человека — открываемся сразу, проверка внутри
 else sb.auth.getSession().then(({data:{session}}) => session ? поднять() : показать('вход'))
   .catch(() => показать('вход'));
