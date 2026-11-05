@@ -333,6 +333,7 @@ main > *{flex:none}
 .внутри.ответ-гили b{display:flex; align-items:center; gap:6px; font:600 12px/1.2 var(--sys); color:var(--accent); letter-spacing:.01em}
 .внутри.ответ-гили b::before{content:''; width:6px; height:6px; border-radius:99px; background:var(--accent)}
 .внутри.ответ-гили span{margin-top:4px; white-space:pre-line; font-size:14px; line-height:1.42; color:var(--fg)}
+.внутри.ответ-гили span a{color:var(--accent); font-weight:600; text-decoration:none}
 .ответ-гили.думает{margin-top:7px; padding-top:7px; border-top:1px solid oklch(.5 .02 220 / .08); font-size:13.5px}
 /* ответ на выделенную мысль (17.10): как в ТГ — над текстом черта цвета акцента и кусок того, на что отвечаешь */
 .цитата{display:block; margin:0 0 6px; padding:2px 0 2px 9px; border-left:2px solid var(--accent);
@@ -1185,7 +1186,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v70·663d20</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·9e5a19</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1341,6 +1342,11 @@ let ПОТОК = 'дом';
 
 const $ = id => document.getElementById(id);
 const экран = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// Ответ поиска приходит с адресами строк «· https://…» (ум.py, 05.11): показываем имя сайта ссылкой.
+const со_ссылками = s => экран(s).replace(/https?:\/\/[^\s<"]+/g, u => {
+  let имя = u; try { имя = new URL(u.replace(/&amp;/g,'&')).hostname.replace(/^www\./,''); } catch(e) {}
+  return `<a href="${u}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${имя}</a>`;
+});
 
 /* ── вход ─────────────────────────────────────────────────────────────────────
    Пароля нет: в «Разберёмся» вход по коду из письма, и здесь тот же аккаунт.
@@ -1889,7 +1895,7 @@ function карточка(м){
              : напоминание_ли(м) ? тело_напоминания(м.body, открыта || !!ИСКОМОЕ)
              : тело_мысли(м.body || '') + что_за_ссылкой(м, открыта);
   const ответ = правится ? ''
-              : (ОТВЕТЫ_ГИЛИ[м.id] || знание_о(м)?.answer) ? `<div class="внутри ответ-гили"><b>Гили отвечает</b><span>${экран(ОТВЕТЫ_ГИЛИ[м.id] || знание_о(м).answer)}</span></div>`
+              : (ОТВЕТЫ_ГИЛИ[м.id] || знание_о(м)?.answer) ? `<div class="внутри ответ-гили"><b>Гили отвечает</b><span>${со_ссылками(ОТВЕТЫ_ГИЛИ[м.id] || знание_о(м).answer)}</span></div>`
               : (ГИЛИ_ОТВЕТИТ && м.audio === ГИЛИ_ОТВЕТИТ.путь && !ждёт_слов(м)) ? `<div class="ответ-гили думает"><i></i>Гили думает над ответом…</div>` : '';
   const послушать = (ждёт_слов(м) && м.audio !== ЖДУ)
     ? `<button class="звук" data-звук="${экран(м.audio)}">${ЗНАК_ГОЛОСА}послушать</button>` : '';
