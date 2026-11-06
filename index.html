@@ -1186,7 +1186,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·9e5a19</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·b22b57</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -2777,11 +2777,28 @@ async function везти_очередь(){
    Дом принимает ответ только от Жени и только на плод из последнего снимка — чужую строку так не закрыть.
    Снимка нет (Саша, или Дом ещё не выложил) — кнопки нет. */
 var САД_СНИМОК = null, САД_ПРОВЕРЕН = 0;   // var: быстрый старт зовёт сад_кнопка() раньше этой строки
+/* СНАЧАЛА ДАТА, ПОТОМ ФАЙЛ (06.11, облако встало по квоте трафика 402). Снимок весит ~240 КБ и качался
+   при каждом возврате в приложение. Теперь крошечный список с датой правки; та же дата — берём копию
+   из памяти телефона, файл не тянем. Образец — Разберёмся rz-v418 (опрос сперва updated_at). */
 async function сад_снимок(){
   if(НА_МАКЕ || !Я) return null;
+  let метка = '';
+  try{
+    const {data: спис} = await sb.storage.from('gili').list(Я.id, {search: 'sad.json', limit: 5});
+    const ф = (спис || []).find(x => x.name === 'sad.json');
+    метка = ф ? (ф.updated_at || ф.created_at || '') : '';
+    if(метка && localStorage.getItem('сад_метка') === метка){
+      const копия = localStorage.getItem('сад_копия');
+      if(копия) return JSON.parse(копия);
+    }
+  }catch{}
   const {data, error} = await sb.storage.from('gili').download(`${Я.id}/sad.json`);
   if(error || !data) return null;
-  try{ return JSON.parse(await data.text()); }catch{ return null; }
+  try{
+    const текст = await data.text(), снимок = JSON.parse(текст);
+    if(метка) try{ localStorage.setItem('сад_копия', текст); localStorage.setItem('сад_метка', метка); }catch{}
+    return снимок;
+  }catch{ return null; }
 }
 /* ГОРОД вместо сада (28.09): та же кнопка, счёт — все квесты города (вопросы, платежи, дела), почта отдельно
    внутри. На маке город ходит в свой сервер (/api/gorod), на телефоне — в снимок sad.json (поле «город»). */
