@@ -9,6 +9,9 @@
    до стилей, чтобы шапка не мигнула. Рамка с чужого адреса (OS на :5050, лицо на :5055), путь
    родителя не прочитать — потому top !== self или явный ?os=1 / ?embed=os (так зовёт Ричард), как у CRM (static/index.html:15). */
 try{ if(window.top !== window.self || /[?&](os=1|embed=os)(&|$)/.test(location.search)) document.documentElement.classList.add('in-os'); }catch(e){}
+/* В ПУЛЬТЕ /m (жалоба Жени №119, 07.11): рамка «Заметки» зовёт /gili/?embed=pult. Небо, шапку и низ даёт страница
+   пульта — лицо не рисует своё небо и туман, иначе «коробка в коробке». Правила — html.in-pult в конце стилей. */
+try{ if(/[?&]embed=pult(&|$)/.test(location.search)) document.documentElement.classList.add('in-pult'); }catch(e){}
 /* 31.10 ночь у моря (Женя 23.10 «делай»): с 18 до 7 по часам телефона — то же море с луной. Признак до стилей,
    чтобы дневной постер не мигнул. ?night=1 / ?night=0 — посмотреть днём или ночью вручную. */
 try{ const ч = new Date().getHours(), н = /[?&]night=([01])/.exec(location.search);
@@ -1152,6 +1155,22 @@ html.in-os .мобильный-имя > span:not(.мак-фраза){display:non
 html.in-os .мобильный-бренд{height:auto; min-height:36px; padding:0 3px 4px}
 html.in-os .мобильный-имя{justify-content:center}
 html.in-os #приложение > header{padding-top:6px}
+
+/* ═══ В ПУЛЬТЕ /m (07.11, жалоба Жени №119: «Гили вот так уебски интегрирован. Сделай его частью приложения») ═══
+   Было: внутри «Заметок» лицо рисовало своё небо другим кадром, туман над поиском и под полем — вторая стеклянная
+   панель со скруглением внутри страницы, у которой уже есть небо, шапка и нижняя панель. Стекло на стекле.
+   Стало: фон лица прозрачный — небо даёт страница; тумана нет, лента растворяется маской под поиском и над полем.
+   Рамка (pult/ramka.js) на телефоне во всю ширину без скругления. Снять: убрать класс in-pult (скрипт в <head>). */
+#лента img[data-нет]{background:oklch(1 0 0/.42)}   /* превью ещё нет — пустое стекло (№119) */
+html.in-pult, html.in-pult body{background:transparent !important; background-image:none !important}
+html.in-pult #небо, html.in-pult #небо-видео, html.in-pult body::before, html.in-pult body::after,
+html.in-pult header::before, html.in-pult #приложение::before, html.in-pult #приложение::after{display:none !important}
+html.in-pult .подшапка, html.in-pult .подшапка::before, html.in-pult .подшапка::after{
+  background:transparent !important; box-shadow:none !important; border:0 !important;
+  -webkit-backdrop-filter:none !important; backdrop-filter:none !important}
+html.in-pult main{
+  -webkit-mask-image:linear-gradient(to bottom,transparent calc(var(--верх,170px) + 4px),#000 calc(var(--верх,170px) + 30px),#000 calc(100% - var(--низ,90px) - 30px),transparent calc(100% - var(--низ,90px) + 6px));
+          mask-image:linear-gradient(to bottom,transparent calc(var(--верх,170px) + 4px),#000 calc(var(--верх,170px) + 30px),#000 calc(100% - var(--низ,90px) - 30px),transparent calc(100% - var(--низ,90px) + 6px))}
 </style>
 </head>
 <body>
@@ -1186,7 +1205,7 @@ html.in-os #приложение > header{padding-top:6px}
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·b22b57</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·adbbb1</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1195,7 +1214,7 @@ html.in-os #приложение > header{padding-top:6px}
   </header>
   <div class="подшапка">
     <span class="поиск-знак" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg></span>
-    <input id="поиск" placeholder="искать во всех мыслях…" autocomplete="off">
+    <input id="поиск" placeholder="поиск по мыслям" autocomplete="off">
     <button class="вид сад-кнопка" id="сад-кнопка" title="город: задачи, платежи и письма ждут тебя" hidden>Ждёт тебя</button>
     <button class="вид кал-кнопка" id="кал-кнопка" type="button" aria-label="старые дни — календарь" aria-expanded="false" title="старые дни">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="3.5"/><path d="M4 10.5h16M9 3.5v4M15 3.5v4"/></svg>
@@ -2636,6 +2655,18 @@ async function показать_фото(){
   // запись, на которую ссылку так и не дали, слушать нечем — кнопку убираем, как и раньше
   for(const б of л.querySelectorAll('button[data-звук]')) if(записи.includes(б.dataset.звук)) б.remove();
 }
+
+/* Превью не пришло (404, сеть, у Сервера ещё нет ручки prev) — пустое стекло, а не знак битой картинки «?»
+   (жалоба Жени №119, 07.11). Прозрачная точка вместо картинки держит место и рамку; через минуту пробуем снова,
+   два раза — как витрина Сервера §6. Событие error не всплывает, поэтому ловим на погружении. */
+const ПУСТО_IMG = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+document.addEventListener('error', e => {
+  const i = e.target;
+  if(!(i instanceof HTMLImageElement) || !i.closest('#лента') || i.src === ПУСТО_IMG) return;
+  const было = i.src, раз = +(i.dataset.повтор || 0);
+  i.dataset.нет = '1'; i.src = ПУСТО_IMG;
+  if(раз < 2) setTimeout(() => { if(i.isConnected){ i.dataset.повтор = раз + 1; delete i.dataset.нет; i.src = было; } }, 60000);
+}, true);
 
 let ЗВУЧИТ = null;
 document.addEventListener('click', e => {
