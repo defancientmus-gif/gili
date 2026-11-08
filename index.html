@@ -1205,7 +1205,7 @@ html.in-pult main{
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·adbbb1</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·f0239b</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -3006,6 +3006,9 @@ $('фото-готово').onclick = () => {
 // а в окне из интернета (телефон, любой браузер) — нет. Вставка НЕ отправляет сама:
 // картинку из буфера обычно хочется подписать, поэтому она встаёт фишкой и ждёт.
 document.addEventListener('paste', async e => {
+  /* 09.11 01:10 Женя: ссылка инсты «в гили не вставлялась». Буфер из приложений часто несёт вместе со ссылкой
+     картинку-превью — и вставка отменялась ради картинки, текст пропадал. Есть текст — вставляется текст, как везде. */
+  if((e.clipboardData?.getData('text/plain') || '').trim()) return;
   const файлы = [...(e.clipboardData?.items || [])]
     .filter(п => п.kind === 'file' && п.type.startsWith('image/'))
     .map(п => п.getAsFile()).filter(Boolean);
