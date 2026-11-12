@@ -256,6 +256,25 @@ main > *{flex:none}
 .низ .чей{margin-left:auto; font-weight:500}
 /* что за ссылкой: адрес коротко, под ним название и суть, вывод дома — по касанию */
 .мысль a.адрес{color:var(--accent); font-weight:600; text-decoration:none; border-bottom:1px solid currentColor}
+/* карточка ссылки (13.11): обложка слева, сайт · автор, подпись в две строки. Без блюра — стекло только у неподвижного */
+.слова-ссылки{margin-bottom:8px}
+.мысль a.ссылка-карта{position:relative; z-index:1; display:flex; gap:11px; align-items:center; margin-top:2px;
+  padding:7px 12px 7px 7px; border-radius:16px; text-decoration:none; color:inherit; min-width:0;
+  background:oklch(1 0 0/.34); box-shadow:inset 0 0 0 1px oklch(1 0 0/.6), 0 6px 16px -12px oklch(.25 .08 220/.45);
+  transition:transform .18s var(--пружина, ease), background .18s}
+.мысль a.ссылка-карта:active{transform:scale(.98); background:oklch(1 0 0/.5)}
+.ссылка-карта .обложка{flex:none; width:64px; height:64px; border-radius:12px; overflow:hidden; display:grid; place-items:center;
+  background:linear-gradient(150deg, oklch(.86 .06 215), oklch(.93 .03 200)); box-shadow:inset 0 0 0 1px oklch(1 0 0/.5)}
+.ссылка-карта .обложка img{width:100%; height:100%; object-fit:cover; display:block; animation:обложка-явь .35s ease-out both}
+.ссылка-карта .обложка i{font:700 15px/1 var(--sys); font-style:normal; color:oklch(1 0 0/.95); letter-spacing:.02em}
+@keyframes обложка-явь{from{opacity:0}to{opacity:1}}
+.ссылка-карта .о-ссылке{min-width:0; display:flex; flex-direction:column; gap:3px}
+.ссылка-карта small{font:500 12px/1.25 var(--sys); color:var(--fg-l); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ссылка-карта b{font-weight:600; font-size:14px; line-height:1.32; color:var(--fg); display:-webkit-box;
+  -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere}
+.ссылка-карта b.ждёт-превью{color:var(--fg-l); font-weight:500; animation:превью-дышит 1.6s ease-in-out infinite}
+@keyframes превью-дышит{50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.ссылка-карта b.ждёт-превью,.ссылка-карта .обложка img{animation:none}}
 .внутри{position:relative; z-index:1; margin-top:8px; padding:9px 12px; border-radius:14px;
   font-size:13.5px; line-height:1.4; white-space:normal;
   background:oklch(1 0 0/.24); box-shadow:inset 0 0 0 1px oklch(1 0 0/.5)}
@@ -1205,7 +1224,7 @@ html.in-pult main{
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·7fe129</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·1c10d9</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1688,8 +1707,65 @@ function доклад_для(м){
   }
   return ДОКЛАДЫ.get(url);
 }
-function что_за_ссылкой(м, открыта){
+/* КАРТОЧКА ССЫЛКИ (13.11). Женя 01:14 со скрином айфона: «Гили очень слабый. Не вижу я красиво и быстро ссылки.
+   Приложение не полноценное )». Кинул рилс — видел голую синюю строку instagram.com/reel/…, а что там, приходило
+   минут через семь и только в тг. Теперь ссылка — карточка, как в мессенджере: обложка, сайт и автор, подпись.
+   Сразу, без сети — по одному адресу («Instagram · ролик», значок сайта); секунды спустя мак кладёт обложку,
+   автора и подпись (поле ссылка, server.py превью_ссылки); разбор дома встаёт под карточкой, как только готов.
+   Пока превью нет, подпись берём из механической сводки (сводка.py): «инстаграм · ролик · Автор · дата — подпись». */
+const ЗНАЧОК_САЙТА = {Instagram: 'IG', YouTube: '▶', Telegram: 'TG', GitHub: 'GH', TikTok: 'TT', VK: 'VK', X: 'X'};
+function сайт_по_адресу(url){
+  const узел = url.replace(/^https?:\/\/(www\.|m\.)?/, '').split(/[/?#]/)[0].toLowerCase();
+  const имя = {'instagram.com':'Instagram','youtube.com':'YouTube','youtu.be':'YouTube','t.me':'Telegram',
+               'github.com':'GitHub','tiktok.com':'TikTok','vk.com':'VK','vkvideo.ru':'VK','x.com':'X','twitter.com':'X'}[узел] || узел;
+  const вид = /\/(reel|reels|shorts|clip)\/|tiktok\.com\/@/.test(url) ? 'ролик' : /instagram\.com\/p\//.test(url) ? 'пост'
+            : /youtube\.com\/watch|youtu\.be\/|vk\.com\/video/.test(url) ? 'видео' : '';
+  return {имя, вид};
+}
+const чистая_подпись = т => (т || '').replace(/⟨[^⟩]*⟩/g, ' ').replace(/(^|\s)#[^\s#]+/g, ' ').replace(/\s+/g, ' ').trim();
+function превью_ссылки(м, url){
+  const п = м.ссылка || {}, {имя, вид} = сайт_по_адресу(url);
+  let автор = п.author || '', подпись = чистая_подпись(п.title);
+  // из сводки дома: «инстаграм · ролик · Автор · 12.11 · 823 ❤ — подпись ⟨с обложки: …⟩»
+  const св = м.сводка || '';
+  if(св && (!автор || !подпись)){
+    const [голова, ...хвост] = св.split(' — ');
+    const части = голова.replace(/⟨[^⟩]*⟩/g, '').split(' · ').map(с => с.trim()).filter(Boolean);
+    if(!автор && /^инстаграм$/i.test(части[0] || '') && части[2] && !/^\d/.test(части[2])) автор = части[2];
+    if(!подпись) подпись = чистая_подпись(хвост.join(' — '));
+    if(!подпись){ const с = св.match(/⟨с обложки:\s*([^⟩]+)⟩/); if(с) подпись = 'На обложке: ' + с[1]; }
+  }
+  return {имя, вид: п.kind || вид, автор: автор.split(' | ')[0].trim(), подпись, обложка: п.cover || ''};
+}
+function карточка_ссылки(м, url){
+  const п = превью_ссылки(м, url);
+  const верх = [п.имя, п.вид, п.автор].filter(Boolean).join(' · ');
+  const свежая = Date.now() - new Date(м.created_at).getTime() < 3 * 60000;
+  const лицо = п.обложка ? `<img src="${п.обложка}" alt="">`
+             : `<i>${экран(ЗНАЧОК_САЙТА[п.имя] || (п.имя[0] || '·').toUpperCase())}</i>`;
+  const строка = п.подпись ? `<b>${экран(п.подпись)}</b>`
+               : свежая ? `<b class="ждёт-превью">смотрю, что там…</b>`
+               : `<b>${экран(короткий_адрес(url))}</b>`;
+  return `<a class="ссылка-карта${п.обложка ? '' : ' без-обложки'}" href="${экран(url)}" target="_blank" rel="noopener">` +
+         `<span class="обложка">${лицо}</span><span class="о-ссылке"><small>${экран(верх)}</small>${строка}</span></a>`;
+}
+/* Мысль со ссылкой: слова — как есть, первая ссылка — карточкой под ними (как в тг), разбор — под карточкой. */
+function тело_со_ссылкой(м, открыта){
+  const текст = м.body || '';
+  const н = текст.match(АДРЕС);
+  if(!н) return тело_мысли(текст) + что_за_ссылкой(м, открыта);
+  const url = н[0].replace(/[.,;:!?)]+$/, '');
+  const слова = текст.replace(url, ' ').replace(/^[\s\-–—:·,]+|[\s\-–—:·,]+$/g, '').replace(/[ \t]{2,}/g, ' ');
+  return (слова ? `<div class="слова-ссылки">${тело_мысли(слова)}</div>` : '') + карточка_ссылки(м, url) + что_за_ссылкой(м, открыта, true);
+}
+function что_за_ссылкой(м, открыта, есть_карточка){
   const р = м.разбор || {}, зн = знание_о(м) || {};
+  // в short пока лежит голая сводка (её подпись уже в карточке) — это ещё не разбор, второй раз не показываем
+  if(есть_карточка && !р.заголовок && !р.кратко && !зн.report?.length && !зн.style && !зн.shot
+     && (!зн.short || (м.сводка || '').slice(0, 80) === зн.short.slice(0, 80))){
+    const ждёт = !обработана(м) && Date.now() - new Date(м.created_at).getTime() < 30 * 60000;
+    return ждёт ? `<div class="внутри ход">разбираю, что там — пара минут</div>` : '';
+  }
   const есть_доклад = !!зн.report?.length || (НА_МАКЕ && !!р.доклад);
   const д = открыта && есть_доклад ? доклад_для(м) : null;
   const кратко = р.кратко || зн.short || '';
@@ -1710,7 +1786,7 @@ function что_за_ссылкой(м, открыта){
             : !открыта && есть_доклад ? `<em class="ещё-доклад">коснись — доклад целиком</em>` : '') + `</div>`;
   if(зн.shot) return `<div class="внутри"><span>На снимке: ${подсветить(зн.shot)}</span></div>`;
   const суть = (м.сводка || '').split(' — ').slice(1).join(' — ').trim();
-  if(суть) return `<div class="внутри"><span>${экран(суть)}</span></div>`;
+  if(суть && !есть_карточка) return `<div class="внутри"><span>${экран(суть)}</span></div>`;
   return м.разбор_ход ? `<div class="внутри ход">${экран(м.разбор_ход)}</div>` : '';
 }
 /* НАПОМИНАНИЕ ДОМА — НЕ МЫСЛЬ ЖЕНИ (аудит 24.09). Отложенное возвращается в ленту строкой
@@ -1912,7 +1988,7 @@ function карточка(м){
              : м.звук_ждёт  ? `<span class="распознаётся">${ЗНАК_ГОЛОСА} запись ждёт сети</span>`
              : платёж ? тело_платежа(платёж)
              : напоминание_ли(м) ? тело_напоминания(м.body, открыта || !!ИСКОМОЕ)
-             : тело_мысли(м.body || '') + что_за_ссылкой(м, открыта);
+             : тело_со_ссылкой(м, открыта);
   const ответ = правится ? ''
               : (ОТВЕТЫ_ГИЛИ[м.id] || знание_о(м)?.answer) ? `<div class="внутри ответ-гили"><b>Гили отвечает</b><span>${со_ссылками(ОТВЕТЫ_ГИЛИ[м.id] || знание_о(м).answer)}</span></div>`
               : (ГИЛИ_ОТВЕТИТ && м.audio === ГИЛИ_ОТВЕТИТ.путь && !ждёт_слов(м)) ? `<div class="ответ-гили думает"><i></i>Гили думает над ответом…</div>` : '';
@@ -2460,7 +2536,7 @@ document.addEventListener('click', e => {
   }
   if(e.target.closest('.снимки') || e.target.closest('.звук')
      || e.target.closest('.редактор') || e.target.closest('.правка-низ')
-     || e.target.closest('a.адрес')) return;          // ссылка открывается, карточка не мигает
+     || e.target.closest('a.адрес, a.ссылка-карта')) return;          // ссылка открывается, карточка не мигает
   const п = e.target.closest('.полоса');
   if(п){
     const к = п.dataset.день;
