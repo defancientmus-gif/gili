@@ -68,6 +68,9 @@ main{max-width:720px; margin:0 auto; padding:14px 16px}
 .плитка .фон.книги{display:flex; gap:6px; align-items:flex-end; justify-content:center; padding:18px 14px 64px;
   background:linear-gradient(160deg,#EAF3FB,#CFE3F4)}
 .плитка .фон.книги span{width:22%; border-radius:4px 7px 7px 4px; box-shadow:inset 4px 0 0 rgba(0,0,0,.12), 0 4px 10px rgba(30,50,80,.18)}
+/* Вещь без кадра — не битая картинка, а тихая плитка в том же стекле (16.11) */
+.плитка .фон.пусто{display:flex; align-items:center; justify-content:center; font-size:34px; opacity:.5;
+  background:linear-gradient(160deg,#EAF3FB,#DCE9F5)}
 .плитка .подпись{position:absolute; left:0; right:0; bottom:0; padding:28px 12px 11px;
   background:linear-gradient(to top, rgba(255,255,255,.96) 55%, rgba(255,255,255,0)); color:var(--ink)}
 .плитка .подпись b{display:block; font-size:15px; line-height:1.2}
@@ -111,19 +114,22 @@ main{max-width:720px; margin:0 auto; padding:14px 16px}
 // Вещи живут в polka.json — тот же файл читает Космос OS (os_gotovoe.py): одна правда на двоих.
 // Источник маленький, внизу: героем остаётся сама вещь.
 let ПОЛКА = [];
-const э = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// пустое поле не должно становиться словом «undefined» в src/href: у Дома бывают вещи
+// без кадра и без ссылки (находка 16.11 — пункт «Космос OS · доехало 16.11» ломал плитку).
+const э = s => s == null ? '' : String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const карта = (м) => `<article class="карта">
   <span class="вид">${э(м.вид)}</span>
   <h2>${э(м.имя)}</h2><p class="суть">${э(м.суть)}</p>
   <ul class="ряды">${м.ряды.map(р => `<li>${р.цвет ? `<span class="корешок" style="background:${р.цвет}"></span>` : `<span class="номер">${р.н}</span>`}
     <span><b>${э(р.т)}</b><small>${э(р.п)}</small></span>${р.г ? `<span class="грань">${э(р.г)}</span>` : ''}</li>`).join('')}</ul>
-  <p class="заметка">${э(м.заметка)}</p>
+  ${м.заметка ? `<p class="заметка">${э(м.заметка)}</p>` : ''}
   <div class="низ">${м.кнопка ? `<button class="кн">${э(м.кнопка)}</button>` : '<span></span>'}
-    <a class="откуда" href="${э(м.ссылка)}" target="_blank" rel="noopener"><span>из ролика<br>${э(м.откуда)}</span><img src="${э(м.кадр)}" alt=""></a></div>
+    ${м.ссылка || м.кадр ? `<a class="откуда" ${м.ссылка ? `href="${э(м.ссылка)}" target="_blank" rel="noopener"` : ''}><span>${м.кадр ? 'из ролика' : 'источник'}<br>${э(м.откуда) || 'смотреть'}</span>${м.кадр ? `<img src="${э(м.кадр)}" alt="">` : ''}</a>` : ''}</div>
 </article>`;
 const плитка = (м, i) => `<button class="плитка" data-i="${i}">
   ${м.вид === 'Книги' ? `<div class="фон книги">${м.ряды.map((р, k) => `<span style="background:${р.цвет};height:${62 + (k % 2) * 10}%"></span>`).join('')}</div>`
-                     : `<img class="фон" src="${э(м.кадр)}" alt="">`}
+    : м.кадр ? `<img class="фон" src="${э(м.кадр)}" alt="">`
+    : `<div class="фон пусто">✦</div>`}
   <span class="подпись"><b>${э(м.имя)}</b><small>${э(м.вид)} · ${м.ряды.length} ${м.вид === 'Книги' ? 'книги' : 'шага'}</small></span></button>`;
 const разложить = () => {
   document.getElementById('лента').innerHTML = ПОЛКА.map(карта).join('');
