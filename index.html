@@ -1232,7 +1232,7 @@ html.in-pult main{
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·08b6e0</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·cd3aef</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1745,12 +1745,26 @@ function превью_ссылки(м, url){
   }
   return {имя, вид: п.kind || вид, автор: автор.split(' | ')[0].trim(), подпись, обложка: п.cover || ''};
 }
+/* Картинка ссылки в пульте едет отдельным файлом (19.11): Сервер берёт её у мака при обмене, и первые
+   секунды адрес отвечает 404. Повторяем как у миниатюр снимков — раз в 2,5 с, не больше 12 раз; не пришла —
+   значок сайта на том же месте, слот не прыгает. На маке и в Pages картинка внутри записи и не падает. */
+function обложка_не_пришла(img){
+  const раз = +(img.dataset.n || 0);
+  if(раз < 12 && /^\/api\//.test(img.getAttribute('src') || '')){
+    img.dataset.n = раз + 1;
+    setTimeout(() => { if(img.isConnected) img.src = img.src.replace(/[?#].*$/, '') + '?r=' + (раз + 1); }, 2500);
+    return;
+  }
+  const сл = img.closest('.ссылка-карта'); if(сл) сл.classList.add('без-обложки');
+  img.outerHTML = `<i>${img.dataset.l || '·'}</i>`;
+}
 function карточка_ссылки(м, url){
   const п = превью_ссылки(м, url);
   const верх = [п.имя, п.вид, п.автор].filter(Boolean).join(' · ');
   const свежая = Date.now() - new Date(м.created_at).getTime() < 3 * 60000;
-  const лицо = п.обложка ? `<img src="${п.обложка}" alt="">`
-             : `<i>${экран(ЗНАЧОК_САЙТА[п.имя] || (п.имя[0] || '·').toUpperCase())}</i>`;
+  const буква = экран(ЗНАЧОК_САЙТА[п.имя] || (п.имя[0] || '·').toUpperCase());
+  const лицо = п.обложка ? `<img src="${экран(п.обложка)}" alt="" data-l="${буква}" onerror="обложка_не_пришла(this)">`
+             : `<i>${буква}</i>`;
   const строка = п.подпись ? `<b>${экран(п.подпись)}</b>`
                : свежая ? `<b class="ждёт-превью">смотрю, что там…</b>`
                : `<b>${экран(короткий_адрес(url))}</b>`;
