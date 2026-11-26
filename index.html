@@ -1233,7 +1233,7 @@ html.in-pult main{
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·6bb570</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·8ca40d</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -2028,7 +2028,9 @@ function тело_платежа(н){
 const ОТКУДА = {'телеграм': 'из телеграма', 'tg': 'из телеграма', 'машина': 'от машины', 'machine': 'от машины'};
 function откуда_пришла(м, дома){
   const с = !дома && ОТКУДА[м.source];
-  return с ? `<span class="откуда">${с}</span><span>·</span>` : '';
+  // «разобрал запасной: польза» — Claude и свои модели молчали, ответил запасной мозг дома (Мастер 26.11); только на маке
+  const з = м.spare_brain ? `<span class="откуда">${экран(м.spare_brain)}</span><span>·</span>` : '';
+  return (с ? `<span class="откуда">${с}</span><span>·</span>` : '') + з;
 }
 function карточка(м){
   ПОКАЗАНО.set(м.id, м);                     // меню берёт мысль отсюда: ждущих в МЫСЛИ нет
