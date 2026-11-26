@@ -1233,7 +1233,7 @@ html.in-pult main{
         </svg>
       </div>
       <div class="мобильный-имя"><strong>Гили</strong><span>поймаю мысль и передам дальше</span></div>
-      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·8ca40d</b></div>
+      <div class="живая-связь" id="связь"><i></i><span>на связи</span><b class="верс" id="верс">v71·94b35d</b></div>
       <div class="ещё" id="ещё">
         <button type="button" aria-label="ещё" aria-haspopup="menu" aria-expanded="false">⋯</button>
         <div class="меню" role="menu" hidden><div class="сводка" id="сводка"></div></div>
@@ -1598,10 +1598,13 @@ async function забрать_ленту(){
   // сам, и именованный select до её появления уронил бы всю ленту, а «*» просто подхватит.
   // 500, а не 200: с 24.09 в облаке и мысли мака (246 и растёт), старые жили бы только
   // полосой без содержимого, и поиск их не находил.
-  const {data, error} = await sb.from('gili_notes')
-    .select('*')
+  let {data, error} = await sb.from('gili_notes')
+    .select(ЛЁГКАЯ_ЛЕНТА)
     .order('created_at', {ascending:false}).limit(500);
+  if(error && !/fetch|network/i.test(error.message || ''))   // колонку переименовали — честно всю ленту, как раньше
+    ({data, error} = await sb.from('gili_notes').select('*').order('created_at', {ascending:false}).limit(500));
   if(error || !data) return;                 // нет связи — остаёмся на том, что видно
+  data.forEach(лёгкое_знание);
   const слепок = JSON.stringify(data);
   const та_же = слепок === СЛЕПОК_ЛЕНТЫ && !МЫСЛИ.some(м => String(м.id).startsWith(ЖДУ));
   СЛЕПОК_ЛЕНТЫ = слепок;
@@ -1703,9 +1706,42 @@ const ДОКЛАДЫ = new Map();                    // адрес → [{р, т}
    в 2–4 строки, report — доклад [{h, t}], style — {how, why} у референса, shot — сводка снимка. Телефон
    видит то же, что мак, без похода домой. */
 const знание_о = м => м.knowledge || м.знание || null;
+/* ЛЁГКАЯ ЛЕНТА (26.11). Supabase бесплатный, трафик 4,17 из 5 ГБ за 11 дней — упирались ~28.11, дальше
+   облако отвечает 402 и телефон без ленты. Замер: 500 мыслей «select *» = 259 КБ сжатыми, из них доклады
+   (knowledge.report) — 379 КБ из 720 сырых, а смотрят их только по касанию. Теперь лента везёт из знания
+   short, answer, style, shot и метку «доклад есть» (первый заголовок) — 104 КБ, на 60% меньше; сам доклад
+   едет одной строкой, когда карточку раскрыли (доклад_для). Новую колонку в облаке добавить и сюда. */
+const ЛЁГКАЯ_ЛЕНТА = 'id,author,flow,body,photos,created_at,pulled_at,status,home_id,audio,reply_to,'
+  + 'k_short:knowledge->short,k_answer:knowledge->answer,k_style:knowledge->style,k_shot:knowledge->shot,'
+  + 'k_has:knowledge->report->0->>h';
+function лёгкое_знание(м){
+  if(!м || !('k_has' in м)) return м;         // мак и полный забор присылают знание целиком — не трогаем
+  const зн = {};
+  if(м.k_short) зн.short = м.k_short;
+  if(м.k_answer) зн.answer = м.k_answer;
+  if(м.k_style) зн.style = м.k_style;
+  if(м.k_shot) зн.shot = м.k_shot;
+  if(м.k_has) зн.report_ждёт = true;
+  for(const к of ['k_short','k_answer','k_style','k_shot','k_has']) delete м[к];
+  м.knowledge = Object.keys(зн).length ? зн : null;
+  return м;
+}
 function доклад_для(м){
   const зн = знание_о(м);
   if(Array.isArray(зн?.report) && зн.report.length) return зн.report.map(к => ({р: к.h, т: к.t}));
+  if(зн?.report_ждёт){                        // лёгкая лента: доклад едет по касанию, одной строкой
+    const ключ = 'id:' + м.id;
+    if(!ДОКЛАДЫ.has(ключ)){
+      ДОКЛАДЫ.set(ключ, 'жду');
+      sb.from('gili_notes').select('id,rep:knowledge->report').eq('id', м.id).maybeSingle()
+        .then(({data}) => {
+          const рз = Array.isArray(data?.rep) ? data.rep : [];
+          if(рз.length) зн.report = рз;
+          ДОКЛАДЫ.set(ключ, рз.length ? рз.map(к => ({р: к.h, т: к.t})) : 'нет'); нарисовать();
+        }, () => ДОКЛАДЫ.delete(ключ));      // сеть мигнула — следующее касание спросит снова
+    }
+    return ДОКЛАДЫ.get(ключ);
+  }
   const url = ((м.body || '').match(АДРЕС) || [''])[0].replace(/[.,;:!?)]+$/, '');
   if(!url || !НА_МАКЕ || !м.разбор?.доклад) return null;
   if(!ДОКЛАДЫ.has(url)){
@@ -1784,7 +1820,7 @@ function тело_со_ссылкой(м, открыта){
 function что_за_ссылкой(м, открыта, есть_карточка){
   const р = м.разбор || {}, зн = знание_о(м) || {};
   // в short пока лежит голая сводка (её подпись уже в карточке) — это ещё не разбор, второй раз не показываем
-  if(есть_карточка && !р.заголовок && !р.кратко && !зн.report?.length && !зн.style && !зн.shot
+  if(есть_карточка && !р.заголовок && !р.кратко && !зн.report?.length && !зн.report_ждёт && !зн.style && !зн.shot
      && (!зн.short || (м.сводка || '').slice(0, 80) === зн.short.slice(0, 80))){
     const ждёт = !обработана(м) && Date.now() - new Date(м.created_at).getTime() < 30 * 60000;
     return ждёт ? `<div class="внутри ход">разбираю, что там — пара минут</div>` : '';
@@ -1793,7 +1829,7 @@ function что_за_ссылкой(м, открыта, есть_карточк�
   // р.доклад без НА_МАКЕ — не доклад, а лишь его наличие: обещание по касанию на телефоне не выполнялось (16.11).
   // на маке доклад берётся и с сервера (/api/razbor), когда знание ещё не доехало (второй глаз 17.11):
   // спрашиваем заранее, а обещаем по касанию только когда разделы уже пришли — не «жду»
-  const есть_доклад = !!зн.report?.length || (НА_МАКЕ && !!р.доклад && Array.isArray(доклад_для(м)));
+  const есть_доклад = !!зн.report?.length || !!зн.report_ждёт || (НА_МАКЕ && !!р.доклад && Array.isArray(доклад_для(м)));
   const д = открыта && есть_доклад ? доклад_для(м) : null;
   // пустые строки («   », «\n») — это не разбор: иначе под карточкой встаёт рамка без слов (случай 5 пробы)
   const остаток = с => (с || '').trim();
@@ -2859,8 +2895,9 @@ async function точки(){
   const ид = [...ЖДУТ_ТОЧКИ]; ЖДУТ_ТОЧКИ.clear();
   if(!ид.length) return;
   if(ГРУЖУ) return загрузить();
-  const {data, error} = await sb.from('gili_notes').select('*').in('id', ид);
+  const {data, error} = await sb.from('gili_notes').select(ЛЁГКАЯ_ЛЕНТА).in('id', ид);
   if(error || !data) return загрузить();
+  data.forEach(лёгкое_знание);
   if(ГРУЖУ) return загрузить();                   // пока везли, начался полный забор — пусть он и решит
   for(const н of data){
     const где = МЫСЛИ.findIndex(м => м.id === н.id);
